@@ -16,14 +16,14 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         User::factory()->create([
-            "name" => "Test User",
-            "email" => "test@example.com",
-            "password" => "prova123",
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'password' => 'prova123',
         ]);
         User::factory()->create([
-            "name" => "Another User",
-            "email" => "test1@example.com",
-            "password" => "prova1234",
+            'name' => 'Another User',
+            'email' => 'test1@example.com',
+            'password' => 'prova1234',
         ]);
         $this->call([ProjectSeeder::class, SegmentSeeder::class]);
     }

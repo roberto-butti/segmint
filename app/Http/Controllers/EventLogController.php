@@ -4,70 +4,68 @@ namespace App\Http\Controllers;
 
 use App\Models\EventLog;
 use App\Models\Project;
-use App\Models\Visitor;
 use App\Services\SegmentEngine;
 use Exception;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Symfony\Component\Uid\Uuid;
 
 class EventLogController extends Controller
 {
     public function track(Request $request)
     {
-        $token = $request->input("token", "");
-        if ($token === "") {
-            abort(404, "token_mandatory");
+        $token = $request->input('token', '');
+        if ($token === '') {
+            abort(404, 'token_mandatory');
         }
         $project = Project::resolveFromAccessToken($token);
 
         if (is_null($project)) {
-            abort(404, "token_not_valid");
+            abort(404, 'token_not_valid');
         }
 
-        $sessionId = "";
-        //var_dump(session()->get("a"));
+        $sessionId = '';
+        // var_dump(session()->get("a"));
         $sessionId = $request->hasSession() ? session()->getId() : null;
-        //session()->set("a", "a");
-        $eventType = $request->input("type", "view"); // default
+        // session()->set("a", "a");
+        $eventType = $request->input('type', 'view'); // default
         $logValues = [
-            "project_id" => $project->id,
-            "session_id" => $sessionId,
-            "uuid" => uniqid("", true),
-            "visitor_id" => $request->input("visitor_id", null),
-            "event_type" => $eventType,
-            "event_properties" => $request->input("event_properties", []),
-            "navigation_info" => [
-                "page_url" => $request->fullUrl(),
-                "referrer_url" => $request->headers->get("referer", null),
-                "path" => $request->path(),
-                "query_string" => $request->getQueryString(),
+            'project_id' => $project->id,
+            'session_id' => $sessionId,
+            'uuid' => uniqid('', true),
+            'visitor_id' => $request->input('visitor_id', null),
+            'event_type' => $eventType,
+            'event_properties' => $request->input('event_properties', []),
+            'navigation_info' => [
+                'page_url' => $request->fullUrl(),
+                'referrer_url' => $request->headers->get('referer', null),
+                'path' => $request->path(),
+                'query_string' => $request->getQueryString(),
             ],
-            "utms" => [
-                "utm_source" => $request->input("utms.utm_source", null),
-                "utm_medium" => $request->input("utms.utm_medium", null),
-                "utm_campaign" => $request->input("utms.utm_campaign", null),
-                "utm_term" => $request->input("utms.utm_term", null),
-                "utm_content" => $request->input("utms.utm_content", null),
+            'utms' => [
+                'utm_source' => $request->input('utms.utm_source', null),
+                'utm_medium' => $request->input('utms.utm_medium', null),
+                'utm_campaign' => $request->input('utms.utm_campaign', null),
+                'utm_term' => $request->input('utms.utm_term', null),
+                'utm_content' => $request->input('utms.utm_content', null),
             ],
-            "metadata" => $request->input("metadata", null),
+            'metadata' => $request->input('metadata', null),
         ];
         $log = new EventLog($logValues);
         $log->save();
 
         $segments = app(SegmentEngine::class)->assignSegments($log);
 
-        //var_dump($segment);
+        // var_dump($segment);
         // } catch (Exception $e) {
         // return ["status" => "OK", "error" => $e->getMessage()];
         // }
 
         return [
-            "status" => "OK",
-            "session" => $sessionId,
-            "segments" => $segments,
+            'status' => 'OK',
+            'session' => $sessionId,
+            'segments' => $segments,
         ];
     }
+
     /**
      * Display a listing of the resource.
      */

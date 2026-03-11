@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class AccessToken extends Model
 {
     use HasFactory;
-    protected $fillable = ["project_id", "name", "token", "active"];
+
+    protected $fillable = ['project_id', 'name', 'token', 'active'];
 
     public function project()
     {

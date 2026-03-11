@@ -30,7 +30,7 @@ class SegmentController extends Controller
             ->where('active', true)
             ->get();
 
-        return response()->json( $segments,
+        return response()->json($segments,
         );
     }
 }
