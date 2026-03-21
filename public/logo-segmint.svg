@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <!-- Three arc segments forming a circle with gaps -->
+  <g transform="translate(50, 50)">
+    <!-- Segment 1: top-right -->
+    <path d="M 4 -38 A 38 38 0 0 1 34 18" fill="none" stroke="#2DD4A8" stroke-width="14" stroke-linecap="round"/>
+    <!-- Segment 2: bottom -->
+    <path d="M 28 24 A 38 38 0 0 1 -28 24" fill="none" stroke="#10B981" stroke-width="14" stroke-linecap="round"/>
+    <!-- Segment 3: top-left -->
+    <path d="M -34 18 A 38 38 0 0 1 -4 -38" fill="none" stroke="#059669" stroke-width="14" stroke-linecap="round"/>
+  </g>
+</svg>

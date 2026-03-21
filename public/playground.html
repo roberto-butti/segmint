@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Segmint Playground</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+
+        .toolbar {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .toolbar strong { color: #2dd4a8; }
+
+        .toolbar .status {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toolbar .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #64748b;
+        }
+
+        .toolbar .dot.ready { background: #22c55e; }
+
+        .toolbar .segments-list {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .toolbar .segments-list span {
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 4px;
+            color: #2dd4a8;
+            font-family: monospace;
+        }
+
+        .setup {
+            max-width: 600px;
+            margin: 80px auto;
+            padding: 32px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .setup h1 { font-size: 24px; margin-bottom: 8px; }
+        .setup p { color: #64748b; margin-bottom: 24px; }
+
+        .setup label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .setup input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: monospace;
+        }
+
+        .setup input:focus { outline: none; border-color: #2dd4a8; box-shadow: 0 0 0 3px rgba(45,212,168,0.15); }
+
+        .setup button {
+            margin-top: 16px;
+            padding: 10px 24px;
+            background: #0f172a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .setup button:hover { background: #1e293b; }
+
+        .setup .hint {
+            margin-top: 16px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .setup .hint code {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .page { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+
+        .page h1 { font-size: 28px; margin-bottom: 24px; }
+
+        .section {
+            border: 2px dashed #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+            position: relative;
+            transition: opacity 0.3s, border-color 0.3s;
+        }
+
+        .section.visible {
+            border-color: #2dd4a8;
+            border-style: solid;
+            background: #f0fdf9;
+        }
+
+        .section.hidden {
+            opacity: 0.3;
+            background: #fafafa;
+        }
+
+        .section .badge {
+            position: absolute;
+            top: -10px;
+            right: 16px;
+            font-size: 11px;
+            font-family: monospace;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .section.visible .badge {
+            background: #059669;
+            color: white;
+        }
+
+        .section.hidden .badge {
+            background: #e2e8f0;
+            color: #64748b;
+        }
+
+        .section .tag {
+            display: inline-block;
+            font-size: 11px;
+            font-family: monospace;
+            background: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .section h2 { font-size: 18px; margin-bottom: 4px; }
+        .section p { color: #64748b; font-size: 14px; }
+
+        .default-section { border-style: solid; border-color: #e2e8f0; background: white; }
+        .default-section .badge { background: #3b82f6; color: white; }
+
+        .log {
+            max-width: 960px;
+            margin: 32px auto;
+            padding: 0 24px 48px;
+        }
+
+        .log h3 { font-size: 14px; color: #64748b; margin-bottom: 8px; }
+
+        .log pre {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            overflow-x: auto;
+            max-height: 300px;
+        }
+
+        .log pre .time { color: #64748b; }
+        .log pre .info { color: #2dd4a8; }
+        .log pre .warn { color: #f59e0b; }
+    </style>
+</head>
+<body>
+
+<div id="toolbar" class="toolbar" style="display: none;">
+    <strong>Segmint Playground</strong>
+    <div class="status">
+        <div id="status-dot" class="dot"></div>
+        <span id="status-text">Connecting...</span>
+    </div>
+    <div id="segments-display" class="segments-list"></div>
+</div>
+
+<div id="setup-screen" class="setup">
+    <h1>Segmint Playground</h1>
+    <p>Enter your project token to see segment-based content visibility in action.</p>
+    <label for="token-input">Project token</label>
+    <input id="token-input" type="text" placeholder="e.g. this-is-a-test-token" />
+    <button onclick="startPlayground()">Start</button>
+    <p class="hint">
+        Tip: pass the token as a query parameter to skip this screen:<br>
+        <code>playground.html?token=your-token</code>
+    </p>
+</div>
+
+<div id="playground" style="display: none;">
+    <div class="page">
+        <h1>Storefront Demo</h1>
+
+        <div class="section default-section">
+            <span class="badge">always visible</span>
+            <span class="tag">data-segment=""</span>
+            <h2>Welcome to our store</h2>
+            <p>Browse our latest collection. This section is shown to every visitor.</p>
+        </div>
+
+        <div class="section" data-segment="google_visitors">
+            <span class="tag">data-segment="google_visitors"</span>
+            <h2>Found us on Google?</h2>
+            <p>Here are our most popular products — handpicked for search visitors like you.</p>
+        </div>
+
+        <div class="section" data-segment="italy_traffic">
+            <span class="tag">data-segment="italy_traffic"</span>
+            <h2>Benvenuto!</h2>
+            <p>Spedizione gratuita in Italia per ordini superiori a 50€.</p>
+        </div>
+
+        <div class="section" data-segment="high_intent">
+            <span class="tag">data-segment="high_intent"</span>
+            <h2>You seem interested!</h2>
+            <p>Use code <strong>SAVE10</strong> for 10% off your first order. Limited time only.</p>
+        </div>
+
+        <div class="section" data-segment="campaign_visitors">
+            <span class="tag">data-segment="campaign_visitors"</span>
+            <h2>Summer Campaign Special</h2>
+            <p>Thanks for clicking through! Exclusive deals for our summer campaign visitors.</p>
+        </div>
+
+        <div class="section" data-segment="tech_interest">
+            <span class="tag">data-segment="tech_interest"</span>
+            <h2>Tech picks for you</h2>
+            <p>We noticed you're into tech — check out our AI-powered product recommendations.</p>
+        </div>
+
+        <div class="section" data-segment="nonexistent_segment">
+            <span class="tag">data-segment="nonexistent_segment"</span>
+            <h2>This should stay hidden</h2>
+            <p>If you see this, something went wrong — this segment doesn't exist.</p>
+        </div>
+    </div>
+
+    <div class="log">
+        <h3>Event log</h3>
+        <pre id="event-log"></pre>
+    </div>
+</div>
+
+<script src="js/segmint.js"></script>
+<script>
+    var logEl = document.getElementById('event-log');
+
+    function log(type, message) {
+        if (!logEl) return;
+        var time = new Date().toLocaleTimeString();
+        var cls = type === 'info' ? 'info' : type === 'warn' ? 'warn' : '';
+        logEl.innerHTML += '<span class="time">' + time + '</span>  <span class="' + cls + '">' + message + '</span>\n';
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function applySegments() {
+        var sections = document.querySelectorAll('[data-segment]');
+        var matched = [];
+        var hidden = [];
+
+        sections.forEach(function (el) {
+            var slug = el.getAttribute('data-segment');
+            var badge = el.querySelector('.badge');
+
+            if (Segmint.visitor.hasSegment(slug)) {
+                el.classList.add('visible');
+                el.classList.remove('hidden');
+                if (badge) badge.textContent = 'VISIBLE — matched';
+                matched.push(slug);
+            } else {
+                el.classList.add('hidden');
+                el.classList.remove('visible');
+                if (badge) badge.textContent = 'HIDDEN — no match';
+                hidden.push(slug);
+            }
+        });
+
+        log('info', 'Visible sections: ' + (matched.length > 0 ? matched.join(', ') : 'none'));
+        log('warn', 'Hidden sections:  ' + (hidden.length > 0 ? hidden.join(', ') : 'none'));
+    }
+
+    function updateToolbar() {
+        var dot = document.getElementById('status-dot');
+        var text = document.getElementById('status-text');
+        var display = document.getElementById('segments-display');
+
+        if (Segmint.isReady()) {
+            dot.classList.add('ready');
+            var segs = Segmint.visitor.segments();
+            text.textContent = segs.length + ' segment' + (segs.length !== 1 ? 's' : '') + ' matched';
+            if (segs.length > 0) {
+                display.innerHTML = 'Matched: ' + segs.map(function (s) {
+                    return '<span>' + (s.slug || s) + '</span>';
+                }).join('');
+            }
+        }
+    }
+
+    function startPlayground() {
+        var input = document.getElementById('token-input');
+        var token = input ? input.value.trim() : '';
+        if (!token) { input.focus(); return; }
+
+        document.getElementById('setup-screen').style.display = 'none';
+        document.getElementById('playground').style.display = '';
+        document.getElementById('toolbar').style.display = '';
+
+        log('info', 'Initialising Segmint SDK...');
+        log('info', 'Token: ' + token);
+
+        Segmint.init({ token: token, autoTrack: true, debug: true })
+            .then(function (result) {
+                log('info', 'Track response: ' + JSON.stringify(result.status));
+                log('info', 'Session: ' + (result.session || 'n/a'));
+
+                var segs = Segmint.visitor.segments();
+                log('info', 'Matched segments (' + segs.length + '): ' +
+                    (segs.length > 0
+                        ? segs.map(function (s) { return s.slug || s; }).join(', ')
+                        : 'none'));
+
+                applySegments();
+                updateToolbar();
+
+                log('info', '');
+                log('info', 'Fetching all project segments...');
+                return Segmint.fetch.segments();
+            })
+            .then(function (allSegments) {
+                log('info', 'Available segments (' + allSegments.length + '): ' +
+                    allSegments.map(function (s) { return s.slug; }).join(', '));
+            })
+            .catch(function (err) {
+                log('warn', 'Error: ' + err.message);
+                document.getElementById('status-text').textContent = 'Error';
+            });
+    }
+
+    // Auto-start if token is in the URL
+    (function () {
+        var params = new URLSearchParams(window.location.search);
+        var token = params.get('token');
+        if (token) {
+            var input = document.getElementById('token-input');
+            if (input) input.value = token;
+            startPlayground();
+        }
+    })();
+</script>
+
+</body>
+</html>
