@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Project;
 use App\Models\RuleTemplate;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -14,8 +13,8 @@ class RuleTemplateTest extends TestCase
 
     public function test_default_templates_are_created_when_project_is_created(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
 
         $defaults = RuleTemplate::defaults();
         $this->assertCount(count($defaults), $project->ruleTemplates);
@@ -31,8 +30,8 @@ class RuleTemplateTest extends TestCase
 
     public function test_templates_are_passed_to_segment_create_page(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
 
         $this->actingAs($user);
 
@@ -47,8 +46,8 @@ class RuleTemplateTest extends TestCase
 
     public function test_templates_are_passed_to_segment_edit_page(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
         $segment = $project->segments()->create([
             'name' => 'Test',
             'slug' => 'test',
@@ -68,9 +67,9 @@ class RuleTemplateTest extends TestCase
 
     public function test_templates_are_project_scoped(): void
     {
-        $user = User::factory()->create();
-        $project1 = Project::factory()->create(['user_id' => $user->id]);
-        $project2 = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project1 = Project::factory()->create(['organization_id' => $organization->id]);
+        $project2 = Project::factory()->create(['organization_id' => $organization->id]);
 
         // Add a custom template to project1 only
         $project1->ruleTemplates()->create([
@@ -89,8 +88,8 @@ class RuleTemplateTest extends TestCase
 
     public function test_templates_are_deleted_when_project_is_deleted(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
 
         $this->assertGreaterThan(0, $project->ruleTemplates()->count());
 

@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\AccessToken;
 use App\Models\Project;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -22,8 +21,8 @@ class AccessTokenIndexTest extends TestCase
 
     public function test_authenticated_user_can_view_access_tokens(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
 
         AccessToken::factory()->count(3)->create(['project_id' => $project->id]);
 
@@ -41,7 +40,7 @@ class AccessTokenIndexTest extends TestCase
 
     public function test_user_cannot_view_access_tokens_for_another_users_project(): void
     {
-        $user = User::factory()->create();
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
         $otherProject = Project::factory()->create();
 
         $this->actingAs($user);
@@ -52,8 +51,8 @@ class AccessTokenIndexTest extends TestCase
 
     public function test_new_project_has_default_token(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
 
         $this->actingAs($user);
 

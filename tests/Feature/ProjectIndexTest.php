@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Project;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -19,8 +18,8 @@ class ProjectIndexTest extends TestCase
 
     public function test_authenticated_user_can_view_projects_list(): void
     {
-        $user = User::factory()->create();
-        $projects = Project::factory()->count(3)->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $projects = Project::factory()->count(3)->create(['organization_id' => $organization->id]);
 
         $this->actingAs($user);
 
@@ -35,11 +34,10 @@ class ProjectIndexTest extends TestCase
 
     public function test_user_only_sees_their_own_projects(): void
     {
-        $user = User::factory()->create();
-        $otherUser = User::factory()->create();
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
 
-        Project::factory()->count(2)->create(['user_id' => $user->id]);
-        Project::factory()->count(3)->create(['user_id' => $otherUser->id]);
+        Project::factory()->count(2)->create(['organization_id' => $organization->id]);
+        Project::factory()->count(3)->create(); // different organization
 
         $this->actingAs($user);
 
@@ -54,7 +52,7 @@ class ProjectIndexTest extends TestCase
 
     public function test_empty_state_when_user_has_no_projects(): void
     {
-        $user = User::factory()->create();
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
 
         $this->actingAs($user);
 

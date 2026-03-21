@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccessTokenController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RuleTemplateController;
 use App\Http\Controllers\SegmentController;
@@ -14,6 +15,8 @@ Route::inertia('/', 'Welcome', [
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
+    Route::get('organizations', [OrganizationController::class, 'index'])->name('organizations.index');
+    Route::post('organizations/{organization}/switch', [OrganizationController::class, 'switch'])->name('organizations.switch');
     Route::get('projects', [ProjectController::class, 'index'])->name('projects.index');
     Route::get('projects/create', [ProjectController::class, 'create'])->name('projects.create');
     Route::post('projects', [ProjectController::class, 'store'])->name('projects.store');

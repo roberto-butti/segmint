@@ -20,9 +20,10 @@ class ProjectController extends Controller
     public function index(Request $request): Response
     {
         $projects = $request->user()
-            ->projects()
+            ->currentOrganization()
+            ?->projects()
             ->latest()
-            ->get();
+            ->get() ?? collect();
 
         return Inertia::render('Projects/Index', [
             'projects' => $projects,
@@ -47,7 +48,9 @@ class ProjectController extends Controller
             'description' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $project = $request->user()->projects()->create([
+        $organization = $request->user()->currentOrganization();
+
+        $project = $organization->projects()->create([
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
             'description' => $validated['description'] ?? null,
@@ -62,7 +65,7 @@ class ProjectController extends Controller
      */
     public function show(Request $request, Project $project): Response
     {
-        abort_unless($project->user_id === $request->user()->id, 403);
+        $this->authorize('view', $project);
 
         $thirtyDaysAgo = Carbon::now()->subDays(30)->startOfDay();
 
@@ -165,7 +168,7 @@ class ProjectController extends Controller
      */
     public function edit(Request $request, Project $project): Response
     {
-        abort_unless($project->user_id === $request->user()->id, 403);
+        $this->authorize('update', $project);
 
         return Inertia::render('Projects/Edit', [
             'project' => $project,

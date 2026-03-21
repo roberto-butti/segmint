@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Project;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -20,8 +19,8 @@ class ProjectEditTest extends TestCase
 
     public function test_authenticated_user_can_view_edit_form(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
 
         $this->actingAs($user);
 
@@ -36,7 +35,7 @@ class ProjectEditTest extends TestCase
 
     public function test_user_cannot_view_edit_form_for_another_users_project(): void
     {
-        $user = User::factory()->create();
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
         $otherProject = Project::factory()->create();
 
         $this->actingAs($user);
@@ -46,8 +45,8 @@ class ProjectEditTest extends TestCase
 
     public function test_authenticated_user_can_update_their_project(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id, 'active' => true]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id, 'active' => true]);
 
         $this->actingAs($user);
 
@@ -67,7 +66,7 @@ class ProjectEditTest extends TestCase
 
     public function test_user_cannot_update_another_users_project(): void
     {
-        $user = User::factory()->create();
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
         $otherProject = Project::factory()->create();
 
         $this->actingAs($user);
@@ -81,8 +80,8 @@ class ProjectEditTest extends TestCase
 
     public function test_name_is_required(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
 
         $this->actingAs($user);
 
@@ -96,8 +95,8 @@ class ProjectEditTest extends TestCase
 
     public function test_active_is_required(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
 
         $this->actingAs($user);
 

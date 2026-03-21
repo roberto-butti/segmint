@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Project;
 use App\Models\Segment;
 use App\Models\SegmentRule;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -27,8 +26,8 @@ class SegmentDuplicateTest extends TestCase
 
     public function test_user_can_duplicate_a_segment(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
         $segment = Segment::factory()->create([
             'project_id' => $project->id,
             'name' => 'Original',
@@ -96,7 +95,7 @@ class SegmentDuplicateTest extends TestCase
 
     public function test_user_cannot_duplicate_segment_for_another_users_project(): void
     {
-        $user = User::factory()->create();
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
         $otherProject = Project::factory()->create();
         $segment = Segment::factory()->create(['project_id' => $otherProject->id]);
 
@@ -112,9 +111,9 @@ class SegmentDuplicateTest extends TestCase
 
     public function test_user_cannot_duplicate_segment_from_different_project(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
-        $otherProject = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
+        $otherProject = Project::factory()->create(['organization_id' => $organization->id]);
         $segment = Segment::factory()->create(['project_id' => $otherProject->id]);
 
         $this->actingAs($user);
@@ -129,8 +128,8 @@ class SegmentDuplicateTest extends TestCase
 
     public function test_name_is_required(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
         $segment = Segment::factory()->create(['project_id' => $project->id]);
 
         $this->actingAs($user);
@@ -145,8 +144,8 @@ class SegmentDuplicateTest extends TestCase
 
     public function test_slug_is_required(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
         $segment = Segment::factory()->create(['project_id' => $project->id]);
 
         $this->actingAs($user);
@@ -161,8 +160,8 @@ class SegmentDuplicateTest extends TestCase
 
     public function test_slug_must_be_unique(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
         $segment = Segment::factory()->create([
             'project_id' => $project->id,
             'slug' => 'existing-slug',
@@ -180,8 +179,8 @@ class SegmentDuplicateTest extends TestCase
 
     public function test_duplicate_segment_without_rules(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
         $segment = Segment::factory()->create([
             'project_id' => $project->id,
             'name' => 'No Rules',

@@ -28,10 +28,10 @@ class DashboardTest extends TestCase
 
     public function test_dashboard_displays_projects_count_for_authenticated_user(): void
     {
-        $user = User::factory()->create();
-        Project::factory()->count(3)->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        Project::factory()->count(3)->create(['organization_id' => $organization->id]);
 
-        // Create projects for another user to ensure they are not counted
+        // Create projects for another organization to ensure they are not counted
         Project::factory()->count(2)->create();
 
         $this->actingAs($user);

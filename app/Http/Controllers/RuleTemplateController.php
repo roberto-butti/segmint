@@ -19,7 +19,7 @@ class RuleTemplateController extends Controller
      */
     public function index(Request $request, Project $project): Response
     {
-        abort_unless($project->user_id === $request->user()->id, 403);
+        $this->authorize('view', $project);
 
         $templates = $project->ruleTemplates()
             ->orderBy('name')
@@ -38,7 +38,7 @@ class RuleTemplateController extends Controller
      */
     public function store(Request $request, Project $project): RedirectResponse
     {
-        abort_unless($project->user_id === $request->user()->id, 403);
+        $this->authorize('view', $project);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -64,7 +64,7 @@ class RuleTemplateController extends Controller
      */
     public function update(Request $request, Project $project, RuleTemplate $ruleTemplate): RedirectResponse
     {
-        abort_unless($project->user_id === $request->user()->id, 403);
+        $this->authorize('view', $project);
         abort_unless($ruleTemplate->project_id === $project->id, 404);
 
         $validated = $request->validate([
@@ -91,7 +91,7 @@ class RuleTemplateController extends Controller
      */
     public function destroy(Request $request, Project $project, RuleTemplate $ruleTemplate): RedirectResponse
     {
-        abort_unless($project->user_id === $request->user()->id, 403);
+        $this->authorize('view', $project);
         abort_unless($ruleTemplate->project_id === $project->id, 404);
 
         $ruleTemplate->delete();

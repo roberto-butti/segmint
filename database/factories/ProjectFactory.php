@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\Organization;
 use App\Models\Project;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -22,7 +22,7 @@ class ProjectFactory extends Factory
         $name = fake()->unique()->words(3, true);
 
         return [
-            'user_id' => User::factory(),
+            'organization_id' => Organization::factory(),
             'name' => $name,
             'slug' => Str::slug($name),
             'description' => fake()->sentence(),

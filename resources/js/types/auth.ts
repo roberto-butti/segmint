@@ -9,8 +9,15 @@ export type User = {
     [key: string]: unknown;
 };
 
+export type Organization = {
+    id: number;
+    name: string;
+    slug: string;
+};
+
 export type Auth = {
     user: User;
+    organization: Organization | null;
 };
 
 export type TwoFactorConfigContent = {

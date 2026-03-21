@@ -14,7 +14,7 @@ class AccessTokenController extends Controller
      */
     public function index(Request $request, Project $project): Response
     {
-        abort_unless($project->user_id === $request->user()->id, 403);
+        $this->authorize('view', $project);
 
         $accessTokens = $project->accessTokens()
             ->latest()

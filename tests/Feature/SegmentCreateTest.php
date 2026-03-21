@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Project;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -21,8 +20,8 @@ class SegmentCreateTest extends TestCase
 
     public function test_authenticated_user_can_view_create_form(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
 
         $this->actingAs($user);
 
@@ -37,7 +36,7 @@ class SegmentCreateTest extends TestCase
 
     public function test_user_cannot_view_create_form_for_another_users_project(): void
     {
-        $user = User::factory()->create();
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
         $otherProject = Project::factory()->create();
 
         $this->actingAs($user);
@@ -48,8 +47,8 @@ class SegmentCreateTest extends TestCase
 
     public function test_user_can_create_a_segment(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
 
         $this->actingAs($user);
 
@@ -72,7 +71,7 @@ class SegmentCreateTest extends TestCase
 
     public function test_user_cannot_create_segment_for_another_users_project(): void
     {
-        $user = User::factory()->create();
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
         $otherProject = Project::factory()->create();
 
         $this->actingAs($user);
@@ -87,8 +86,8 @@ class SegmentCreateTest extends TestCase
 
     public function test_name_is_required(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
 
         $this->actingAs($user);
 
@@ -102,8 +101,8 @@ class SegmentCreateTest extends TestCase
 
     public function test_segment_can_be_created_without_description(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
 
         $this->actingAs($user);
 
@@ -124,8 +123,8 @@ class SegmentCreateTest extends TestCase
 
     public function test_segment_can_be_created_with_rules(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
 
         $this->actingAs($user);
 
@@ -178,8 +177,8 @@ class SegmentCreateTest extends TestCase
 
     public function test_rule_validation_requires_all_fields(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
 
         $this->actingAs($user);
 
@@ -205,8 +204,8 @@ class SegmentCreateTest extends TestCase
 
     public function test_rule_validation_rejects_invalid_type(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
 
         $this->actingAs($user);
 
@@ -228,8 +227,8 @@ class SegmentCreateTest extends TestCase
 
     public function test_rule_validation_rejects_invalid_operator(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
 
         $this->actingAs($user);
 
@@ -251,8 +250,8 @@ class SegmentCreateTest extends TestCase
 
     public function test_create_form_receives_enum_options(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
 
         $this->actingAs($user);
 

@@ -21,7 +21,7 @@ class SegmentController extends Controller
      */
     public function index(Request $request, Project $project): Response
     {
-        abort_unless($project->user_id === $request->user()->id, 403);
+        $this->authorize('view', $project);
 
         $segments = $project->segments()
             ->withCount('rules')
@@ -39,7 +39,7 @@ class SegmentController extends Controller
      */
     public function create(Request $request, Project $project): Response
     {
-        abort_unless($project->user_id === $request->user()->id, 403);
+        $this->authorize('view', $project);
 
         return Inertia::render('Segments/Create', [
             'project' => $project,
@@ -71,7 +71,7 @@ class SegmentController extends Controller
      */
     public function show(Request $request, Project $project, Segment $segment): Response
     {
-        abort_unless($project->user_id === $request->user()->id, 403);
+        $this->authorize('view', $project);
         abort_unless($segment->project_id === $project->id, 404);
 
         $segment->load('rules');
@@ -89,7 +89,7 @@ class SegmentController extends Controller
      */
     public function edit(Request $request, Project $project, Segment $segment): Response
     {
-        abort_unless($project->user_id === $request->user()->id, 403);
+        $this->authorize('view', $project);
         abort_unless($segment->project_id === $project->id, 404);
 
         $segment->load('rules');
@@ -127,7 +127,7 @@ class SegmentController extends Controller
      */
     public function duplicate(Request $request, Project $project, Segment $segment): RedirectResponse
     {
-        abort_unless($project->user_id === $request->user()->id, 403);
+        $this->authorize('view', $project);
         abort_unless($segment->project_id === $project->id, 404);
 
         $request->validate([
@@ -162,7 +162,7 @@ class SegmentController extends Controller
      */
     public function destroy(Request $request, Project $project, Segment $segment): RedirectResponse
     {
-        abort_unless($project->user_id === $request->user()->id, 403);
+        $this->authorize('view', $project);
         abort_unless($segment->project_id === $project->id, 404);
 
         $segment->rules()->delete();

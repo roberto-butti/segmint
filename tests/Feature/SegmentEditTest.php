@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Project;
 use App\Models\Segment;
 use App\Models\SegmentRule;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -24,8 +23,8 @@ class SegmentEditTest extends TestCase
 
     public function test_authenticated_user_can_view_edit_form(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
         $segment = Segment::factory()->create(['project_id' => $project->id]);
 
         $this->actingAs($user);
@@ -42,7 +41,7 @@ class SegmentEditTest extends TestCase
 
     public function test_user_cannot_view_edit_form_for_another_users_project(): void
     {
-        $user = User::factory()->create();
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
         $otherProject = Project::factory()->create();
         $segment = Segment::factory()->create(['project_id' => $otherProject->id]);
 
@@ -54,9 +53,9 @@ class SegmentEditTest extends TestCase
 
     public function test_user_cannot_edit_segment_from_different_project(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
-        $otherProject = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
+        $otherProject = Project::factory()->create(['organization_id' => $organization->id]);
         $segment = Segment::factory()->create(['project_id' => $otherProject->id]);
 
         $this->actingAs($user);
@@ -67,8 +66,8 @@ class SegmentEditTest extends TestCase
 
     public function test_user_can_update_a_segment(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
         $segment = Segment::factory()->create([
             'project_id' => $project->id,
             'name' => 'Old Name',
@@ -96,7 +95,7 @@ class SegmentEditTest extends TestCase
 
     public function test_user_cannot_update_segment_for_another_users_project(): void
     {
-        $user = User::factory()->create();
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
         $otherProject = Project::factory()->create();
         $segment = Segment::factory()->create(['project_id' => $otherProject->id]);
 
@@ -112,8 +111,8 @@ class SegmentEditTest extends TestCase
 
     public function test_name_is_required_on_update(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
         $segment = Segment::factory()->create(['project_id' => $project->id]);
 
         $this->actingAs($user);
@@ -128,8 +127,8 @@ class SegmentEditTest extends TestCase
 
     public function test_user_can_update_segment_with_rules(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
         $segment = Segment::factory()->create(['project_id' => $project->id]);
 
         $this->actingAs($user);
@@ -162,8 +161,8 @@ class SegmentEditTest extends TestCase
 
     public function test_updating_rules_replaces_existing_rules(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
         $segment = Segment::factory()->create(['project_id' => $project->id]);
 
         SegmentRule::create([
@@ -205,8 +204,8 @@ class SegmentEditTest extends TestCase
 
     public function test_updating_with_empty_rules_removes_all_rules(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
         $segment = Segment::factory()->create(['project_id' => $project->id]);
 
         SegmentRule::create([
@@ -232,8 +231,8 @@ class SegmentEditTest extends TestCase
 
     public function test_edit_form_loads_existing_rules(): void
     {
-        $user = User::factory()->create();
-        $project = Project::factory()->create(['user_id' => $user->id]);
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
         $segment = Segment::factory()->create(['project_id' => $project->id]);
 
         SegmentRule::create([

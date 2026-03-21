@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Str;
 
-#[Fillable(['slug', 'user_id', 'name', 'description', 'active'])]
+#[Fillable(['slug', 'organization_id', 'name', 'description', 'active'])]
 class Project extends Model
 {
     use HasFactory;
@@ -44,9 +44,9 @@ class Project extends Model
         return $this->hasMany(AccessToken::class);
     }
 
-    public function user(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Organization::class);
     }
 
     public function segments(): HasMany

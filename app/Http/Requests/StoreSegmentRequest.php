@@ -15,7 +15,7 @@ class StoreSegmentRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->route('project')->user_id === $this->user()->id;
+        return $this->user()->can('update', $this->route('project'));
     }
 
     /**

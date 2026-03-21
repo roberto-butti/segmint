@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\AccessToken;
+use App\Models\Organization;
 use App\Models\Project;
-use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class ProjectSeeder extends Seeder
@@ -14,66 +14,57 @@ class ProjectSeeder extends Seeder
      */
     public function run(): void
     {
-        $user = User::where('email', 'test@example.com')->first();
+        $org1 = Organization::where('slug', 'test-organization')->first();
 
         $project = Project::firstOrCreate(
             [
                 'slug' => 'demo-project',
             ],
             [
-                'user_id' => $user->id,
+                'organization_id' => $org1->id,
                 'name' => 'Demo Project',
                 'description' => 'This is a demo project',
                 'active' => true,
             ],
         );
 
-        $plainToken = 'this-is-a-test-token';
-
-        AccessToken::firstOrCreate(
-            [
-                'project_id' => $project->id,
-            ],
-            [
-                'name' => 'Demo API Token',
-                'token' => $plainToken,
-                'active' => true,
-            ],
-        );
+        // Override the auto-created default token with a known one for testing
+        $project->accessTokens()->delete();
+        AccessToken::create([
+            'project_id' => $project->id,
+            'name' => 'Demo API Token',
+            'token' => 'this-is-a-test-token',
+            'active' => true,
+        ]);
 
         $project = Project::firstOrCreate(
             [
                 'slug' => 'demo-project-2',
             ],
             [
-                'user_id' => $user->id,
+                'organization_id' => $org1->id,
                 'name' => 'Second Demo Project',
                 'description' => 'This is another demo project',
                 'active' => true,
             ],
         );
 
-        $plainToken = 'this-is-a-test-token-2';
+        $project->accessTokens()->delete();
+        AccessToken::create([
+            'project_id' => $project->id,
+            'name' => 'Demo API Token another project',
+            'token' => 'this-is-a-test-token-2',
+            'active' => true,
+        ]);
 
-        AccessToken::firstOrCreate(
-            [
-                'project_id' => $project->id,
-            ],
-            [
-                'name' => 'Demo API Token another project',
-                'token' => $plainToken,
-                'active' => true,
-            ],
-        );
+        $org2 = Organization::where('slug', 'another-organization')->first();
 
-        $user = User::where('email', 'test1@example.com')->first();
-
-        $project = Project::firstOrCreate(
+        Project::firstOrCreate(
             [
                 'slug' => 'demo-project-user-2',
             ],
             [
-                'user_id' => $user->id,
+                'organization_id' => $org2->id,
                 'name' => 'Second Demo Project for user 2',
                 'description' => 'This is another demo project for another user',
                 'active' => true,

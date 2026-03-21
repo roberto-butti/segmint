@@ -14,7 +14,7 @@ class DashboardController extends Controller
     public function __invoke(Request $request): Response
     {
         return Inertia::render('Dashboard', [
-            'projectsCount' => $request->user()->projects()->count(),
+            'projectsCount' => $request->user()->currentOrganization()?->projects()->count() ?? 0,
         ]);
     }
 }
