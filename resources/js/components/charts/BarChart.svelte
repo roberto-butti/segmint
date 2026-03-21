@@ -1,8 +1,21 @@
 <script lang="ts">
-    import { Chart, CategoryScale, LinearScale, BarElement, BarController, Tooltip } from 'chart.js';
+    import {
+        Chart,
+        CategoryScale,
+        LinearScale,
+        BarElement,
+        BarController,
+        Tooltip,
+    } from 'chart.js';
     import { onMount } from 'svelte';
 
-    Chart.register(CategoryScale, LinearScale, BarElement, BarController, Tooltip);
+    Chart.register(
+        CategoryScale,
+        LinearScale,
+        BarElement,
+        BarController,
+        Tooltip,
+    );
 
     let {
         labels,
@@ -24,16 +37,29 @@
             type: 'bar',
             data: {
                 labels,
-                datasets: [{
-                    label,
-                    data,
-                    backgroundColor: data.map((_, i) => [
-                        '#6366F1', '#F59E0B', '#10B981', '#EF4444', '#3B82F6',
-                        '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#06B6D4',
-                    ][i % 10]),
-                    borderRadius: 4,
-                    barThickness: horizontal ? 20 : undefined,
-                }],
+                datasets: [
+                    {
+                        label,
+                        data,
+                        backgroundColor: data.map(
+                            (_, i) =>
+                                [
+                                    '#6366F1',
+                                    '#F59E0B',
+                                    '#10B981',
+                                    '#EF4444',
+                                    '#3B82F6',
+                                    '#8B5CF6',
+                                    '#EC4899',
+                                    '#14B8A6',
+                                    '#F97316',
+                                    '#06B6D4',
+                                ][i % 10],
+                        ),
+                        borderRadius: 4,
+                        barThickness: horizontal ? 20 : undefined,
+                    },
+                ],
             },
             options: {
                 indexAxis: horizontal ? 'y' : 'x',
@@ -52,7 +78,10 @@
                     },
                     y: {
                         beginAtZero: true,
-                        grid: { display: !horizontal, color: 'rgba(0,0,0,0.05)' },
+                        grid: {
+                            display: !horizontal,
+                            color: 'rgba(0,0,0,0.05)',
+                        },
                         ticks: { precision: 0, font: { size: 11 } },
                     },
                 },

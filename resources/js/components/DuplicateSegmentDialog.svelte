@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { untrack } from 'svelte';
     import { router } from '@inertiajs/svelte';
+    import { untrack } from 'svelte';
     import { Button } from '@/components/ui/button';
     import {
         Dialog,
@@ -41,9 +41,11 @@
     function randomSuffix(): string {
         const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
         let result = '';
+
         for (let i = 0; i < 5; i++) {
             result += chars.charAt(Math.floor(Math.random() * chars.length));
         }
+
         return result;
     }
 
@@ -59,7 +61,10 @@
     function handleDuplicate(): void {
         processing = true;
         router.post(
-            segments.duplicate.url({ project: projectSlug, segment: segmentId }),
+            segments.duplicate.url({
+                project: projectSlug,
+                segment: segmentId,
+            }),
             { name: nameInput, slug: slugInput },
             {
                 onFinish: () => {
@@ -73,9 +78,7 @@
 
 <Dialog bind:open>
     <DialogTrigger>
-        <Button {variant} {size} class={className}>
-            Duplicate
-        </Button>
+        <Button {variant} {size} class={className}>Duplicate</Button>
     </DialogTrigger>
     <DialogContent>
         <DialogTitle>Duplicate segment</DialogTitle>
@@ -89,7 +92,11 @@
                     id="duplicate-name"
                     bind:value={nameInput}
                     placeholder="Segment name"
-                    onkeydown={(e) => { if (e.key === 'Enter') handleDuplicate(); }}
+                    onkeydown={(e) => {
+                        if (e.key === 'Enter') {
+                            handleDuplicate();
+                        }
+                    }}
                 />
             </div>
             <div class="grid gap-2">
@@ -99,16 +106,25 @@
                     bind:value={slugInput}
                     placeholder="segment-slug"
                     class="font-mono"
-                    onkeydown={(e) => { if (e.key === 'Enter') handleDuplicate(); }}
+                    onkeydown={(e) => {
+                        if (e.key === 'Enter') {
+                            handleDuplicate();
+                        }
+                    }}
                 />
-                <p class="text-xs text-muted-foreground">Used for matching in the SDK and API.</p>
+                <p class="text-xs text-muted-foreground">
+                    Used for matching in the SDK and API.
+                </p>
             </div>
         </div>
         <DialogFooter>
             <DialogClose>
                 <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button onclick={handleDuplicate} disabled={processing || !nameInput.trim() || !slugInput.trim()}>
+            <Button
+                onclick={handleDuplicate}
+                disabled={processing || !nameInput.trim() || !slugInput.trim()}
+            >
                 {processing ? 'Duplicating...' : 'Duplicate'}
             </Button>
         </DialogFooter>

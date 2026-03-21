@@ -198,7 +198,6 @@ class SegmentCreateTest extends TestCase
 
         $response->assertSessionHasErrors([
             'rules.0.type',
-            'rules.0.key',
             'rules.0.operator',
             'rules.0.value',
         ]);

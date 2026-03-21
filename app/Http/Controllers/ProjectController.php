@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -26,6 +27,34 @@ class ProjectController extends Controller
         return Inertia::render('Projects/Index', [
             'projects' => $projects,
         ]);
+    }
+
+    /**
+     * Show the form for creating a new project.
+     */
+    public function create(): Response
+    {
+        return Inertia::render('Projects/Create');
+    }
+
+    /**
+     * Store a newly created project.
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $project = $request->user()->projects()->create([
+            'name' => $validated['name'],
+            'slug' => Str::slug($validated['name']),
+            'description' => $validated['description'] ?? null,
+            'active' => true,
+        ]);
+
+        return redirect()->route('projects.show', $project);
     }
 
     /**
@@ -118,6 +147,7 @@ class ProjectController extends Controller
             'activeSegmentsCount' => $project->segments()->where('active', true)->count(),
             'eventLogsCount' => $project->eventLogs()->count(),
             'accessTokensCount' => $project->accessTokens()->count(),
+            'ruleTemplatesCount' => $project->ruleTemplates()->count(),
             'eventsOverTime' => $eventsOverTime,
             'eventsLastHour' => $eventsLastHour,
             'segmentMatchesLastHour' => [

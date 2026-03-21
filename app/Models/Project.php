@@ -8,11 +8,27 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Support\Str;
 
 #[Fillable(['slug', 'user_id', 'name', 'description', 'active'])]
 class Project extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::created(function (Project $project): void {
+            foreach (RuleTemplate::defaults() as $template) {
+                $project->ruleTemplates()->create($template);
+            }
+
+            $project->accessTokens()->create([
+                'name' => 'Default',
+                'token' => Str::random(64),
+                'active' => true,
+            ]);
+        });
+    }
 
     protected function casts(): array
     {
@@ -41,6 +57,11 @@ class Project extends Model
     public function eventLogs(): HasMany
     {
         return $this->hasMany(EventLog::class);
+    }
+
+    public function ruleTemplates(): HasMany
+    {
+        return $this->hasMany(RuleTemplate::class);
     }
 
     public function segmentMatches(): HasManyThrough

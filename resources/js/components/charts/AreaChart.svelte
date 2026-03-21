@@ -1,8 +1,25 @@
 <script lang="ts">
-    import { Chart, CategoryScale, LinearScale, PointElement, LineElement, LineController, Filler, Tooltip } from 'chart.js';
+    import {
+        Chart,
+        CategoryScale,
+        LinearScale,
+        PointElement,
+        LineElement,
+        LineController,
+        Filler,
+        Tooltip,
+    } from 'chart.js';
     import { onMount } from 'svelte';
 
-    Chart.register(CategoryScale, LinearScale, PointElement, LineElement, LineController, Filler, Tooltip);
+    Chart.register(
+        CategoryScale,
+        LinearScale,
+        PointElement,
+        LineElement,
+        LineController,
+        Filler,
+        Tooltip,
+    );
 
     let {
         labels,
@@ -22,17 +39,19 @@
             type: 'line',
             data: {
                 labels,
-                datasets: [{
-                    label,
-                    data,
-                    fill: true,
-                    backgroundColor: 'rgba(99, 102, 241, 0.15)',
-                    borderColor: '#6366F1',
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    pointHoverRadius: 4,
-                    tension: 0.3,
-                }],
+                datasets: [
+                    {
+                        label,
+                        data,
+                        fill: true,
+                        backgroundColor: 'rgba(99, 102, 241, 0.15)',
+                        borderColor: '#6366F1',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        pointHoverRadius: 4,
+                        tension: 0.3,
+                    },
+                ],
             },
             options: {
                 responsive: true,

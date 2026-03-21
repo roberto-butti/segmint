@@ -74,16 +74,19 @@
         },
         {
             title: segment.name,
-            href: segments.show.url({ project: project.slug, segment: segment.id }),
+            href: segments.show.url({
+                project: project.slug,
+                segment: segment.id,
+            }),
         },
     ];
 
     function getTypeLabel(value: string): string {
-        return ruleTypes.find(t => t.value === value)?.label ?? value;
+        return ruleTypes.find((t) => t.value === value)?.label ?? value;
     }
 
     function getOperatorLabel(value: string): string {
-        return ruleOperators.find(o => o.value === value)?.label ?? value;
+        return ruleOperators.find((o) => o.value === value)?.label ?? value;
     }
 
     let copiedSnippet = $state<string | null>(null);
@@ -91,7 +94,9 @@
     function copyToClipboard(text: string, label: string): void {
         navigator.clipboard.writeText(text);
         copiedSnippet = label;
-        setTimeout(() => { copiedSnippet = null; }, 2000);
+        setTimeout(() => {
+            copiedSnippet = null;
+        }, 2000);
     }
 
     const snippetCheck = `if (Segmint.visitor.hasSegment('${segment.slug}')) {
@@ -142,7 +147,12 @@
                     segmentSlug={segment.slug}
                 />
                 <Button variant="outline" size="sm">
-                    <Link href={segments.edit.url({ project: project.slug, segment: segment.id })}>Edit</Link>
+                    <Link
+                        href={segments.edit.url({
+                            project: project.slug,
+                            segment: segment.id,
+                        })}>Edit</Link
+                    >
                 </Button>
                 <DeleteSegmentDialog
                     projectSlug={project.slug}
@@ -156,20 +166,36 @@
             <div class="space-y-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle class="text-sm font-medium">Details</CardTitle>
+                        <CardTitle class="text-sm font-medium"
+                            >Details</CardTitle
+                        >
                     </CardHeader>
                     <CardContent class="space-y-3">
                         <div>
-                            <p class="text-xs font-medium text-muted-foreground">Slug</p>
+                            <p
+                                class="text-xs font-medium text-muted-foreground"
+                            >
+                                Slug
+                            </p>
                             <p class="font-mono text-sm">{segment.slug}</p>
                         </div>
                         <div>
-                            <p class="text-xs font-medium text-muted-foreground">Status</p>
-                            <p class="text-sm">{segment.active ? 'Active' : 'Inactive'}</p>
+                            <p
+                                class="text-xs font-medium text-muted-foreground"
+                            >
+                                Status
+                            </p>
+                            <p class="text-sm">
+                                {segment.active ? 'Active' : 'Inactive'}
+                            </p>
                         </div>
                         {#if segment.description}
                             <div>
-                                <p class="text-xs font-medium text-muted-foreground">Description</p>
+                                <p
+                                    class="text-xs font-medium text-muted-foreground"
+                                >
+                                    Description
+                                </p>
                                 <p class="text-sm">{segment.description}</p>
                             </div>
                         {/if}
@@ -184,19 +210,38 @@
                     </CardHeader>
                     <CardContent>
                         {#if segment.rules.length === 0}
-                            <p class="text-sm text-muted-foreground">No rules defined.</p>
+                            <p class="text-sm text-muted-foreground">
+                                No rules defined.
+                            </p>
                         {:else}
                             <div class="space-y-3">
-                                {#each segment.rules as rule, index}
+                                {#each segment.rules as rule, index (rule.id)}
                                     <div class="rounded-lg border p-3">
-                                        <div class="flex items-center justify-between">
-                                            <span class="text-xs font-medium text-muted-foreground">Rule {index + 1}</span>
-                                            <span class="rounded bg-muted px-1.5 py-0.5 text-xs">{getTypeLabel(rule.type)}</span>
+                                        <div
+                                            class="flex items-center justify-between"
+                                        >
+                                            <span
+                                                class="text-xs font-medium text-muted-foreground"
+                                                >Rule {index + 1}</span
+                                            >
+                                            <span
+                                                class="rounded bg-muted px-1.5 py-0.5 text-xs"
+                                                >{getTypeLabel(rule.type)}</span
+                                            >
                                         </div>
                                         <p class="mt-1 text-sm">
-                                            <span class="font-mono">{rule.key}</span>
-                                            <span class="mx-1 text-muted-foreground">{getOperatorLabel(rule.operator)}</span>
-                                            <span class="font-mono">{rule.value}</span>
+                                            <span class="font-mono"
+                                                >{rule.key}</span
+                                            >
+                                            <span
+                                                class="mx-1 text-muted-foreground"
+                                                >{getOperatorLabel(
+                                                    rule.operator,
+                                                )}</span
+                                            >
+                                            <span class="font-mono"
+                                                >{rule.value}</span
+                                            >
                                         </p>
                                     </div>
                                 {/each}
@@ -209,63 +254,105 @@
             <div class="space-y-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle class="text-sm font-medium">SDK snippets</CardTitle>
+                        <CardTitle class="text-sm font-medium"
+                            >SDK snippets</CardTitle
+                        >
                     </CardHeader>
                     <CardContent class="space-y-4">
                         <p class="text-sm text-muted-foreground">
-                            Copy these snippets to use the <span class="font-mono">{segment.slug}</span> segment in your frontend.
+                            Copy these snippets to use the <span
+                                class="font-mono">{segment.slug}</span
+                            > segment in your frontend.
                         </p>
 
                         <div class="space-y-1.5">
                             <div class="flex items-center justify-between">
-                                <p class="text-xs font-medium">Check segment membership</p>
+                                <p class="text-xs font-medium">
+                                    Check segment membership
+                                </p>
                                 <button
                                     class="text-xs text-muted-foreground hover:text-foreground"
-                                    onclick={() => copyToClipboard(snippetCheck, 'check')}
+                                    onclick={() =>
+                                        copyToClipboard(snippetCheck, 'check')}
                                 >
-                                    {copiedSnippet === 'check' ? 'Copied!' : 'Copy'}
+                                    {copiedSnippet === 'check'
+                                        ? 'Copied!'
+                                        : 'Copy'}
                                 </button>
                             </div>
-                            <pre class="overflow-x-auto rounded-lg bg-muted p-3 text-xs"><code>{snippetCheck}</code></pre>
+                            <pre
+                                class="overflow-x-auto rounded-lg bg-muted p-3 text-xs"><code
+                                    >{snippetCheck}</code
+                                ></pre>
                         </div>
 
                         <div class="space-y-1.5">
                             <div class="flex items-center justify-between">
-                                <p class="text-xs font-medium">Personalise on page load</p>
+                                <p class="text-xs font-medium">
+                                    Personalise on page load
+                                </p>
                                 <button
                                     class="text-xs text-muted-foreground hover:text-foreground"
-                                    onclick={() => copyToClipboard(snippetInit, 'init')}
+                                    onclick={() =>
+                                        copyToClipboard(snippetInit, 'init')}
                                 >
-                                    {copiedSnippet === 'init' ? 'Copied!' : 'Copy'}
+                                    {copiedSnippet === 'init'
+                                        ? 'Copied!'
+                                        : 'Copy'}
                                 </button>
                             </div>
-                            <pre class="overflow-x-auto rounded-lg bg-muted p-3 text-xs"><code>{snippetInit}</code></pre>
+                            <pre
+                                class="overflow-x-auto rounded-lg bg-muted p-3 text-xs"><code
+                                    >{snippetInit}</code
+                                ></pre>
                         </div>
 
                         <div class="space-y-1.5">
                             <div class="flex items-center justify-between">
-                                <p class="text-xs font-medium">HTML data attribute</p>
+                                <p class="text-xs font-medium">
+                                    HTML data attribute
+                                </p>
                                 <button
                                     class="text-xs text-muted-foreground hover:text-foreground"
-                                    onclick={() => copyToClipboard(snippetDataAttr, 'data')}
+                                    onclick={() =>
+                                        copyToClipboard(
+                                            snippetDataAttr,
+                                            'data',
+                                        )}
                                 >
-                                    {copiedSnippet === 'data' ? 'Copied!' : 'Copy'}
+                                    {copiedSnippet === 'data'
+                                        ? 'Copied!'
+                                        : 'Copy'}
                                 </button>
                             </div>
-                            <pre class="overflow-x-auto rounded-lg bg-muted p-3 text-xs"><code>{snippetDataAttr}</code></pre>
+                            <pre
+                                class="overflow-x-auto rounded-lg bg-muted p-3 text-xs"><code
+                                    >{snippetDataAttr}</code
+                                ></pre>
                         </div>
 
                         <div class="space-y-1.5">
                             <div class="flex items-center justify-between">
-                                <p class="text-xs font-medium">onReady callback</p>
+                                <p class="text-xs font-medium">
+                                    onReady callback
+                                </p>
                                 <button
                                     class="text-xs text-muted-foreground hover:text-foreground"
-                                    onclick={() => copyToClipboard(snippetOnReady, 'ready')}
+                                    onclick={() =>
+                                        copyToClipboard(
+                                            snippetOnReady,
+                                            'ready',
+                                        )}
                                 >
-                                    {copiedSnippet === 'ready' ? 'Copied!' : 'Copy'}
+                                    {copiedSnippet === 'ready'
+                                        ? 'Copied!'
+                                        : 'Copy'}
                                 </button>
                             </div>
-                            <pre class="overflow-x-auto rounded-lg bg-muted p-3 text-xs"><code>{snippetOnReady}</code></pre>
+                            <pre
+                                class="overflow-x-auto rounded-lg bg-muted p-3 text-xs"><code
+                                    >{snippetOnReady}</code
+                                ></pre>
                         </div>
                     </CardContent>
                 </Card>

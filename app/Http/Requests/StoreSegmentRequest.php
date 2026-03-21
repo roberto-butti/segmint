@@ -31,7 +31,7 @@ class StoreSegmentRequest extends FormRequest
             'active' => ['required', 'boolean'],
             'rules' => ['nullable', 'array'],
             'rules.*.type' => ['required', Rule::enum(SegmentRuleType::class)],
-            'rules.*.key' => ['required', 'string', 'max:255'],
+            'rules.*.key' => ['nullable', 'string', 'max:255'],
             'rules.*.operator' => ['required', Rule::enum(SegmentRuleOperator::class)],
             'rules.*.value' => ['required', 'string', 'max:1000'],
             'rules.*.priority' => ['nullable', 'integer', 'min:0'],

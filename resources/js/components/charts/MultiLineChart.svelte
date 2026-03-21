@@ -1,8 +1,27 @@
 <script lang="ts">
-    import { Chart, CategoryScale, LinearScale, PointElement, LineElement, LineController, Filler, Tooltip, Legend } from 'chart.js';
+    import {
+        Chart,
+        CategoryScale,
+        LinearScale,
+        PointElement,
+        LineElement,
+        LineController,
+        Filler,
+        Tooltip,
+        Legend,
+    } from 'chart.js';
     import { onMount } from 'svelte';
 
-    Chart.register(CategoryScale, LinearScale, PointElement, LineElement, LineController, Filler, Tooltip, Legend);
+    Chart.register(
+        CategoryScale,
+        LinearScale,
+        PointElement,
+        LineElement,
+        LineController,
+        Filler,
+        Tooltip,
+        Legend,
+    );
 
     let {
         labels,
@@ -16,8 +35,16 @@
     let chart: Chart | null = null;
 
     const colors = [
-        '#6366F1', '#F59E0B', '#10B981', '#EF4444', '#3B82F6',
-        '#8B5CF6', '#EC4899', '#14B8A6', '#F97316', '#06B6D4',
+        '#6366F1',
+        '#F59E0B',
+        '#10B981',
+        '#EF4444',
+        '#3B82F6',
+        '#8B5CF6',
+        '#EC4899',
+        '#14B8A6',
+        '#F97316',
+        '#06B6D4',
     ];
 
     onMount(() => {
@@ -49,7 +76,11 @@
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: { boxWidth: 12, padding: 12, font: { size: 11 } },
+                        labels: {
+                            boxWidth: 12,
+                            padding: 12,
+                            font: { size: 11 },
+                        },
                     },
                     tooltip: {
                         mode: 'index',

@@ -42,27 +42,38 @@
         label: string;
     }
 
+    interface RuleTemplateItem {
+        id: number;
+        name: string;
+        type: string;
+        key: string;
+        operator: string;
+        value: string;
+    }
+
     let {
         project,
         segment,
         ruleTypes,
         ruleOperators,
+        ruleTemplates = [],
     }: {
         project: Project;
         segment: Segment;
         ruleTypes: EnumOption[];
         ruleOperators: EnumOption[];
+        ruleTemplates?: RuleTemplateItem[];
     } = $props();
 
     let isActive = $state(segment.active);
     let rules = $state(
-        segment.rules.map(r => ({
+        segment.rules.map((r) => ({
             type: r.type,
             key: r.key,
             operator: r.operator,
             value: r.value,
             priority: r.priority,
-        }))
+        })),
     );
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -80,7 +91,10 @@
         },
         {
             title: segment.name,
-            href: segments.edit.url({ project: project.slug, segment: segment.id }),
+            href: segments.edit.url({
+                project: project.slug,
+                segment: segment.id,
+            }),
         },
     ];
 </script>
@@ -96,7 +110,10 @@
         />
 
         <Form
-            action={segments.update.url({ project: project.slug, segment: segment.id })}
+            action={segments.update.url({
+                project: project.slug,
+                segment: segment.id,
+            })}
             method="put"
             class="max-w-2xl space-y-6"
             options={{ preserveScroll: true }}
@@ -128,17 +145,24 @@
                 </div>
 
                 <div class="flex items-center space-x-3">
-                    <Checkbox
-                        id="active"
-                        bind:checked={isActive}
-                    />
+                    <Checkbox id="active" bind:checked={isActive} />
                     <Label for="active">Active</Label>
                     <InputError message={errors.active} />
                 </div>
 
-                <input type="hidden" name="active" value={isActive ? '1' : '0'} />
+                <input
+                    type="hidden"
+                    name="active"
+                    value={isActive ? '1' : '0'}
+                />
 
-                <RuleBuilder bind:rules {ruleTypes} {ruleOperators} {errors} />
+                <RuleBuilder
+                    bind:rules
+                    {ruleTypes}
+                    {ruleOperators}
+                    {ruleTemplates}
+                    {errors}
+                />
 
                 <div class="flex items-center gap-4">
                     <Button type="submit" disabled={processing}>

@@ -62,9 +62,7 @@
             <div
                 class="flex flex-1 items-center justify-center rounded-xl border border-dashed border-sidebar-border p-12"
             >
-                <p class="text-muted-foreground">
-                    No access tokens yet.
-                </p>
+                <p class="text-muted-foreground">No access tokens yet.</p>
             </div>
         {:else}
             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -90,7 +88,9 @@
                             </p>
                             {#if token.last_used_at}
                                 <p class="text-xs text-muted-foreground">
-                                    Last used: {new Date(token.last_used_at).toLocaleDateString()}
+                                    Last used: {new Date(
+                                        token.last_used_at,
+                                    ).toLocaleDateString()}
                                 </p>
                             {:else}
                                 <p class="text-xs text-muted-foreground">

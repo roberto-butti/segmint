@@ -13,16 +13,21 @@
     let {
         asChild = false,
         class: className = '',
+        onclick,
         children,
     }: {
         asChild?: boolean;
         class?: string;
+        onclick?: (event: MouseEvent) => void;
         children?: Snippet<[AsChildProps]>;
     } = $props();
 
     const { setOpen } = getContext<DropdownMenuContext>(DROPDOWN_MENU_CONTEXT);
 
-    const handleClick = () => setOpen(false);
+    const handleClick = (event: MouseEvent) => {
+        onclick?.(event);
+        setOpen(false);
+    };
 
     const classes = () =>
         cn(

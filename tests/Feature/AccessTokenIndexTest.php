@@ -35,7 +35,7 @@ class AccessTokenIndexTest extends TestCase
         $response->assertInertia(fn ($page) => $page
             ->component('AccessTokens/Index')
             ->where('project.id', $project->id)
-            ->has('accessTokens', 3)
+            ->has('accessTokens', 4) // 3 created + 1 default
         );
     }
 
@@ -50,7 +50,7 @@ class AccessTokenIndexTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_empty_state_when_project_has_no_tokens(): void
+    public function test_new_project_has_default_token(): void
     {
         $user = User::factory()->create();
         $project = Project::factory()->create(['user_id' => $user->id]);
@@ -62,7 +62,7 @@ class AccessTokenIndexTest extends TestCase
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
             ->component('AccessTokens/Index')
-            ->has('accessTokens', 0)
+            ->has('accessTokens', 1) // auto-created default token
         );
     }
 }

@@ -31,9 +31,7 @@
         <div class="grid auto-rows-min gap-4 md:grid-cols-3">
             <Card>
                 <CardHeader>
-                    <CardTitle class="text-sm font-medium">
-                        Projects
-                    </CardTitle>
+                    <CardTitle class="text-sm font-medium">Projects</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div class="text-3xl font-bold">{projectsCount}</div>
@@ -43,7 +41,9 @@
                 </CardContent>
                 <CardFooter>
                     <Button variant="outline" size="sm" class="w-full">
-                        <Link href={projects.index.url()}>View all projects</Link>
+                        <Link href={projects.index.url()}
+                            >View all projects</Link
+                        >
                     </Button>
                 </CardFooter>
             </Card>

@@ -47,20 +47,30 @@
 
 <Dialog bind:open>
     <DialogTrigger>
-        <Button {variant} {size} class="text-destructive hover:text-destructive {className}">
+        <Button
+            {variant}
+            {size}
+            class="text-destructive hover:text-destructive {className}"
+        >
             Delete
         </Button>
     </DialogTrigger>
     <DialogContent>
         <DialogTitle>Delete segment</DialogTitle>
         <DialogDescription>
-            Are you sure you want to delete <strong>{segmentName}</strong>? This will permanently remove the segment and all its rules. This action cannot be undone.
+            Are you sure you want to delete <strong>{segmentName}</strong>? This
+            will permanently remove the segment and all its rules. This action
+            cannot be undone.
         </DialogDescription>
         <DialogFooter>
             <DialogClose>
                 <Button variant="outline">Cancel</Button>
             </DialogClose>
-            <Button variant="destructive" onclick={handleDelete} disabled={processing}>
+            <Button
+                variant="destructive"
+                onclick={handleDelete}
+                disabled={processing}
+            >
                 {processing ? 'Deleting...' : 'Delete segment'}
             </Button>
         </DialogFooter>

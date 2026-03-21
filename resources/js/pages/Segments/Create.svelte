@@ -24,18 +24,37 @@
         label: string;
     }
 
+    interface RuleTemplateItem {
+        id: number;
+        name: string;
+        type: string;
+        key: string;
+        operator: string;
+        value: string;
+    }
+
     let {
         project,
         ruleTypes,
         ruleOperators,
+        ruleTemplates = [],
     }: {
         project: Project;
         ruleTypes: EnumOption[];
         ruleOperators: EnumOption[];
+        ruleTemplates?: RuleTemplateItem[];
     } = $props();
 
     let isActive = $state(true);
-    let rules = $state<{ type: string; key: string; operator: string; value: string; priority: number }[]>([]);
+    let rules = $state<
+        {
+            type: string;
+            key: string;
+            operator: string;
+            value: string;
+            priority: number;
+        }[]
+    >([]);
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -97,17 +116,24 @@
                 </div>
 
                 <div class="flex items-center space-x-3">
-                    <Checkbox
-                        id="active"
-                        bind:checked={isActive}
-                    />
+                    <Checkbox id="active" bind:checked={isActive} />
                     <Label for="active">Active</Label>
                     <InputError message={errors.active} />
                 </div>
 
-                <input type="hidden" name="active" value={isActive ? '1' : '0'} />
+                <input
+                    type="hidden"
+                    name="active"
+                    value={isActive ? '1' : '0'}
+                />
 
-                <RuleBuilder bind:rules {ruleTypes} {ruleOperators} {errors} />
+                <RuleBuilder
+                    bind:rules
+                    {ruleTypes}
+                    {ruleOperators}
+                    {ruleTemplates}
+                    {errors}
+                />
 
                 <div class="flex items-center gap-4">
                     <Button type="submit" disabled={processing}>

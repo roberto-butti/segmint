@@ -118,7 +118,8 @@
 
         .page { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
 
-        .page h1 { font-size: 28px; margin-bottom: 24px; }
+        .page h1 { font-size: 28px; margin-bottom: 8px; }
+        .page .subtitle { font-size: 14px; color: #64748b; margin-bottom: 24px; }
 
         .section {
             border: 2px dashed #e2e8f0;
@@ -205,6 +206,8 @@
 
 <div id="toolbar" class="toolbar" style="display: none;">
     <strong>Segmint Playground</strong>
+    <span id="visitor-id-display" style="font-family: monospace; font-size: 11px; color: #64748b;"></span>
+    <button onclick="newVisitor()" style="background: #1e293b; color: #e2e8f0; border: 1px solid #334155; padding: 4px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">New visitor</button>
     <div class="status">
         <div id="status-dot" class="dot"></div>
         <span id="status-text">Connecting...</span>
@@ -227,6 +230,7 @@
 <div id="playground" style="display: none;">
     <div class="page">
         <h1>Storefront Demo</h1>
+        <p class="subtitle">Each section below is tagged with a segment. Matched segments are highlighted green, unmatched are greyed out.</p>
 
         <div class="section default-section">
             <span class="badge">always visible</span>
@@ -235,41 +239,7 @@
             <p>Browse our latest collection. This section is shown to every visitor.</p>
         </div>
 
-        <div class="section" data-segment="google_visitors">
-            <span class="tag">data-segment="google_visitors"</span>
-            <h2>Found us on Google?</h2>
-            <p>Here are our most popular products — handpicked for search visitors like you.</p>
-        </div>
-
-        <div class="section" data-segment="italy_traffic">
-            <span class="tag">data-segment="italy_traffic"</span>
-            <h2>Benvenuto!</h2>
-            <p>Spedizione gratuita in Italia per ordini superiori a 50€.</p>
-        </div>
-
-        <div class="section" data-segment="high_intent">
-            <span class="tag">data-segment="high_intent"</span>
-            <h2>You seem interested!</h2>
-            <p>Use code <strong>SAVE10</strong> for 10% off your first order. Limited time only.</p>
-        </div>
-
-        <div class="section" data-segment="campaign_visitors">
-            <span class="tag">data-segment="campaign_visitors"</span>
-            <h2>Summer Campaign Special</h2>
-            <p>Thanks for clicking through! Exclusive deals for our summer campaign visitors.</p>
-        </div>
-
-        <div class="section" data-segment="tech_interest">
-            <span class="tag">data-segment="tech_interest"</span>
-            <h2>Tech picks for you</h2>
-            <p>We noticed you're into tech — check out our AI-powered product recommendations.</p>
-        </div>
-
-        <div class="section" data-segment="nonexistent_segment">
-            <span class="tag">data-segment="nonexistent_segment"</span>
-            <h2>This should stay hidden</h2>
-            <p>If you see this, something went wrong — this segment doesn't exist.</p>
-        </div>
+        <div id="segment-sections"></div>
     </div>
 
     <div class="log">
@@ -290,30 +260,24 @@
         logEl.scrollTop = logEl.scrollHeight;
     }
 
-    function applySegments() {
-        var sections = document.querySelectorAll('[data-segment]');
-        var matched = [];
-        var hidden = [];
+    function buildSections(allSegments) {
+        var container = document.getElementById('segment-sections');
+        container.innerHTML = '';
 
-        sections.forEach(function (el) {
-            var slug = el.getAttribute('data-segment');
-            var badge = el.querySelector('.badge');
+        allSegments.forEach(function (seg) {
+            var isMatched = Segmint.visitor.hasSegment(seg.slug);
+            var stateClass = isMatched ? 'visible' : 'hidden';
+            var badgeText = isMatched ? 'VISIBLE — matched' : 'HIDDEN — no match';
 
-            if (Segmint.visitor.hasSegment(slug)) {
-                el.classList.add('visible');
-                el.classList.remove('hidden');
-                if (badge) badge.textContent = 'VISIBLE — matched';
-                matched.push(slug);
-            } else {
-                el.classList.add('hidden');
-                el.classList.remove('visible');
-                if (badge) badge.textContent = 'HIDDEN — no match';
-                hidden.push(slug);
-            }
+            var html = '<div class="section ' + stateClass + '" data-segment="' + seg.slug + '">'
+                + '<span class="badge">' + badgeText + '</span>'
+                + '<span class="tag">data-segment="' + seg.slug + '"</span>'
+                + '<h2>' + seg.name + '</h2>'
+                + '<p>' + (seg.description || 'No description') + '</p>'
+                + '</div>';
+
+            container.insertAdjacentHTML('beforeend', html);
         });
-
-        log('info', 'Visible sections: ' + (matched.length > 0 ? matched.join(', ') : 'none'));
-        log('warn', 'Hidden sections:  ' + (hidden.length > 0 ? hidden.join(', ') : 'none'));
     }
 
     function updateToolbar() {
@@ -333,6 +297,22 @@
         }
     }
 
+    function updateVisitorDisplay() {
+        var el = document.getElementById('visitor-id-display');
+        if (el) {
+            var vid = Segmint.visitor.id();
+            el.textContent = vid ? vid.slice(0, 8) + '...' : '';
+        }
+    }
+
+    function newVisitor() {
+        Segmint.visitor.reset();
+        log('info', '');
+        log('info', 'Visitor reset. Reloading...');
+        updateVisitorDisplay();
+        window.location.reload();
+    }
+
     function startPlayground() {
         var input = document.getElementById('token-input');
         var token = input ? input.value.trim() : '';
@@ -344,6 +324,10 @@
 
         log('info', 'Initialising Segmint SDK...');
         log('info', 'Token: ' + token);
+        log('info', 'Visitor ID: ' + Segmint.visitor.id());
+        updateVisitorDisplay();
+
+        var allSegments = [];
 
         Segmint.init({ token: token, autoTrack: true, debug: true })
             .then(function (result) {
@@ -356,16 +340,25 @@
                         ? segs.map(function (s) { return s.slug || s; }).join(', ')
                         : 'none'));
 
-                applySegments();
                 updateToolbar();
 
                 log('info', '');
                 log('info', 'Fetching all project segments...');
                 return Segmint.fetch.segments();
             })
-            .then(function (allSegments) {
-                log('info', 'Available segments (' + allSegments.length + '): ' +
-                    allSegments.map(function (s) { return s.slug; }).join(', '));
+            .then(function (segments) {
+                allSegments = segments;
+                log('info', 'Available segments (' + segments.length + '): ' +
+                    segments.map(function (s) { return s.slug; }).join(', '));
+
+                log('info', '');
+                log('info', 'Building sections...');
+                buildSections(allSegments);
+
+                var matchedCount = allSegments.filter(function (s) {
+                    return Segmint.visitor.hasSegment(s.slug);
+                }).length;
+                log('info', matchedCount + ' of ' + allSegments.length + ' sections highlighted');
             })
             .catch(function (err) {
                 log('warn', 'Error: ' + err.message);

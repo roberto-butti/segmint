@@ -45,6 +45,7 @@ class SegmentController extends Controller
             'project' => $project,
             'ruleTypes' => $this->enumOptions(SegmentRuleType::class),
             'ruleOperators' => $this->enumOptions(SegmentRuleOperator::class),
+            'ruleTemplates' => $project->ruleTemplates()->orderBy('name')->get(),
         ]);
     }
 
@@ -98,6 +99,7 @@ class SegmentController extends Controller
             'segment' => $segment,
             'ruleTypes' => $this->enumOptions(SegmentRuleType::class),
             'ruleOperators' => $this->enumOptions(SegmentRuleOperator::class),
+            'ruleTemplates' => $project->ruleTemplates()->orderBy('name')->get(),
         ]);
     }
 
@@ -181,7 +183,7 @@ class SegmentController extends Controller
         foreach ($rules as $index => $rule) {
             $segment->rules()->create([
                 'type' => $rule['type'],
-                'key' => $rule['key'],
+                'key' => $rule['key'] ?? '',
                 'operator' => $rule['operator'],
                 'value' => $rule['value'],
                 'priority' => $rule['priority'] ?? $index,
