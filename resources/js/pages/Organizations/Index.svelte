@@ -47,8 +47,8 @@
             {},
             {
                 onFinish: () => {
- switching = null; 
-},
+                    switching = null;
+                },
             },
         );
     }
@@ -67,8 +67,12 @@
         </div>
 
         {#if orgList.length === 0}
-            <div class="flex flex-1 items-center justify-center rounded-xl border border-dashed border-sidebar-border p-12">
-                <p class="text-muted-foreground">You don't belong to any organization yet.</p>
+            <div
+                class="flex flex-1 items-center justify-center rounded-xl border border-dashed border-sidebar-border p-12"
+            >
+                <p class="text-muted-foreground">
+                    You don't belong to any organization yet.
+                </p>
             </div>
         {:else}
             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -87,7 +91,9 @@
                                     {/if}
                                 </div>
                                 {#if isCurrent}
-                                    <span class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                                    <span
+                                        class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+                                    >
                                         <Check class="size-3" />
                                         Active
                                     </span>
@@ -96,15 +102,25 @@
                         </CardHeader>
                         <CardContent class="space-y-1">
                             <p class="text-xs text-muted-foreground">
-                                {org.projects_count} {org.projects_count === 1 ? 'project' : 'projects'}
+                                {org.projects_count}
+                                {org.projects_count === 1
+                                    ? 'project'
+                                    : 'projects'}
                             </p>
                             <p class="text-xs text-muted-foreground">
-                                Your role: <span class="font-medium">{roleLabel(org.role)}</span>
+                                Your role: <span class="font-medium"
+                                    >{roleLabel(org.role)}</span
+                                >
                             </p>
                         </CardContent>
                         <CardFooter>
                             {#if isCurrent}
-                                <Button variant="outline" size="sm" class="w-full" disabled>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    class="w-full"
+                                    disabled
+                                >
                                     Currently active
                                 </Button>
                             {:else}
@@ -115,7 +131,9 @@
                                     onclick={() => switchOrg(org.id)}
                                     disabled={switching === org.id}
                                 >
-                                    {switching === org.id ? 'Switching...' : 'Switch to this organization'}
+                                    {switching === org.id
+                                        ? 'Switching...'
+                                        : 'Switch to this organization'}
                                 </Button>
                             {/if}
                         </CardFooter>
