@@ -21,6 +21,17 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::create('rule_templates', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('project_id')->constrained()->cascadeOnDelete();
+            $table->string('name');
+            $table->string('type');
+            $table->string('key')->default('');
+            $table->string('operator');
+            $table->string('value')->default('');
+            $table->timestamps();
+        });
+
         Schema::create('access_tokens', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained()->cascadeOnDelete();
@@ -38,6 +49,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('access_tokens');
+        Schema::dropIfExists('rule_templates');
         Schema::dropIfExists('projects');
     }
 };

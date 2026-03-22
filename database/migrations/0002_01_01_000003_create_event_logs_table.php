@@ -30,6 +30,14 @@ return new class extends Migration
             $table->jsonb('metadata')->nullable();
             $table->timestamps();
         });
+
+        Schema::create('segment_matches', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('event_log_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('segment_id')->constrained()->cascadeOnDelete();
+            $table->boolean('matched')->default(false);
+            $table->timestamps();
+        });
     }
 
     /**
@@ -37,6 +45,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('segment_matches');
         Schema::dropIfExists('event_logs');
     }
 };
