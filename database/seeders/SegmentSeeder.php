@@ -26,7 +26,7 @@ class SegmentSeeder extends Seeder
         SegmentRule::create([
             'segment_id' => $google->id,
             'type' => 'comparison',
-            'key' => 'utms.utm_source',
+            'key' => 'utm_source',
             'operator' => '=',
             'value' => 'google',
         ]);
@@ -35,13 +35,13 @@ class SegmentSeeder extends Seeder
             'project_id' => $project->id,
             'name' => 'Italy Traffic',
             'slug' => 'italy_traffic',
-            'description' => 'Visitors from Italy (GeoIP)',
+            'description' => 'Visitors from Italy',
         ]);
 
         SegmentRule::create([
             'segment_id' => $italy->id,
             'type' => 'browser_language',
-            'key' => 'country',
+            'key' => 'Accept-Language',
             'operator' => '=',
             'value' => 'it',
         ]);
@@ -56,7 +56,7 @@ class SegmentSeeder extends Seeder
         SegmentRule::create([
             'segment_id' => $highIntent->id,
             'type' => 'visit_count',
-            'key' => 'visits_count',
+            'key' => 'page-view',
             'operator' => '>=',
             'value' => 3,
         ]);
@@ -71,7 +71,7 @@ class SegmentSeeder extends Seeder
         SegmentRule::create([
             'segment_id' => $campaign->id,
             'type' => 'comparison',
-            'key' => 'utms.utm_campaign',
+            'key' => 'utm_campaign',
             'operator' => '=',
             'value' => 'summer-2025',
         ]);
@@ -86,7 +86,7 @@ class SegmentSeeder extends Seeder
         SegmentRule::create([
             'segment_id' => $tech->id,
             'type' => 'comparison',
-            'key' => 'last_url',
+            'key' => 'page_path',
             'operator' => 'contains',
             'value' => 'ai',
         ]);

@@ -13,10 +13,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'uuid',
     'visitor_id',
     'event_type',
+    'page_url',
+    'page_path',
+    'referrer_url',
+    'utm_source',
+    'utm_medium',
+    'utm_campaign',
+    'utm_term',
+    'utm_content',
     'event_properties',
     'metadata',
-    'navigation_info',
-    'utms',
 ])]
 class EventLog extends Model
 {
@@ -27,8 +33,6 @@ class EventLog extends Model
         return [
             'event_properties' => 'array',
             'metadata' => 'array',
-            'navigation_info' => 'array',
-            'utms' => 'array',
         ];
     }
 

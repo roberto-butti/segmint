@@ -18,10 +18,16 @@ return new class extends Migration
             $table->string('uuid')->unique()->nullable();
             $table->string('visitor_id')->nullable();
             $table->string('event_type')->nullable();
+            $table->string('page_url')->nullable();
+            $table->string('page_path')->nullable()->index();
+            $table->string('referrer_url')->nullable();
+            $table->string('utm_source')->nullable();
+            $table->string('utm_medium')->nullable();
+            $table->string('utm_campaign')->nullable();
+            $table->string('utm_term')->nullable();
+            $table->string('utm_content')->nullable();
             $table->jsonb('event_properties')->nullable();
             $table->jsonb('metadata')->nullable();
-            $table->jsonb('navigation_info')->nullable();
-            $table->jsonb('utms')->nullable();
             $table->timestamps();
         });
     }

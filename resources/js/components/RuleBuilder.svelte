@@ -60,13 +60,14 @@
     };
 
     const keyPlaceholders: Record<string, string> = {
-        comparison: 'e.g. utms.utm_source, metadata.device.language',
+        comparison: 'e.g. utm_source, page_path, referrer_url',
         browser_language: 'HTTP header name',
         visit_count: 'Event type to count',
     };
 
     const keyHints: Record<string, string> = {
-        comparison: 'Dot-notation path into the event log data',
+        comparison:
+            'Event log field name (e.g. utm_source, utm_campaign, page_path)',
         browser_language: 'Request header to match against',
         visit_count: 'The event type to count (e.g. page-view, add-to-cart)',
     };
