@@ -13,8 +13,17 @@ class DashboardController extends Controller
      */
     public function __invoke(Request $request): Response
     {
+        $user = $request->user();
+        $ownedOrg = $user->ownedOrganization;
+
         return Inertia::render('Dashboard', [
-            'projectsCount' => $request->user()->currentOrganization()?->projects()->count() ?? 0,
+            'projectsCount' => $user->accessibleProjects()->count(),
+            'organizationsCount' => $user->organizations()->count(),
+            'ownedOrganization' => $ownedOrg ? [
+                'id' => $ownedOrg->id,
+                'name' => $ownedOrg->name,
+                'projectsCount' => $ownedOrg->projects()->count(),
+            ] : null,
         ]);
     }
 }

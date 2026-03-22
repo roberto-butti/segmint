@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\OrganizationRole;
 use App\Http\Requests\UpdateProjectRequest;
+use App\Models\Organization;
 use App\Models\Project;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -15,17 +17,66 @@ use Inertia\Response;
 class ProjectController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the resource, filtered by organization.
      */
     public function index(Request $request): Response
     {
-        $projects = $request->user()
-            ->currentOrganization()
-            ?->projects()
-            ->latest()
-            ->get() ?? collect();
+        $userOrgs = $request->user()
+            ->organizations()
+            ->orderBy('name')
+            ->get();
+
+        $ownedOrgId = $request->user()->owned_organization_id;
+
+        // Sort: owned org first, then alphabetically
+        $orgOptions = $userOrgs
+            ->sortBy(fn ($org) => [
+                $org->id === $ownedOrgId ? 0 : 1,
+                $org->name,
+            ])
+            ->values()
+            ->map(fn ($org) => [
+                'id' => $org->id,
+                'name' => $org->name,
+                'role' => $org->id === $ownedOrgId ? 'owner' : $org->pivot->role,
+                'isOwned' => $org->id === $ownedOrgId,
+            ]);
+
+        // Determine selected org: query param > session > owned org > null
+        $selectedOrgId = $request->input('organization_id');
+
+        if ($selectedOrgId) {
+            session(['projects_organization_id' => (int) $selectedOrgId]);
+        } else {
+            $selectedOrgId = session('projects_organization_id');
+        }
+
+        // Validate the session value still belongs to the user
+        if ($selectedOrgId && ! $userOrgs->contains('id', (int) $selectedOrgId)) {
+            $selectedOrgId = null;
+            session()->forget('projects_organization_id');
+        }
+
+        // Default to owned org
+        if (! $selectedOrgId && $ownedOrgId) {
+            $selectedOrgId = $ownedOrgId;
+            session(['projects_organization_id' => $selectedOrgId]);
+        }
+
+        $projects = collect();
+        $selectedOrg = null;
+
+        if ($selectedOrgId) {
+            $selectedOrg = $userOrgs->firstWhere('id', (int) $selectedOrgId);
+            if ($selectedOrg) {
+                $projects = $selectedOrg->projects()->latest()->get();
+            }
+        }
 
         return Inertia::render('Projects/Index', [
+            'organizations' => $orgOptions,
+            'selectedOrganizationId' => $selectedOrgId ? (int) $selectedOrgId : null,
+            'selectedOrganizationRole' => $selectedOrg?->pivot->role,
             'projects' => $projects,
         ]);
     }
@@ -33,9 +84,21 @@ class ProjectController extends Controller
     /**
      * Show the form for creating a new project.
      */
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        return Inertia::render('Projects/Create');
+        $organizations = $request->user()
+            ->organizations()
+            ->get()
+            ->filter(fn ($org) => OrganizationRole::from($org->pivot->role)->canManageProjects())
+            ->map(fn ($org) => [
+                'id' => $org->id,
+                'name' => $org->name,
+            ])
+            ->values();
+
+        return Inertia::render('Projects/Create', [
+            'organizations' => $organizations,
+        ]);
     }
 
     /**
@@ -46,9 +109,13 @@ class ProjectController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'organization_id' => ['required', 'integer', 'exists:organizations,id'],
         ]);
 
-        $organization = $request->user()->currentOrganization();
+        $organization = Organization::findOrFail($validated['organization_id']);
+        $role = $request->user()->roleInOrganization($organization);
+
+        abort_unless($role !== null && $role->canManageProjects(), 403);
 
         $project = $organization->projects()->create([
             'name' => $validated['name'],

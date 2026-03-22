@@ -7,7 +7,9 @@ use App\Enums\OrganizationRole;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -15,7 +17,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'owned_organization_id'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -56,20 +58,30 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the user's current organization (from session, or first).
+     * Get the organization this user owns (max 1).
      */
-    public function currentOrganization(): ?Organization
+    public function ownedOrganization(): BelongsTo
     {
-        $sessionOrgId = session('current_organization_id');
+        return $this->belongsTo(Organization::class, 'owned_organization_id');
+    }
 
-        if ($sessionOrgId) {
-            $org = $this->organizations()->where('organizations.id', $sessionOrgId)->first();
-            if ($org) {
-                return $org;
-            }
-        }
+    /**
+     * Check if the user is the owner of the given organization.
+     */
+    public function isOwnerOf(Organization $organization): bool
+    {
+        return $this->owned_organization_id === $organization->id;
+    }
 
-        return $this->organizations()->first();
+    /**
+     * Get all projects accessible to this user across all organizations.
+     */
+    public function accessibleProjects(): Builder
+    {
+        return Project::query()->whereIn(
+            'organization_id',
+            $this->organizations()->pluck('organizations.id')
+        );
     }
 
     /**

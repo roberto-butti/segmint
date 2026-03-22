@@ -1,8 +1,8 @@
 <script lang="ts">
     import { Link } from '@inertiajs/svelte';
     import BookOpen from 'lucide-svelte/icons/book-open';
-    import Building2 from 'lucide-svelte/icons/building-2';
     import FolderGit2 from 'lucide-svelte/icons/folder-git-2';
+    import FolderKanban from 'lucide-svelte/icons/folder-kanban';
     import LayoutGrid from 'lucide-svelte/icons/layout-grid';
     import type { Snippet } from 'svelte';
     import AppLogo from '@/components/AppLogo.svelte';
@@ -20,7 +20,7 @@
     } from '@/components/ui/sidebar';
     import { toUrl } from '@/lib/utils';
     import { dashboard } from '@/routes';
-    import organizations from '@/routes/organizations';
+    import projects from '@/routes/projects';
     import type { NavItem } from '@/types';
 
     let {
@@ -31,14 +31,14 @@
 
     const mainNavItems: NavItem[] = [
         {
-            title: 'My Org',
+            title: 'Dashboard',
             href: dashboard(),
             icon: LayoutGrid,
         },
         {
-            title: 'Organizations',
-            href: organizations.index.url(),
-            icon: Building2,
+            title: 'Projects',
+            href: projects.index.url(),
+            icon: FolderKanban,
         },
     ];
 

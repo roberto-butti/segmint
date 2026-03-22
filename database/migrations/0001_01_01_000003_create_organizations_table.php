@@ -18,6 +18,16 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        // Add owned_organization_id to users (now that organizations table exists)
+        Schema::table('users', function (Blueprint $table) {
+            $table->foreignId('owned_organization_id')
+                ->nullable()
+                ->unique()
+                ->after('remember_token')
+                ->constrained('organizations')
+                ->nullOnDelete();
+        });
+
         Schema::create('organization_memberships', function (Blueprint $table) {
             $table->id();
             $table->foreignId('organization_id')->constrained()->cascadeOnDelete();

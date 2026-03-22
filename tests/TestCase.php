@@ -18,9 +18,12 @@ abstract class TestCase extends BaseTestCase
      */
     protected function createUserWithOrganization(array $userAttributes = []): array
     {
-        $user = User::factory()->create($userAttributes);
         $organization = Organization::factory()->create();
-        $organization->members()->attach($user, ['role' => OrganizationRole::Owner->value]);
+        $user = User::factory()->create(array_merge(
+            ['owned_organization_id' => $organization->id],
+            $userAttributes,
+        ));
+        $organization->members()->attach($user, ['role' => OrganizationRole::Admin->value]);
 
         return ['user' => $user, 'organization' => $organization];
     }

@@ -6,9 +6,24 @@
     import { Button } from '@/components/ui/button';
     import { Input } from '@/components/ui/input';
     import { Label } from '@/components/ui/label';
+    import {
+        Select,
+        SelectContent,
+        SelectItem,
+        SelectTrigger,
+    } from '@/components/ui/select';
     import AppLayout from '@/layouts/AppLayout.svelte';
     import projects from '@/routes/projects';
     import type { BreadcrumbItem } from '@/types';
+
+    interface OrganizationOption {
+        id: number;
+        name: string;
+    }
+
+    let { organizations }: { organizations: OrganizationOption[] } = $props();
+
+    let selectedOrgId = $state(organizations[0]?.id?.toString() ?? '');
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -20,6 +35,13 @@
             href: projects.create.url(),
         },
     ];
+
+    function getOrgName(id: string): string {
+        return (
+            organizations.find((o) => o.id.toString() === id)?.name ??
+            'Select organization'
+        );
+    }
 </script>
 
 <AppHead title="Create project" />
@@ -38,6 +60,44 @@
             class="max-w-lg space-y-6"
         >
             {#snippet children({ errors, processing })}
+                {#if organizations.length > 1}
+                    <div class="grid gap-2">
+                        <Label>Organization</Label>
+                        <Select
+                            type="single"
+                            value={selectedOrgId}
+                            onValueChange={(v) => {
+                                if (v) {
+                                    selectedOrgId = v;
+                                }
+                            }}
+                        >
+                            <SelectTrigger class="w-full">
+                                {getOrgName(selectedOrgId)}
+                            </SelectTrigger>
+                            <SelectContent>
+                                {#each organizations as org (org.id)}
+                                    <SelectItem value={org.id.toString()}
+                                        >{org.name}</SelectItem
+                                    >
+                                {/each}
+                            </SelectContent>
+                        </Select>
+                        <input
+                            type="hidden"
+                            name="organization_id"
+                            value={selectedOrgId}
+                        />
+                        <InputError message={errors.organization_id} />
+                    </div>
+                {:else}
+                    <input
+                        type="hidden"
+                        name="organization_id"
+                        value={selectedOrgId}
+                    />
+                {/if}
+
                 <div class="grid gap-2">
                     <Label for="name">Name</Label>
                     <Input
