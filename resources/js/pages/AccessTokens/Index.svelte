@@ -1,8 +1,10 @@
 <script lang="ts">
     import AppHead from '@/components/AppHead.svelte';
+    import { Button } from '@/components/ui/button';
     import {
         Card,
         CardContent,
+        CardFooter,
         CardHeader,
         CardTitle,
     } from '@/components/ui/card';
@@ -98,6 +100,23 @@
                                 </p>
                             {/if}
                         </CardContent>
+                        {#if token.active}
+                            <CardFooter>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    class="w-full"
+                                    asChild
+                                >
+                                    <a
+                                        href={`/playground.html?token=${encodeURIComponent(token.token)}`}
+                                        class="inline-flex items-center justify-center gap-1.5"
+                                    >
+                                        Open playground
+                                    </a>
+                                </Button>
+                            </CardFooter>
+                        {/if}
                     </Card>
                 {/each}
             </div>

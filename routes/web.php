@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccessTokenController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EventLogViewController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RuleTemplateController;
 use App\Http\Controllers\SegmentController;
@@ -32,6 +33,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('projects/{project:slug}/rule-templates', [RuleTemplateController::class, 'store'])->name('projects.rule-templates.store');
     Route::put('projects/{project:slug}/rule-templates/{ruleTemplate}', [RuleTemplateController::class, 'update'])->name('projects.rule-templates.update');
     Route::delete('projects/{project:slug}/rule-templates/{ruleTemplate}', [RuleTemplateController::class, 'destroy'])->name('projects.rule-templates.destroy');
+    Route::get('projects/{project:slug}/events', [EventLogViewController::class, 'index'])->name('projects.events.index');
     Route::get('projects/{project:slug}/access-tokens', [AccessTokenController::class, 'index'])->name('projects.access-tokens.index');
 });
 

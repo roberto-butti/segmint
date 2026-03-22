@@ -16,6 +16,7 @@
     import AppLayout from '@/layouts/AppLayout.svelte';
     import projects from '@/routes/projects';
     import accessTokens from '@/routes/projects/access-tokens';
+    import eventsRoute from '@/routes/projects/events';
     import ruleTemplates from '@/routes/projects/rule-templates';
     import segments from '@/routes/projects/segments';
     import type { BreadcrumbItem } from '@/types';
@@ -162,6 +163,13 @@
                         Total events tracked
                     </p>
                 </CardContent>
+                <CardFooter>
+                    <Button variant="outline" size="sm" class="w-full">
+                        <Link href={eventsRoute.index.url(project.slug)}
+                            >View events</Link
+                        >
+                    </Button>
+                </CardFooter>
             </Card>
 
             <Card>
