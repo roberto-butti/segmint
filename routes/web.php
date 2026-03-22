@@ -6,6 +6,7 @@ use App\Http\Controllers\EventLogViewController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RuleTemplateController;
 use App\Http\Controllers\SegmentController;
+use App\Http\Controllers\SegmentSuggestionController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -22,6 +23,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('projects/{project:slug}/edit', [ProjectController::class, 'edit'])->name('projects.edit');
     Route::put('projects/{project:slug}', [ProjectController::class, 'update'])->name('projects.update');
     Route::get('projects/{project:slug}/segments', [SegmentController::class, 'index'])->name('projects.segments.index');
+    Route::get('projects/{project:slug}/segments/suggestions', [SegmentSuggestionController::class, 'index'])->name('projects.segments.suggestions');
     Route::get('projects/{project:slug}/segments/create', [SegmentController::class, 'create'])->name('projects.segments.create');
     Route::post('projects/{project:slug}/segments', [SegmentController::class, 'store'])->name('projects.segments.store');
     Route::get('projects/{project:slug}/segments/{segment}', [SegmentController::class, 'show'])->name('projects.segments.show');

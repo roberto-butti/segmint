@@ -64,11 +64,18 @@
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-semibold">Segments</h2>
-            <Button variant="default" size="sm">
-                <Link href={segments.create.url(project.slug)}
-                    >Create segment</Link
-                >
-            </Button>
+            <div class="flex items-center gap-2">
+                <Button variant="outline" size="sm">
+                    <Link href={segments.suggestions.url(project.slug)}>
+                        Suggestions
+                    </Link>
+                </Button>
+                <Button variant="default" size="sm">
+                    <Link href={segments.create.url(project.slug)}>
+                        Create segment
+                    </Link>
+                </Button>
+            </div>
         </div>
 
         {#if segmentList.length === 0}

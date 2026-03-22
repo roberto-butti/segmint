@@ -12,6 +12,7 @@
     import AppLayout from '@/layouts/AppLayout.svelte';
     import projects from '@/routes/projects';
     import events from '@/routes/projects/events';
+    import segments from '@/routes/projects/segments';
     import type { BreadcrumbItem } from '@/types';
 
     interface Project {
@@ -163,6 +164,11 @@
                     >({eventLogs.total} total)</span
                 >
             </h2>
+            <Button variant="outline" size="sm">
+                <Link href={segments.suggestions.url(project.slug)}>
+                    Suggest segments
+                </Link>
+            </Button>
         </div>
 
         <!-- Filters -->

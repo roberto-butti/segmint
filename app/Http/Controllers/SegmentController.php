@@ -63,7 +63,7 @@ class SegmentController extends Controller
 
         $this->syncRules($segment, $request->validated('rules', []));
 
-        return redirect()->route('projects.segments.index', $project->slug);
+        return redirect()->route('projects.segments.edit', [$project->slug, $segment]);
     }
 
     /**

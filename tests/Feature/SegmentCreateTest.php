@@ -58,7 +58,8 @@ class SegmentCreateTest extends TestCase
             'active' => true,
         ]);
 
-        $response->assertRedirect(route('projects.segments.index', $project));
+        $segment = $project->segments()->latest()->first();
+        $response->assertRedirect(route('projects.segments.edit', [$project, $segment]));
 
         $this->assertDatabaseHas('segments', [
             'project_id' => $project->id,
@@ -111,7 +112,8 @@ class SegmentCreateTest extends TestCase
             'active' => false,
         ]);
 
-        $response->assertRedirect(route('projects.segments.index', $project));
+        $segment = $project->segments()->latest()->first();
+        $response->assertRedirect(route('projects.segments.edit', [$project, $segment]));
 
         $this->assertDatabaseHas('segments', [
             'project_id' => $project->id,
@@ -150,7 +152,8 @@ class SegmentCreateTest extends TestCase
             ],
         ]);
 
-        $response->assertRedirect(route('projects.segments.index', $project));
+        $segment = $project->segments()->latest()->first();
+        $response->assertRedirect(route('projects.segments.edit', [$project, $segment]));
 
         $segment = $project->segments()->where('name', 'UTM Facebook Users')->first();
         $this->assertNotNull($segment);
