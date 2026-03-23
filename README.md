@@ -1,20 +1,49 @@
 # Segmint
 
-**Self-hosted, event-driven audience segmentation platform.**
+**Self-hosted, real-time audience segmentation for modern web apps.**
 
-Segmint lets you define audience segments based on real-time events, track how users match those segments over time, and visualize engagement through built-in analytics — all within your own infrastructure.
+Segmint lets you define audience segments based on real-time events, track how visitors match those segments, and deliver personalised content — all within your own infrastructure.
 
-> Real-time visitor segmentation for modern web apps. Track events, define audience segments with flexible rules, and get instant insights into your audience composition.
+## Why Segmint
 
-## Features
+**Know your audience. Personalise in real time. Own your data.**
 
-- **Project-based organization** — Group segments, events, and access tokens under isolated projects
-- **Rule-based segmentation** — Define segments with flexible rules (comparison, visit count, page view count, browser language) that automatically evaluate incoming events
-- **Real-time event tracking** — Ingest events via API and watch segment matches update in real time
-- **Built-in analytics** — Per-project dashboards with charts for event trends, segment distribution, top segments, and recent activity
-- **Token-based API access** — Generate scoped access tokens for each project to integrate with your applications
-- **JavaScript SDK** — Lightweight client-side SDK with namespaced API (`visitor.*` for tracking, `fetch.*` for project queries)
-- **Two-factor authentication** — Secure your account with TOTP-based 2FA
+Most personalisation tools either lock you into expensive SaaS platforms or require complex enterprise setups. Segmint gives you the same capabilities — self-hosted, open source, and developer-first.
+
+### Business value
+
+- **Higher conversions** — Show returning visitors a "Welcome back" offer, match campaign traffic with campaign-specific content, surface relevant CTAs based on engagement. Personalised experiences convert better.
+- **Zero marginal cost** — No per-event pricing. No per-user fees. Runs on your existing infrastructure. At 100K monthly visitors, SaaS alternatives cost thousands — Segmint costs nothing.
+- **Full data ownership** — Visitor data never leaves your servers. No third-party processors, no DPA negotiations, no GDPR complications with external vendors.
+- **CMS-agnostic** — Works with any CMS or headless setup. Fetch segments via API, tag content with audiences, render the right content. Storyblok, Contentful, WordPress, or your own CMS.
+
+### Key features
+
+- **Smart segment suggestions** — Segmint analyzes your actual event data and suggests segments you should create — with pre-built rules, confidence levels, and one-click creation. It detects top UTM sources, campaigns, referrer domains, returning visitors, and frequent page visitors automatically. No other self-hosted tool does this.
+- **Real-time matching** — Segments are evaluated on every event. A visitor's third page view immediately triggers a "high intent" segment. No batch processing, no overnight jobs.
+- **Lightweight SDK** — Under 5KB. One script tag, 4 lines of code to personalise. Auto-detects the API endpoint from its own URL.
+- **Flexible rules** — Comparison, visit count, page views, browser language — combine rules to define any audience.
+- **Rule templates** — Per-project reusable presets. Default templates are created automatically when you start a project.
+- **Organizations & teams** — Multi-org support with role-based access (admin, member, viewer). One user can own an org and be invited to others.
+- **Built-in analytics** — Per-project dashboards with event trends, segment distribution, top audiences, and real-time activity.
+- **Playground** — Built-in HTML playground to test segment visibility with your actual data, directly from the access tokens page.
+
+## How it works
+
+1. **Track events** — Drop the SDK on your site. It captures page views, UTM parameters, referrers, and custom events automatically.
+2. **Define segments** — Create audience segments with rules, or let Segmint suggest them from your data.
+3. **Personalise content** — The SDK tells you which segments the current visitor matches. Show different content to different audiences.
+
+```html
+<script src="https://your-segmint-host/js/segmint.min.js"></script>
+<script>
+  await Segmint.init({ token: 'your-token', autoTrack: true });
+
+  if (Segmint.visitor.hasSegment('high_intent')) {
+    showSpecialOffer();
+  }
+</script>
+```
 
 ## Tech Stack
 
@@ -112,21 +141,7 @@ See [docs/segments-api.md](docs/segments-api.md) for full API documentation.
 Segmint ships with a lightweight SDK (`public/js/segmint.js`) organised into two namespaces:
 
 - **`Segmint.visitor.*`** — Track events and read matched segments for the current visitor
-- **`Segmint.fetch.*`** — Query project-level data (e.g. list all available segments)
-
-### Quick start
-
-```html
-<script src="https://your-segmint-host/js/segmint.min.js"></script>
-<script>
-  Segmint.init({ token: 'your-project-token', autoTrack: true })
-    .then(function () {
-      if (Segmint.visitor.hasSegment('high_intent')) {
-        document.getElementById('cta').style.display = 'block';
-      }
-    });
-</script>
-```
+- **`Segmint.fetch.*`** — Query project-level data (e.g. list all available segments for CMS integration)
 
 ### Track events
 
@@ -144,7 +159,7 @@ window.addEventListener('beforeunload', function () {
 
 ```js
 // Matched segments for the current visitor
-Segmint.visitor.segments();           // [{ slug: 'high_intent', ... }]
+Segmint.visitor.segments();                // [{ slug: 'high_intent', ... }]
 Segmint.visitor.hasSegment('high_intent'); // true
 
 // All active segments defined in the project (for CMS integration)
@@ -207,7 +222,11 @@ vendor/bin/pint
 
 - [Tracking SDK](docs/tracking-sdk.md) — Full SDK reference, payload format, and integration recipes
 - [Segments API](docs/segments-api.md) — REST API for retrieving segments, CMS integration patterns
+- [Data Model](docs/data-model.md) — Users, Organizations, and Projects architecture
 
 ## License
 
-[MIT](LICENSE.md)
+[AGPL-3.0](LICENSE.md) with an SDK exception:
+
+- **Server-side code** (PHP, Svelte, etc.) — AGPL-3.0. Anyone who modifies and deploys it as a service must open-source their changes.
+- **JavaScript SDK** (`segmint.js` / `segmint.min.js`) — MIT. Users can embed it in their sites without AGPL obligations. The SDK's permissive license ensures it doesn't contaminate your client-side code.

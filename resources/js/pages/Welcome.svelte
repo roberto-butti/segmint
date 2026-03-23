@@ -185,8 +185,141 @@
         </div>
     </section>
 
-    <!-- Features -->
+    <!-- Segment Suggestions -->
     <section class="py-20">
+        <div class="mx-auto max-w-6xl px-6">
+            <div class="grid items-center gap-12 lg:grid-cols-2">
+                <div>
+                    <div
+                        class="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-1.5 text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+                    >
+                        <span class="size-2 rounded-full bg-amber-500"></span>
+                        Unique to Segmint
+                    </div>
+                    <h2
+                        class="text-2xl font-bold text-gray-900 dark:text-white"
+                    >
+                        Your data suggests the segments
+                    </h2>
+                    <p class="mt-3 text-gray-600 dark:text-gray-400">
+                        Most tools make you guess which audiences to target.
+                        Segmint analyzes your actual event data and suggests
+                        segments you should create — with pre-built rules,
+                        confidence levels, and one-click creation.
+                    </p>
+                    <div class="mt-6 space-y-3">
+                        <div class="flex items-start gap-3">
+                            <span
+                                class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400"
+                                >1</span
+                            >
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                Detects top UTM sources, campaigns, referrers,
+                                and high-traffic pages
+                            </p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span
+                                class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400"
+                                >2</span
+                            >
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                Identifies returning visitors and frequent page
+                                visitors from behavior patterns
+                            </p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span
+                                class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400"
+                                >3</span
+                            >
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                Shows if a suggestion already exists or is
+                                similar to an existing segment
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div
+                        class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+                    >
+                        <div class="flex items-center justify-between">
+                            <span
+                                class="font-semibold text-gray-900 dark:text-white"
+                                >Google Visitors</span
+                            >
+                            <span
+                                class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700"
+                                >high</span
+                            >
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">
+                            utm_source = google &middot; 42% of traffic
+                        </p>
+                        <div
+                            class="mt-2 rounded bg-gray-50 px-3 py-1.5 text-xs dark:bg-gray-900"
+                        >
+                            <span class="font-medium">Comparison</span>
+                            <span class="font-mono">utm_source</span>
+                            <span class="text-gray-400">Equals</span>
+                            <span class="font-mono">google</span>
+                        </div>
+                    </div>
+                    <div
+                        class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+                    >
+                        <div class="flex items-center justify-between">
+                            <span
+                                class="font-semibold text-gray-900 dark:text-white"
+                                >Returning Visitors</span
+                            >
+                            <span
+                                class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700"
+                                >high</span
+                            >
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">
+                            5+ page views &middot; 18 visitors match
+                        </p>
+                        <div
+                            class="mt-2 rounded bg-gray-50 px-3 py-1.5 text-xs dark:bg-gray-900"
+                        >
+                            <span class="font-medium">Visit count</span>
+                            <span class="font-mono">page-view</span>
+                            <span class="text-gray-400">&ge;</span>
+                            <span class="font-mono">5</span>
+                        </div>
+                    </div>
+                    <div
+                        class="rounded-xl border border-amber-200 bg-amber-50/50 p-4 shadow-sm dark:border-amber-800 dark:bg-amber-900/20"
+                    >
+                        <div class="flex items-center justify-between">
+                            <span
+                                class="font-semibold text-gray-900 dark:text-white"
+                                >Facebook Visitors</span
+                            >
+                            <span
+                                class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700"
+                                >Similar</span
+                            >
+                        </div>
+                        <p
+                            class="mt-1 text-xs text-amber-700 dark:text-amber-400"
+                        >
+                            Similar to "Google Visitors" &middot; Existing
+                            value: google
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section
+        class="border-t border-gray-100 bg-gray-50 py-20 dark:border-gray-800 dark:bg-gray-900/50"
+    >
         <div class="mx-auto max-w-6xl px-6">
             <h2
                 class="text-center text-2xl font-bold text-gray-900 dark:text-white"
@@ -247,6 +380,17 @@
                     <p class="mt-1.5 text-sm text-gray-600 dark:text-gray-400">
                         Comparison, visit count, page views, browser language —
                         combine rules to define any audience.
+                    </p>
+                </div>
+                <div
+                    class="rounded-xl border border-amber-200 bg-amber-50/30 p-5 dark:border-amber-800 dark:bg-amber-900/10"
+                >
+                    <h3 class="font-semibold text-gray-900 dark:text-white">
+                        Smart suggestions
+                    </h3>
+                    <p class="mt-1.5 text-sm text-gray-600 dark:text-gray-400">
+                        Segmint analyzes your event data and suggests segments
+                        to create — with pre-built rules and one-click creation.
                     </p>
                 </div>
                 <div
