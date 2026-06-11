@@ -1,6 +1,6 @@
 # Segmint
 
-**A self-hosted application for event tracking and real-time audience segmentation.**
+**An Open-Source application for event tracking and real-time audience segmentation.**
 
 Segmint collects events from web applications, evaluates visitors against configurable
 segment rules, and exposes the resulting segment data through an API and JavaScript SDK.
