@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Form } from '@inertiajs/svelte';
+    import { untrack } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
     import InputError from '@/components/InputError.svelte';
@@ -65,18 +66,20 @@
         ruleTemplates?: RuleTemplateItem[];
     } = $props();
 
-    let isActive = $state(segment.active);
+    let isActive = $state(untrack(() => segment.active));
     let rules = $state(
-        segment.rules.map((r) => ({
-            type: r.type,
-            key: r.key,
-            operator: r.operator,
-            value: r.value,
-            priority: r.priority,
-        })),
+        untrack(() =>
+            segment.rules.map((r) => ({
+                type: r.type,
+                key: r.key,
+                operator: r.operator,
+                value: r.value,
+                priority: r.priority,
+            })),
+        ),
     );
 
-    const breadcrumbs: BreadcrumbItem[] = [
+    const breadcrumbs: BreadcrumbItem[] = $derived([
         {
             title: 'Projects',
             href: projects.index.url(),
@@ -96,7 +99,7 @@
                 segment: segment.id,
             }),
         },
-    ];
+    ]);
 </script>
 
 <AppHead title={`Edit ${segment.name}`} />

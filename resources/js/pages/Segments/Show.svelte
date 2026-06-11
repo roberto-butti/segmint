@@ -59,7 +59,7 @@
         ruleOperators: EnumOption[];
     } = $props();
 
-    const breadcrumbs: BreadcrumbItem[] = [
+    const breadcrumbs: BreadcrumbItem[] = $derived([
         {
             title: 'Projects',
             href: projects.index.url(),
@@ -79,7 +79,7 @@
                 segment: segment.id,
             }),
         },
-    ];
+    ]);
 
     function getTypeLabel(value: string): string {
         return ruleTypes.find((t) => t.value === value)?.label ?? value;
@@ -99,27 +99,30 @@
         }, 2000);
     }
 
-    const snippetCheck = `if (Segmint.visitor.hasSegment('${segment.slug}')) {
+    const snippetCheck =
+        $derived(`if (Segmint.visitor.hasSegment('${segment.slug}')) {
   // Show personalised content for "${segment.name}"
-}`;
+}`);
 
-    const snippetInit = `Segmint.init({ token: 'your-project-token', autoTrack: true })
+    const snippetInit =
+        $derived(`Segmint.init({ token: 'your-project-token', autoTrack: true })
   .then(function () {
     if (Segmint.visitor.hasSegment('${segment.slug}')) {
       document.getElementById('banner').style.display = 'block';
     }
-  });`;
+  });`);
 
-    const snippetDataAttr = `<!-- Tag your content block with this segment -->
+    const snippetDataAttr =
+        $derived(`<!-- Tag your content block with this segment -->
 <div data-segment="${segment.slug}" style="display: none;">
   <!-- Content shown only to "${segment.name}" visitors -->
-</div>`;
+</div>`);
 
-    const snippetOnReady = `Segmint.onReady(function (segments) {
+    const snippetOnReady = $derived(`Segmint.onReady(function (segments) {
   if (Segmint.visitor.hasSegment('${segment.slug}')) {
     console.log('Visitor matches: ${segment.name}');
   }
-});`;
+});`);
 </script>
 
 <AppHead title={segment.name} />

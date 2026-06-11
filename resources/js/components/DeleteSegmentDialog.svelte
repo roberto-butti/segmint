@@ -46,14 +46,18 @@
 </script>
 
 <Dialog bind:open>
-    <DialogTrigger>
-        <Button
-            {variant}
-            {size}
-            class="text-destructive hover:text-destructive {className}"
-        >
-            Delete
-        </Button>
+    <DialogTrigger asChild>
+        {#snippet children(props)}
+            <Button
+                {variant}
+                {size}
+                class="text-destructive hover:text-destructive {className}"
+                onclick={props.onclick}
+                aria-expanded={props['aria-expanded']}
+            >
+                Delete
+            </Button>
+        {/snippet}
     </DialogTrigger>
     <DialogContent>
         <DialogTitle>Delete segment</DialogTitle>
@@ -63,8 +67,12 @@
             cannot be undone.
         </DialogDescription>
         <DialogFooter>
-            <DialogClose>
-                <Button variant="outline">Cancel</Button>
+            <DialogClose asChild>
+                {#snippet children(props)}
+                    <Button variant="outline" onclick={props.onclick}
+                        >Cancel</Button
+                    >
+                {/snippet}
             </DialogClose>
             <Button
                 variant="destructive"

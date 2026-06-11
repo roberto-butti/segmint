@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Form } from '@inertiajs/svelte';
+    import { untrack } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
     import InputError from '@/components/InputError.svelte';
@@ -23,7 +24,9 @@
 
     let { organizations }: { organizations: OrganizationOption[] } = $props();
 
-    let selectedOrgId = $state(organizations[0]?.id?.toString() ?? '');
+    let selectedOrgId = $state(
+        untrack(() => organizations[0]?.id?.toString() ?? ''),
+    );
 
     const breadcrumbs: BreadcrumbItem[] = [
         {

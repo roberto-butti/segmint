@@ -56,7 +56,7 @@
         }[]
     >([]);
 
-    const breadcrumbs: BreadcrumbItem[] = [
+    const breadcrumbs: BreadcrumbItem[] = $derived([
         {
             title: 'Projects',
             href: projects.index.url(),
@@ -73,7 +73,7 @@
             title: 'Create',
             href: segments.create.url(project.slug),
         },
-    ];
+    ]);
 </script>
 
 <AppHead title={`Create segment - ${project.name}`} />

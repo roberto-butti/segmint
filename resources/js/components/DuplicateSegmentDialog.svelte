@@ -77,8 +77,16 @@
 </script>
 
 <Dialog bind:open>
-    <DialogTrigger>
-        <Button {variant} {size} class={className}>Duplicate</Button>
+    <DialogTrigger asChild>
+        {#snippet children(props)}
+            <Button
+                {variant}
+                {size}
+                class={className}
+                onclick={props.onclick}
+                aria-expanded={props['aria-expanded']}>Duplicate</Button
+            >
+        {/snippet}
     </DialogTrigger>
     <DialogContent>
         <DialogTitle>Duplicate segment</DialogTitle>
@@ -118,8 +126,12 @@
             </div>
         </div>
         <DialogFooter>
-            <DialogClose>
-                <Button variant="outline">Cancel</Button>
+            <DialogClose asChild>
+                {#snippet children(props)}
+                    <Button variant="outline" onclick={props.onclick}
+                        >Cancel</Button
+                    >
+                {/snippet}
             </DialogClose>
             <Button
                 onclick={handleDuplicate}

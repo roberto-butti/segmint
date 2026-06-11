@@ -72,12 +72,12 @@
         ruleOperators: EnumOption[];
     } = $props();
 
-    const breadcrumbs: BreadcrumbItem[] = [
+    const breadcrumbs: BreadcrumbItem[] = $derived([
         { title: 'Projects', href: projects.index.url() },
         { title: project.name, href: projects.show.url(project.slug) },
         { title: 'Segments', href: segments.index.url(project.slug) },
         { title: 'Suggestions', href: segments.suggestions.url(project.slug) },
-    ];
+    ]);
 
     function getTypeLabel(value: string): string {
         return ruleTypes.find((t) => t.value === value)?.label ?? value;

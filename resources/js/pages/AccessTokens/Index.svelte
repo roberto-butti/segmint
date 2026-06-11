@@ -36,7 +36,7 @@
         accessTokens: AccessToken[];
     } = $props();
 
-    const breadcrumbs: BreadcrumbItem[] = [
+    const breadcrumbs: BreadcrumbItem[] = $derived([
         {
             title: 'Projects',
             href: projects.index.url(),
@@ -49,7 +49,7 @@
             title: 'Access Tokens',
             href: accessTokens.index.url(project.slug),
         },
-    ];
+    ]);
 
     function maskToken(token: string): string {
         return token.slice(0, 8) + '...' + token.slice(-4);

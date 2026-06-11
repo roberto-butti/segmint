@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Link, router } from '@inertiajs/svelte';
+    import { untrack } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Button } from '@/components/ui/button';
     import { Input } from '@/components/ui/input';
@@ -65,15 +66,15 @@
         filters: Filters;
     } = $props();
 
-    let search = $state(filters.search);
-    let eventTypeFilter = $state(filters.event_type);
-    let utmSourceFilter = $state(filters.utm_source);
+    let search = $state(untrack(() => filters.search));
+    let eventTypeFilter = $state(untrack(() => filters.event_type));
+    let utmSourceFilter = $state(untrack(() => filters.utm_source));
 
-    const breadcrumbs: BreadcrumbItem[] = [
+    const breadcrumbs: BreadcrumbItem[] = $derived([
         { title: 'Projects', href: projects.index.url() },
         { title: project.name, href: projects.show.url(project.slug) },
         { title: 'Events', href: events.index.url(project.slug) },
-    ];
+    ]);
 
     function applyFilters(): void {
         const params: Record<string, string> = {};

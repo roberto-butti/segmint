@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Form } from '@inertiajs/svelte';
+    import { untrack } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
     import InputError from '@/components/InputError.svelte';
@@ -21,9 +22,9 @@
 
     let { project }: { project: Project } = $props();
 
-    let isActive = $state(project.active);
+    let isActive = $state(untrack(() => project.active));
 
-    const breadcrumbs: BreadcrumbItem[] = [
+    const breadcrumbs: BreadcrumbItem[] = $derived([
         {
             title: 'Projects',
             href: projects.index.url(),
@@ -36,7 +37,7 @@
             title: 'Edit',
             href: projects.edit.url(project.slug),
         },
-    ];
+    ]);
 </script>
 
 <AppHead title={`Edit ${project.name}`} />

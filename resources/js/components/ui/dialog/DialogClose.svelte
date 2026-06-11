@@ -3,7 +3,15 @@
     import { getContext } from 'svelte';
     import { DIALOG_CONTEXT, type DialogContext } from './context';
 
-    let { asChild = false, children }: { asChild?: boolean; children?: Snippet<[Record<string, unknown>]> } = $props();
+    type CloseProps = {
+        onclick?: (event: MouseEvent) => void;
+        [key: string]: unknown;
+    };
+
+    let {
+        asChild = false,
+        children,
+    }: { asChild?: boolean; children?: Snippet<[CloseProps]> } = $props();
 
     const { setOpen } = getContext<DialogContext>(DIALOG_CONTEXT);
 
@@ -11,7 +19,7 @@
 </script>
 
 {#if asChild}
-    {@render children?.({ onClick: handleClick })}
+    {@render children?.({ onclick: handleClick })}
 {:else}
     <button type="button" onclick={handleClick}>
         {@render children?.({})}

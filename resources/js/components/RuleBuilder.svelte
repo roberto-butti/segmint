@@ -134,10 +134,19 @@
         <div class="flex items-center gap-1">
             {#if ruleTemplates.length > 0}
                 <DropdownMenu>
-                    <DropdownMenuTrigger>
-                        <Button type="button" variant="outline" size="sm">
-                            From template
-                        </Button>
+                    <DropdownMenuTrigger asChild>
+                        {#snippet children(props)}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onclick={props.onclick}
+                                aria-expanded={props['aria-expanded']}
+                                data-state={props['data-state']}
+                            >
+                                From template
+                            </Button>
+                        {/snippet}
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" class="w-64">
                         <DropdownMenuLabel>Rule templates</DropdownMenuLabel>

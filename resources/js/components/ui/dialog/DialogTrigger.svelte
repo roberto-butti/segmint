@@ -3,7 +3,16 @@
     import { getContext } from 'svelte';
     import { DIALOG_CONTEXT, type DialogContext } from './context';
 
-    let { asChild = false, children }: { asChild?: boolean; children?: Snippet<[Record<string, unknown>]> } = $props();
+    type TriggerProps = {
+        onclick?: (event: MouseEvent) => void;
+        'aria-expanded'?: boolean;
+        [key: string]: unknown;
+    };
+
+    let {
+        asChild = false,
+        children,
+    }: { asChild?: boolean; children?: Snippet<[TriggerProps]> } = $props();
 
     const { setOpen, open } = getContext<DialogContext>(DIALOG_CONTEXT);
 
@@ -11,7 +20,7 @@
 </script>
 
 {#if asChild}
-    {@render children?.({ onClick: handleClick, 'aria-expanded': open() })}
+    {@render children?.({ onclick: handleClick, 'aria-expanded': open() })}
 {:else}
     <button type="button" onclick={handleClick} aria-expanded={open()}>
         {@render children?.({})}

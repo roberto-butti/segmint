@@ -61,7 +61,7 @@
         topSegments: Record<string, number>;
     } = $props();
 
-    const breadcrumbs: BreadcrumbItem[] = [
+    const breadcrumbs: BreadcrumbItem[] = $derived([
         {
             title: 'Projects',
             href: projects.index.url(),
@@ -70,7 +70,7 @@
             title: project.name,
             href: projects.show.url(project.slug),
         },
-    ];
+    ]);
 
     const eventsLabels = $derived(
         Object.keys(eventsOverTime).map((d) => {

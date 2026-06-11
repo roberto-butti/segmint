@@ -1,5 +1,6 @@
 <script lang="ts">
     import { router } from '@inertiajs/svelte';
+    import { untrack } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Button } from '@/components/ui/button';
     import {
@@ -63,7 +64,7 @@
         ruleOperators: EnumOption[];
     } = $props();
 
-    const breadcrumbs: BreadcrumbItem[] = [
+    const breadcrumbs: BreadcrumbItem[] = $derived([
         {
             title: 'Projects',
             href: projects.index.url(),
@@ -76,7 +77,7 @@
             title: 'Rule Templates',
             href: ruleTemplatesRoute.index.url(project.slug),
         },
-    ];
+    ]);
 
     const keyDefaults: Record<string, string> = {
         browser_language: 'Accept-Language',
@@ -98,9 +99,9 @@
     // Create form state
     let createOpen = $state(false);
     let createName = $state('');
-    let createType = $state(ruleTypes[0]?.value ?? '');
+    let createType = $state(untrack(() => ruleTypes[0]?.value ?? ''));
     let createKey = $state('');
-    let createOperator = $state(ruleOperators[0]?.value ?? '');
+    let createOperator = $state(untrack(() => ruleOperators[0]?.value ?? ''));
     let createValue = $state('');
     let createProcessing = $state(false);
 
@@ -221,8 +222,16 @@
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-semibold">Rule Templates</h2>
             <Dialog bind:open={createOpen}>
-                <DialogTrigger>
-                    <Button variant="default" size="sm">Create template</Button>
+                <DialogTrigger asChild>
+                    {#snippet children(props)}
+                        <Button
+                            variant="default"
+                            size="sm"
+                            onclick={props.onclick}
+                            aria-expanded={props['aria-expanded']}
+                            >Create template</Button
+                        >
+                    {/snippet}
                 </DialogTrigger>
                 <DialogContent>
                     <DialogTitle>Create rule template</DialogTitle>
@@ -312,8 +321,13 @@
                         </div>
                     </div>
                     <DialogFooter>
-                        <DialogClose>
-                            <Button variant="outline">Cancel</Button>
+                        <DialogClose asChild>
+                            {#snippet children(props)}
+                                <Button
+                                    variant="outline"
+                                    onclick={props.onclick}>Cancel</Button
+                                >
+                            {/snippet}
                         </DialogClose>
                         <Button
                             onclick={handleCreate}
@@ -484,8 +498,12 @@
                 </div>
             </div>
             <DialogFooter>
-                <DialogClose>
-                    <Button variant="outline">Cancel</Button>
+                <DialogClose asChild>
+                    {#snippet children(props)}
+                        <Button variant="outline" onclick={props.onclick}
+                            >Cancel</Button
+                        >
+                    {/snippet}
                 </DialogClose>
                 <Button
                     onclick={handleUpdate}
