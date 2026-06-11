@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\OrganizationRole;
+use App\Http\Requests\CopyRuleTemplatesRequest;
 use App\Models\Project;
 use App\Models\RuleTemplate;
 use App\Services\SegmentRules\SegmentRuleOperator;
 use App\Services\SegmentRules\SegmentRuleType;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,9 +29,36 @@ class RuleTemplateController extends Controller
             ->orderBy('name')
             ->get();
 
+        $manageableOrganizationIds = $request->user()
+            ->organizations()
+            ->get()
+            ->filter(fn ($organization) => OrganizationRole::from($organization->pivot->role)->canManageProjects())
+            ->pluck('id');
+
+        $destinationProjects = Project::query()
+            ->whereIn('organization_id', $manageableOrganizationIds)
+            ->whereKeyNot($project->id)
+            ->with([
+                'organization:id,name',
+                'ruleTemplates' => fn ($query) => $query
+                    ->select(['id', 'project_id', 'name'])
+                    ->whereIn('name', $templates->pluck('name')),
+            ])
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Project $destination) => [
+                'id' => $destination->id,
+                'name' => $destination->name,
+                'slug' => $destination->slug,
+                'organization_name' => $destination->organization->name,
+                'rule_template_names' => $destination->ruleTemplates->pluck('name')->values(),
+            ])
+            ->values();
+
         return Inertia::render('RuleTemplates/Index', [
             'project' => $project,
             'templates' => $templates,
+            'destinationProjects' => $destinationProjects,
             'ruleTypes' => $this->enumOptions(SegmentRuleType::class),
             'ruleOperators' => $this->enumOptions(SegmentRuleOperator::class),
         ]);
@@ -57,6 +88,52 @@ class RuleTemplateController extends Controller
         ]);
 
         return redirect()->route('projects.rule-templates.index', $project->slug);
+    }
+
+    /**
+     * Copy selected rule templates into another project.
+     */
+    public function copy(CopyRuleTemplatesRequest $request, Project $project): RedirectResponse
+    {
+        $destination = Project::findOrFail($request->validated('destination_project_id'));
+        $this->authorize('update', $destination);
+
+        $templates = $project->ruleTemplates()
+            ->whereKey($request->validated('rule_template_ids'))
+            ->get();
+
+        $existingNames = $destination->ruleTemplates()
+            ->whereIn('name', $templates->pluck('name'))
+            ->pluck('name');
+
+        $templatesToCopy = $templates->whereNotIn('name', $existingNames);
+
+        DB::transaction(function () use ($destination, $templatesToCopy): void {
+            $destination->ruleTemplates()->createMany($templatesToCopy->map(fn (RuleTemplate $template) => [
+                'name' => $template->name,
+                'type' => $template->type,
+                'key' => $template->key,
+                'operator' => $template->operator,
+                'value' => $template->value,
+            ])->all());
+        });
+
+        $copiedCount = $templatesToCopy->count();
+        $skippedCount = $templates->count() - $copiedCount;
+        $message = "{$copiedCount} rule ".Str::plural('template', $copiedCount)." copied into {$destination->name}.";
+
+        if ($skippedCount > 0) {
+            $message .= " {$skippedCount} rule ".Str::plural('template', $skippedCount).' skipped because the name already exists.';
+        }
+
+        return redirect()
+            ->route('projects.rule-templates.index', $project->slug)
+            ->with('ruleTemplateCopy', [
+                'id' => Str::uuid()->toString(),
+                'message' => $message,
+                'destination_name' => $destination->name,
+                'destination_url' => route('projects.rule-templates.index', $destination->slug),
+            ]);
     }
 
     /**

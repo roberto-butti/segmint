@@ -1,7 +1,10 @@
 <script lang="ts">
-    import { router } from '@inertiajs/svelte';
+    import { Link, page, router } from '@inertiajs/svelte';
+    import X from 'lucide-svelte/icons/x';
     import { untrack } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
+    import CopyRuleTemplatesDialog from '@/components/CopyRuleTemplatesDialog.svelte';
+    import { Alert, AlertDescription } from '@/components/ui/alert';
     import { Button } from '@/components/ui/button';
     import {
         Card,
@@ -10,6 +13,7 @@
         CardHeader,
         CardTitle,
     } from '@/components/ui/card';
+    import { Checkbox } from '@/components/ui/checkbox';
     import {
         Dialog,
         DialogClose,
@@ -52,17 +56,48 @@
         value: string;
     }
 
+    interface DestinationProject {
+        id: number;
+        name: string;
+        slug: string;
+        organization_name: string;
+        rule_template_names: string[];
+    }
+
     let {
         project,
         templates,
+        destinationProjects,
         ruleTypes,
         ruleOperators,
     }: {
         project: Project;
         templates: RuleTemplateItem[];
+        destinationProjects: DestinationProject[];
         ruleTypes: EnumOption[];
         ruleOperators: EnumOption[];
     } = $props();
+
+    let selected = $state<Record<number, boolean>>({});
+    let dismissedCopyMessageId = $state<string | null>(null);
+
+    const selectedTemplates = $derived(
+        templates.filter((template) => selected[template.id]),
+    );
+    const allSelected = $derived(
+        templates.length > 0 && selectedTemplates.length === templates.length,
+    );
+    const ruleTemplateCopy = $derived(page.props.flash.ruleTemplateCopy);
+
+    function selectAll(): void {
+        selected = Object.fromEntries(
+            templates.map((template) => [template.id, true]),
+        );
+    }
+
+    function clearSelection(): void {
+        selected = {};
+    }
 
     const breadcrumbs: BreadcrumbItem[] = $derived([
         {
@@ -221,124 +256,160 @@
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-semibold">Rule Templates</h2>
-            <Dialog bind:open={createOpen}>
-                <DialogTrigger asChild>
-                    {#snippet children(props)}
-                        <Button
-                            variant="default"
-                            size="sm"
-                            onclick={props.onclick}
-                            aria-expanded={props['aria-expanded']}
-                            >Create template</Button
-                        >
-                    {/snippet}
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogTitle>Create rule template</DialogTitle>
-                    <DialogDescription>
-                        Define a reusable rule preset for this project.
-                    </DialogDescription>
-                    <div class="grid gap-4 py-4">
-                        <div class="grid gap-2">
-                            <Label for="create-name">Name</Label>
-                            <Input
-                                id="create-name"
-                                bind:value={createName}
-                                placeholder="e.g. Google visitors"
-                            />
-                        </div>
-                        <div class="grid gap-2">
-                            <Label>Type</Label>
-                            <Select
-                                type="single"
-                                value={createType}
-                                onValueChange={(v) => {
-                                    if (v) {
-                                        onCreateTypeChange(v);
-                                    }
-                                }}
+            <div class="flex items-center gap-2">
+                <CopyRuleTemplatesDialog
+                    sourceProjectSlug={project.slug}
+                    {selectedTemplates}
+                    {destinationProjects}
+                />
+                <Dialog bind:open={createOpen}>
+                    <DialogTrigger asChild>
+                        {#snippet children(props)}
+                            <Button
+                                variant="default"
+                                size="sm"
+                                onclick={props.onclick}
+                                aria-expanded={props['aria-expanded']}
+                                >Create template</Button
                             >
-                                <SelectTrigger class="w-full"
-                                    >{getTypeLabel(createType)}</SelectTrigger
-                                >
-                                <SelectContent>
-                                    {#each ruleTypes as rt (rt.value)}
-                                        <SelectItem value={rt.value}
-                                            >{rt.label}</SelectItem
-                                        >
-                                    {/each}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        {#if shouldShowKey(createType)}
+                        {/snippet}
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogTitle>Create rule template</DialogTitle>
+                        <DialogDescription>
+                            Define a reusable rule preset for this project.
+                        </DialogDescription>
+                        <div class="grid gap-4 py-4">
                             <div class="grid gap-2">
-                                <Label for="create-key">Key</Label>
+                                <Label for="create-name">Name</Label>
                                 <Input
-                                    id="create-key"
-                                    bind:value={createKey}
-                                    placeholder="e.g. utms.utm_source"
+                                    id="create-name"
+                                    bind:value={createName}
+                                    placeholder="e.g. Google visitors"
+                                />
+                            </div>
+                            <div class="grid gap-2">
+                                <Label>Type</Label>
+                                <Select
+                                    type="single"
+                                    value={createType}
+                                    onValueChange={(v) => {
+                                        if (v) {
+                                            onCreateTypeChange(v);
+                                        }
+                                    }}
+                                >
+                                    <SelectTrigger class="w-full"
+                                        >{getTypeLabel(
+                                            createType,
+                                        )}</SelectTrigger
+                                    >
+                                    <SelectContent>
+                                        {#each ruleTypes as rt (rt.value)}
+                                            <SelectItem value={rt.value}
+                                                >{rt.label}</SelectItem
+                                            >
+                                        {/each}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            {#if shouldShowKey(createType)}
+                                <div class="grid gap-2">
+                                    <Label for="create-key">Key</Label>
+                                    <Input
+                                        id="create-key"
+                                        bind:value={createKey}
+                                        placeholder="e.g. utms.utm_source"
+                                        class="font-mono"
+                                    />
+                                </div>
+                            {/if}
+                            <div class="grid gap-2">
+                                <Label>Operator</Label>
+                                <Select
+                                    type="single"
+                                    value={createOperator}
+                                    onValueChange={(v) => {
+                                        if (v) {
+                                            createOperator = v;
+                                        }
+                                    }}
+                                >
+                                    <SelectTrigger class="w-full"
+                                        >{getOperatorLabel(
+                                            createOperator,
+                                        )}</SelectTrigger
+                                    >
+                                    <SelectContent>
+                                        {#each ruleOperators as op (op.value)}
+                                            <SelectItem value={op.value}
+                                                >{op.label}</SelectItem
+                                            >
+                                        {/each}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div class="grid gap-2">
+                                <Label for="create-value"
+                                    >Value <span class="text-muted-foreground"
+                                        >(optional)</span
+                                    ></Label
+                                >
+                                <Input
+                                    id="create-value"
+                                    bind:value={createValue}
+                                    placeholder="Leave empty for user to fill"
                                     class="font-mono"
                                 />
                             </div>
-                        {/if}
-                        <div class="grid gap-2">
-                            <Label>Operator</Label>
-                            <Select
-                                type="single"
-                                value={createOperator}
-                                onValueChange={(v) => {
-                                    if (v) {
-                                        createOperator = v;
-                                    }
-                                }}
-                            >
-                                <SelectTrigger class="w-full"
-                                    >{getOperatorLabel(
-                                        createOperator,
-                                    )}</SelectTrigger
-                                >
-                                <SelectContent>
-                                    {#each ruleOperators as op (op.value)}
-                                        <SelectItem value={op.value}
-                                            >{op.label}</SelectItem
-                                        >
-                                    {/each}
-                                </SelectContent>
-                            </Select>
                         </div>
-                        <div class="grid gap-2">
-                            <Label for="create-value"
-                                >Value <span class="text-muted-foreground"
-                                    >(optional)</span
-                                ></Label
+                        <DialogFooter>
+                            <DialogClose asChild>
+                                {#snippet children(props)}
+                                    <Button
+                                        variant="outline"
+                                        onclick={props.onclick}>Cancel</Button
+                                    >
+                                {/snippet}
+                            </DialogClose>
+                            <Button
+                                onclick={handleCreate}
+                                disabled={createProcessing ||
+                                    !createName.trim()}
                             >
-                            <Input
-                                id="create-value"
-                                bind:value={createValue}
-                                placeholder="Leave empty for user to fill"
-                                class="font-mono"
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            {#snippet children(props)}
-                                <Button
-                                    variant="outline"
-                                    onclick={props.onclick}>Cancel</Button
-                                >
-                            {/snippet}
-                        </DialogClose>
-                        <Button
-                            onclick={handleCreate}
-                            disabled={createProcessing || !createName.trim()}
-                        >
-                            {createProcessing ? 'Creating...' : 'Create'}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                                {createProcessing ? 'Creating...' : 'Create'}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            </div>
         </div>
+
+        {#if ruleTemplateCopy && dismissedCopyMessageId !== ruleTemplateCopy.id}
+            <Alert class="pr-12">
+                <AlertDescription>
+                    <p>
+                        {ruleTemplateCopy.message}
+                        <Link
+                            href={ruleTemplateCopy.destination_url}
+                            class="font-medium text-foreground underline underline-offset-4"
+                        >
+                            View {ruleTemplateCopy.destination_name} rule templates
+                        </Link>
+                    </p>
+                </AlertDescription>
+                <button
+                    type="button"
+                    class="absolute top-3 right-3 rounded-sm p-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label="Dismiss copy result"
+                    onclick={() => {
+                        dismissedCopyMessageId = ruleTemplateCopy.id;
+                    }}
+                >
+                    <X class="size-4" />
+                </button>
+            </Alert>
+        {/if}
 
         {#if templates.length === 0}
             <div
@@ -350,13 +421,47 @@
                 </p>
             </div>
         {:else}
+            <div class="flex items-center gap-2">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onclick={allSelected ? clearSelection : selectAll}
+                >
+                    {allSelected ? 'Clear selection' : 'Select all'}
+                </Button>
+                {#if selectedTemplates.length > 0}
+                    <span class="text-sm text-muted-foreground">
+                        {selectedTemplates.length} rule
+                        {selectedTemplates.length === 1
+                            ? 'template selected'
+                            : 'templates selected'}
+                    </span>
+                {/if}
+                {#if destinationProjects.length === 0}
+                    <span class="text-sm text-muted-foreground">
+                        No other manageable projects available.
+                    </span>
+                {/if}
+            </div>
             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {#each templates as template (template.id)}
                     <Card>
                         <CardHeader>
-                            <CardTitle class="text-base"
-                                >{template.name}</CardTitle
-                            >
+                            <div class="flex items-center gap-2">
+                                <Checkbox
+                                    id={`rule-template-${template.id}`}
+                                    aria-label={`Select ${template.name}`}
+                                    checked={selected[template.id] ?? false}
+                                    onclick={() => {
+                                        selected[template.id] = !(
+                                            selected[template.id] ?? false
+                                        );
+                                    }}
+                                />
+                                <CardTitle class="text-base"
+                                    >{template.name}</CardTitle
+                                >
+                            </div>
                         </CardHeader>
                         <CardContent class="space-y-1">
                             <p class="text-xs">

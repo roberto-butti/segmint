@@ -34,6 +34,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('projects/{project:slug}/segments/{segment}', [SegmentController::class, 'destroy'])->name('projects.segments.destroy');
     Route::get('projects/{project:slug}/rule-templates', [RuleTemplateController::class, 'index'])->name('projects.rule-templates.index');
     Route::post('projects/{project:slug}/rule-templates', [RuleTemplateController::class, 'store'])->name('projects.rule-templates.store');
+    Route::post('projects/{project:slug}/rule-templates/copy', [RuleTemplateController::class, 'copy'])->name('projects.rule-templates.copy');
     Route::put('projects/{project:slug}/rule-templates/{ruleTemplate}', [RuleTemplateController::class, 'update'])->name('projects.rule-templates.update');
     Route::delete('projects/{project:slug}/rule-templates/{ruleTemplate}', [RuleTemplateController::class, 'destroy'])->name('projects.rule-templates.destroy');
     Route::get('projects/{project:slug}/events', [EventLogViewController::class, 'index'])->name('projects.events.index');

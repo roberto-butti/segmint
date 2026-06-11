@@ -29,6 +29,12 @@ declare module '@inertiajs/core' {
                     destination_name: string;
                     destination_url: string;
                 } | null;
+                ruleTemplateCopy: {
+                    id: string;
+                    message: string;
+                    destination_name: string;
+                    destination_url: string;
+                } | null;
             };
             sidebarOpen: boolean;
             [key: string]: unknown;
