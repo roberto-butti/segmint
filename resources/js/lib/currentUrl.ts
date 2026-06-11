@@ -1,11 +1,9 @@
 import type { LinkComponentBaseProps } from '@inertiajs/core';
 import { page } from '@inertiajs/svelte';
-import type { Readable } from 'svelte/store';
-import { derived } from 'svelte/store';
 import { toUrl } from '@/lib/utils';
 
 export type CurrentUrlState = {
-    currentUrl: Readable<string>;
+    currentUrl: () => string;
     isCurrentUrl: (
         urlToCheck: NonNullable<LinkComponentBaseProps['href']>,
         currentUrl: string,
@@ -23,18 +21,18 @@ export type CurrentUrlState = {
     ) => TIfTrue | TIfFalse;
 };
 
-const currentUrl = derived(page, ($page) => {
+function currentUrl(): string {
     const origin =
         typeof window === 'undefined'
             ? 'http://localhost'
             : window.location.origin;
 
     try {
-        return new URL($page.url, origin).pathname;
+        return new URL(page.url, origin).pathname;
     } catch {
-        return $page.url;
+        return page.url;
     }
-});
+}
 
 export function currentUrlState(): CurrentUrlState {
     function isCurrentUrl(

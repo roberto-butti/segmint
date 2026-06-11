@@ -50,7 +50,7 @@ Most personalisation tools either lock you into expensive SaaS platforms or requ
 | Layer       | Technology                          |
 |-------------|-------------------------------------|
 | Backend     | Laravel 13, PHP 8.5                |
-| Frontend    | Svelte 5, Inertia.js v2            |
+| Frontend    | Svelte 5, Inertia.js v3            |
 | Styling     | Tailwind CSS 4                      |
 | Charts      | Chart.js                            |
 | Auth        | Laravel Fortify (headless)          |
@@ -64,6 +64,7 @@ Most personalisation tools either lock you into expensive SaaS platforms or requ
 - PHP 8.5+
 - Composer
 - Bun
+- Node.js 22+ when running production SSR
 - PostgreSQL
 
 ## Installation
@@ -96,11 +97,21 @@ bun run build
 composer run dev
 ```
 
+Inertia SSR is handled automatically by the Vite development server.
+
 Or run services individually:
 
 ```bash
 php artisan serve
 bun run dev
+```
+
+For production SSR, build both client and server bundles and start the Inertia
+SSR process:
+
+```bash
+bun run build:ssr
+php artisan inertia:start-ssr
 ```
 
 ## Testing

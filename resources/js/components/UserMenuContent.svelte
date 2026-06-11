@@ -20,11 +20,14 @@
         user: User;
     } = $props();
 
-    function handleLogout(propsOnClick?: (event: MouseEvent) => void) {
-        return (event: MouseEvent) => {
+    function handleDropdownClick(
+        propsOnClick?: (event: MouseEvent) => void,
+        afterClick?: () => void,
+    ): () => void {
+        return ((event: MouseEvent) => {
             propsOnClick?.(event);
-            router.flushAll();
-        };
+            afterClick?.();
+        }) as () => void;
     }
 </script>
 
@@ -41,7 +44,7 @@
                 class={props.class}
                 href={toUrl(edit())}
                 prefetch
-                onclick={props.onClick}
+                onclick={handleDropdownClick(props.onClick)}
             >
                 <Settings class="mr-2 h-4 w-4" />
                 Settings
@@ -56,7 +59,9 @@
             class={props.class}
             href={logout()}
             as="button"
-            onclick={handleLogout(props.onClick)}
+            onclick={handleDropdownClick(props.onClick, () =>
+                router.flushAll(),
+            )}
             data-test="logout-button"
         >
             <LogOut class="mr-2 h-4 w-4" />

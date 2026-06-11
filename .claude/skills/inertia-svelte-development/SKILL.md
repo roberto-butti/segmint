@@ -1,6 +1,6 @@
 ---
 name: inertia-svelte-development
-description: "Develops Inertia.js v2 Svelte client-side applications. Activates when creating Svelte pages, forms, or navigation; using Link, Form, or router; working with deferred props, prefetching, or polling; or when user mentions Svelte with Inertia, Svelte pages, Svelte forms, or Svelte navigation."
+description: "Develops Inertia.js v3 Svelte 5 client-side applications. Activates when creating Svelte pages, forms, or navigation; using Link, Form, useForm, useHttp, setLayoutProps, or router; working with deferred props, prefetching, optimistic updates, instant visits, or polling; or when user mentions Svelte with Inertia, Svelte pages, Svelte forms, or Svelte navigation."
 license: MIT
 metadata:
   author: laravel
@@ -13,14 +13,24 @@ metadata:
 Activate this skill when:
 
 - Creating or modifying Svelte page components for Inertia
-- Working with forms in Svelte (using `<Form>` or `useForm`)
+- Working with forms in Svelte (using `<Form>`, `useForm`, or `useHttp`)
 - Implementing client-side navigation with `<Link>` or `router`
-- Using v2 features: deferred props, prefetching, WhenVisible, InfiniteScroll, once props, flash data, or polling
+- Using v3 features: deferred props, prefetching, optimistic updates, instant visits, layout props, HTTP requests, WhenVisible, InfiniteScroll, once props, flash data, or polling
 - Building Svelte-specific features with the Inertia protocol
+
+## Important: Svelte 5 Required
+
+Inertia v3 requires Svelte 5. All code must use Svelte 5 runes syntax:
+
+- Use `let { prop } = $props()` (not `export let prop`)
+- Use `onclick` (not `on:click`)
+- Use `$derived()` for reactive values (not `$:`)
+- Use `{#snippet}` for named slots (not `slot="name"`)
+- Use `{@render children()}` for default slot content
 
 ## Documentation
 
-Use `search-docs` for detailed Inertia v2 Svelte patterns and documentation.
+Use `search-docs` for detailed Inertia v3 Svelte patterns and documentation.
 
 ## Basic Usage
 
@@ -33,7 +43,7 @@ Svelte page components should be placed in the `resources/js/pages` directory.
 <!-- Basic Svelte Page Component -->
 ```svelte
 <script>
-export let users
+let { users } = $props()
 </script>
 
 <div>
@@ -113,7 +123,7 @@ function createUser() {
 
 ### Form Component (Recommended)
 
-The recommended way to build forms is with the `<Form>` component:
+The recommended way to build forms is with the `<Form>` component. In Svelte 5, use `{#snippet}` for the default slot:
 
 <!-- Form Component Example -->
 ```svelte
@@ -121,24 +131,26 @@ The recommended way to build forms is with the `<Form>` component:
 import { Form } from '@inertiajs/svelte'
 </script>
 
-<Form action="/users" method="post" let:errors let:processing let:wasSuccessful>
-    <input type="text" name="name" />
-    {#if errors.name}
-        <div>{errors.name}</div>
-    {/if}
+<Form action="/users" method="post">
+    {#snippet children({ errors, processing, wasSuccessful })}
+        <input type="text" name="name" />
+        {#if errors.name}
+            <div>{errors.name}</div>
+        {/if}
 
-    <input type="email" name="email" />
-    {#if errors.email}
-        <div>{errors.email}</div>
-    {/if}
+        <input type="email" name="email" />
+        {#if errors.email}
+            <div>{errors.email}</div>
+        {/if}
 
-    <button type="submit" disabled={processing}>
-        {processing ? 'Creating...' : 'Create User'}
-    </button>
+        <button type="submit" disabled={processing}>
+            {processing ? 'Creating...' : 'Create User'}
+        </button>
 
-    {#if wasSuccessful}
-        <div>User created!</div>
-    {/if}
+        {#if wasSuccessful}
+            <div>User created!</div>
+        {/if}
+    {/snippet}
 </Form>
 ```
 
@@ -150,40 +162,40 @@ import { Form } from '@inertiajs/svelte'
 import { Form } from '@inertiajs/svelte'
 </script>
 
-<Form
-    action="/users"
-    method="post"
-    let:errors
-    let:hasErrors
-    let:processing
-    let:progress
-    let:wasSuccessful
-    let:recentlySuccessful
-    let:clearErrors
-    let:resetAndClearErrors
-    let:defaults
-    let:isDirty
-    let:reset
-    let:submit
->
-    <input type="text" name="name" value={defaults.name} />
-    {#if errors.name}
-        <div>{errors.name}</div>
-    {/if}
+<Form action="/users" method="post">
+    {#snippet children({
+        errors,
+        hasErrors,
+        processing,
+        progress,
+        wasSuccessful,
+        recentlySuccessful,
+        clearErrors,
+        resetAndClearErrors,
+        defaults,
+        isDirty,
+        reset,
+        submit
+    })}
+        <input type="text" name="name" value={defaults.name} />
+        {#if errors.name}
+            <div>{errors.name}</div>
+        {/if}
 
-    <button type="submit" disabled={processing}>
-        {processing ? 'Saving...' : 'Save'}
-    </button>
+        <button type="submit" disabled={processing}>
+            {processing ? 'Saving...' : 'Save'}
+        </button>
 
-    {#if progress}
-        <progress value={progress.percentage} max="100">
-            {progress.percentage}%
-        </progress>
-    {/if}
+        {#if progress}
+            <progress value={progress.percentage} max="100">
+                {progress.percentage}%
+            </progress>
+        {/if}
 
-    {#if wasSuccessful}
-        <div>Saved!</div>
-    {/if}
+        {#if wasSuccessful}
+            <div>Saved!</div>
+        {/if}
+    {/snippet}
 </Form>
 ```
 
@@ -203,23 +215,17 @@ Use the `search-docs` tool with a query of `form component resetting` for detail
 import { Form } from '@inertiajs/svelte'
 </script>
 
-<Form
-    action="/users"
-    method="post"
-    resetOnSuccess
-    setDefaultsOnSuccess
-    let:errors
-    let:processing
-    let:wasSuccessful
->
-    <input type="text" name="name" />
-    {#if errors.name}
-        <div>{errors.name}</div>
-    {/if}
+<Form action="/users" method="post" resetOnSuccess setDefaultsOnSuccess>
+    {#snippet children({ errors, processing, wasSuccessful })}
+        <input type="text" name="name" />
+        {#if errors.name}
+            <div>{errors.name}</div>
+        {/if}
 
-    <button type="submit" disabled={processing}>
-        Submit
-    </button>
+        <button type="submit" disabled={processing}>
+            Submit
+        </button>
+    {/snippet}
 </Form>
 ```
 
@@ -240,36 +246,163 @@ const form = useForm({
     password: '',
 })
 
-function submit() {
-    $form.post('/users', {
-        onSuccess: () => $form.reset('password'),
+function submit(e) {
+    e.preventDefault()
+    form.post('/users', {
+        onSuccess: () => form.reset('password'),
     })
 }
 </script>
 
-<form on:submit|preventDefault={submit}>
-    <input type="text" bind:value={$form.name} />
-    {#if $form.errors.name}
-        <div>{$form.errors.name}</div>
+<form onsubmit={submit}>
+    <input type="text" bind:value={form.name} />
+    {#if form.errors.name}
+        <div>{form.errors.name}</div>
     {/if}
 
-    <input type="email" bind:value={$form.email} />
-    {#if $form.errors.email}
-        <div>{$form.errors.email}</div>
+    <input type="email" bind:value={form.email} />
+    {#if form.errors.email}
+        <div>{form.errors.email}</div>
     {/if}
 
-    <input type="password" bind:value={$form.password} />
-    {#if $form.errors.password}
-        <div>{$form.errors.password}</div>
+    <input type="password" bind:value={form.password} />
+    {#if form.errors.password}
+        <div>{form.errors.password}</div>
     {/if}
 
-    <button type="submit" disabled={$form.processing}>
+    <button type="submit" disabled={form.processing}>
         Create User
     </button>
 </form>
 ```
 
-## Inertia v2 Features
+## Inertia v3 Features
+
+### HTTP Requests
+
+Use the `useHttp` hook for standalone HTTP requests that do not trigger Inertia page visits. It provides the same developer experience as `useForm`, but for plain JSON endpoints.
+
+<!-- useHttp Example -->
+```svelte
+<script>
+import { useHttp } from '@inertiajs/svelte'
+
+const http = useHttp({
+    query: '',
+})
+
+function search() {
+    http.get('/api/search', {
+        onSuccess: (response) => {
+            console.log(response)
+        },
+    })
+}
+</script>
+
+<input bind:value={http.query} oninput={search} />
+{#if http.processing}
+    <div>Searching...</div>
+{/if}
+```
+
+### Optimistic Updates
+
+Apply data changes instantly before the server responds, with automatic rollback on failure:
+
+<!-- Optimistic Update with Router -->
+```svelte
+<script>
+import { router } from '@inertiajs/svelte'
+
+function like(post) {
+    router.optimistic((props) => ({
+        post: {
+            ...props.post,
+            likes: props.post.likes + 1,
+        },
+    })).post(`/posts/${post.id}/like`)
+}
+</script>
+```
+
+Optimistic updates also work with `useForm` and the `<Form>` component:
+
+<!-- Optimistic Update with Form Component -->
+```svelte
+<script>
+import { Form } from '@inertiajs/svelte'
+</script>
+
+<Form
+    action="/todos"
+    method="post"
+    optimistic={(props, data) => ({
+        todos: [...props.todos, { id: Date.now(), name: data.name, done: false }],
+    })}
+>
+    {#snippet children({ processing })}
+        <input type="text" name="name" />
+        <button type="submit" disabled={processing}>Add Todo</button>
+    {/snippet}
+</Form>
+```
+
+### Instant Visits
+
+Navigate to a new page immediately without waiting for the server response. The target component renders right away with shared props, while page-specific props load in the background.
+
+<!-- Instant Visit with Link -->
+```svelte
+<script>
+import { Link, inertia } from '@inertiajs/svelte'
+</script>
+
+<Link href="/dashboard" component="Dashboard">Dashboard</Link>
+
+<a href="/dashboard" use:inertia={{ component: 'Dashboard' }}>Dashboard</a>
+
+<Link
+    href="/posts/1"
+    component="Posts/Show"
+    pageProps={{ post: { id: 1, title: 'My Post' } }}
+>
+    View Post
+</Link>
+```
+
+### Layout Props
+
+Share dynamic data between pages and persistent layouts:
+
+<!-- Layout Props in Layout -->
+```svelte
+<script>
+let { title = 'My App', showSidebar = true, children } = $props()
+</script>
+
+<header>{title}</header>
+{#if showSidebar}
+    <aside>Sidebar</aside>
+{/if}
+<main>
+    {@render children()}
+</main>
+```
+
+<!-- Setting Layout Props from Page -->
+```svelte
+<script>
+import { setLayoutProps } from '@inertiajs/svelte'
+
+setLayoutProps({
+    title: 'Dashboard',
+    showSidebar: false,
+})
+</script>
+
+<h1>Dashboard</h1>
+```
 
 ### Deferred Props
 
@@ -278,7 +411,7 @@ Use deferred props to load data after initial page render:
 <!-- Deferred Props with Empty State -->
 ```svelte
 <script>
-export let users
+let { users } = $props()
 </script>
 
 <div>
@@ -300,27 +433,16 @@ export let users
 
 ### Polling
 
-Automatically refresh data at intervals:
+Use the `usePoll` hook to automatically refresh data at intervals. It handles cleanup on unmount and throttles polling when the tab is inactive.
 
-<!-- Polling Example -->
+<!-- Basic Polling -->
 ```svelte
 <script>
-import { router } from '@inertiajs/svelte'
-import { onMount, onDestroy } from 'svelte'
+import { usePoll } from '@inertiajs/svelte'
 
-export let stats
+let { stats } = $props()
 
-let interval
-
-onMount(() => {
-    interval = setInterval(() => {
-        router.reload({ only: ['stats'] })
-    }, 5000) // Poll every 5 seconds
-})
-
-onDestroy(() => {
-    clearInterval(interval)
-})
+usePoll(5000)
 </script>
 
 <div>
@@ -328,6 +450,38 @@ onDestroy(() => {
     <div>Active Users: {stats.activeUsers}</div>
 </div>
 ```
+
+<!-- Polling With Request Options and Manual Control -->
+```svelte
+<script>
+import { usePoll } from '@inertiajs/svelte'
+
+let { stats } = $props()
+
+const { start, stop } = usePoll(5000, {
+    only: ['stats'],
+    onStart() {
+        console.log('Polling request started')
+    },
+    onFinish() {
+        console.log('Polling request finished')
+    },
+}, {
+    autoStart: false,
+    keepAlive: true,
+})
+</script>
+
+<div>
+    <h1>Dashboard</h1>
+    <div>Active Users: {stats.activeUsers}</div>
+    <button onclick={start}>Start Polling</button>
+    <button onclick={stop}>Stop Polling</button>
+</div>
+```
+
+- `autoStart` (default `true`) - set to `false` to start polling manually via the returned `start()` function
+- `keepAlive` (default `false`) - set to `true` to prevent throttling when the browser tab is inactive
 
 ### WhenVisible
 
@@ -338,25 +492,45 @@ Lazy-load a prop when an element scrolls into view. Useful for deferring expensi
 <script>
 import { WhenVisible } from '@inertiajs/svelte'
 
-export let stats
+let { stats } = $props()
 </script>
 
 <div>
     <h1>Dashboard</h1>
 
-    <!-- stats prop is loaded only when this section scrolls into view -->
     <WhenVisible data="stats" buffer={200}>
+        {#snippet fallback()}
+            <div class="animate-pulse">Loading stats...</div>
+        {/snippet}
+
         <div>
             <p>Total Users: {stats.total_users}</p>
             <p>Revenue: {stats.revenue}</p>
         </div>
-
-        <svelte:fragment slot="fallback">
-            <div class="animate-pulse">Loading stats...</div>
-        </svelte:fragment>
     </WhenVisible>
 </div>
 ```
+
+### InfiniteScroll
+
+Automatically load additional pages of paginated data as users scroll:
+
+<!-- InfiniteScroll Example -->
+```svelte
+<script>
+import { InfiniteScroll } from '@inertiajs/svelte'
+
+let { users } = $props()
+</script>
+
+<InfiniteScroll data="users">
+    {#each users.data as user (user.id)}
+        <div>{user.name}</div>
+    {/each}
+</InfiniteScroll>
+```
+
+The server must use `Inertia::scroll()` to configure the paginated data. Use the `search-docs` tool with a query of `infinite scroll` for detailed guidance on buffers, manual loading, reverse mode, and custom trigger elements.
 
 ## Server-Side Patterns
 
@@ -365,7 +539,10 @@ Server-side patterns (Inertia::render, props, middleware) are covered in inertia
 ## Common Pitfalls
 
 - Using traditional `<a>` links instead of Inertia's `<Link>` component (breaks SPA behavior)
+- Using Svelte 4 syntax (`export let`, `on:click`, `$:`, `slot`) instead of Svelte 5 runes (`$props()`, `onclick`, `$derived()`, `{#snippet}`)
 - Forgetting to add loading states (skeleton screens) when using deferred props
 - Not handling the `undefined` state of deferred props before data loads
-- Using `<form>` without preventing default submission (use `<Form>` component or `on:submit|preventDefault`)
+- Using `<form>` without preventing default submission (use `<Form>` component or call `e.preventDefault()` in the `onsubmit` handler)
 - Forgetting to check if `<Form>` component is available in your Inertia version
+- Using `router.cancel()` instead of `router.cancelAll()` (v3 breaking change)
+- Using `router.on('invalid', ...)` or `router.on('exception', ...)` instead of the renamed `httpException` and `networkError` events
