@@ -7,7 +7,7 @@ segment rules, and exposes the resulting segment data through an API and JavaScr
 It can be used to analyse audience behaviour or adapt application content based on the
 segments matched by a visitor.
 
-## Purpose and deployment model
+## Why Segmint
 
 Segmint provides a central place to inspect tracked activity, define audience segments,
 and use those segments in other applications.
