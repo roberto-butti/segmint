@@ -2,9 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Enums\OrganizationRole;
+use App\Models\Organization;
 use App\Models\Project;
 use App\Models\Segment;
 use App\Models\SegmentRule;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -104,6 +107,22 @@ class SegmentDuplicateTest extends TestCase
         $response = $this->post(route('projects.segments.duplicate', [$otherProject, $segment]), [
             'name' => 'Stolen',
             'slug' => 'stolen-abc12',
+        ]);
+
+        $response->assertForbidden();
+    }
+
+    public function test_viewer_cannot_duplicate_a_segment(): void
+    {
+        $user = User::factory()->create();
+        $organization = Organization::factory()->create();
+        $organization->members()->attach($user, ['role' => OrganizationRole::Viewer->value]);
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
+        $segment = Segment::factory()->create(['project_id' => $project->id]);
+
+        $response = $this->actingAs($user)->post(route('projects.segments.duplicate', [$project, $segment]), [
+            'name' => 'Duplicated',
+            'slug' => 'duplicated',
         ]);
 
         $response->assertForbidden();

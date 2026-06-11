@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Project;
+use App\Models\Segment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -98,6 +99,45 @@ class SegmentCreateTest extends TestCase
         ]);
 
         $response->assertSessionHasErrors('name');
+    }
+
+    public function test_slug_derived_from_name_must_be_unique_within_project(): void
+    {
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
+        Segment::factory()->create([
+            'project_id' => $project->id,
+            'slug' => 'frequent-homepage-visitors',
+        ]);
+
+        $response = $this->actingAs($user)->post(route('projects.segments.store', $project), [
+            'name' => 'Frequent Homepage Visitors',
+            'active' => true,
+        ]);
+
+        $response->assertSessionHasErrors([
+            'slug' => 'A segment with this name already exists in this project.',
+        ]);
+        $this->assertCount(1, $project->segments);
+    }
+
+    public function test_same_slug_can_be_created_in_another_project(): void
+    {
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $source = Project::factory()->create(['organization_id' => $organization->id]);
+        $destination = Project::factory()->create(['organization_id' => $organization->id]);
+        Segment::factory()->create([
+            'project_id' => $source->id,
+            'slug' => 'frequent-homepage-visitors',
+        ]);
+
+        $response = $this->actingAs($user)->post(route('projects.segments.store', $destination), [
+            'name' => 'Frequent Homepage Visitors',
+            'active' => true,
+        ]);
+
+        $response->assertSessionDoesntHaveErrors();
+        $this->assertTrue($destination->segments()->where('slug', 'frequent-homepage-visitors')->exists());
     }
 
     public function test_segment_can_be_created_without_description(): void

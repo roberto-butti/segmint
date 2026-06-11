@@ -102,6 +102,7 @@
                         placeholder="Segment name"
                     />
                     <InputError message={errors.name} />
+                    <InputError message={errors.slug} />
                 </div>
 
                 <div class="grid gap-2">

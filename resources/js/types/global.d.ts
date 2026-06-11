@@ -21,6 +21,15 @@ declare module '@inertiajs/core' {
         sharedPageProps: {
             name: string;
             auth: Auth;
+            flash: {
+                success: string | null;
+                segmentCopy: {
+                    id: string;
+                    message: string;
+                    destination_name: string;
+                    destination_url: string;
+                } | null;
+            };
             sidebarOpen: boolean;
             [key: string]: unknown;
         };

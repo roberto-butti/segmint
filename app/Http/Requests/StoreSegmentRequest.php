@@ -6,6 +6,7 @@ use App\Services\SegmentRules\SegmentRuleOperator;
 use App\Services\SegmentRules\SegmentRuleType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class StoreSegmentRequest extends FormRequest
@@ -25,8 +26,16 @@ class StoreSegmentRequest extends FormRequest
      */
     public function rules(): array
     {
+        $project = $this->route('project');
+
         return [
             'name' => ['required', 'string', 'max:255'],
+            'slug' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('segments')->where('project_id', $project->id),
+            ],
             'description' => ['nullable', 'string', 'max:1000'],
             'active' => ['required', 'boolean'],
             'rules' => ['nullable', 'array'],
@@ -35,6 +44,28 @@ class StoreSegmentRequest extends FormRequest
             'rules.*.operator' => ['required', Rule::enum(SegmentRuleOperator::class)],
             'rules.*.value' => ['required', 'string', 'max:1000'],
             'rules.*.priority' => ['nullable', 'integer', 'min:0'],
+        ];
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'slug' => Str::slug($this->input('name', '')),
+        ]);
+    }
+
+    /**
+     * Get custom validation messages.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'slug.unique' => 'A segment with this name already exists in this project.',
         ];
     }
 }

@@ -125,6 +125,28 @@ class SegmentEditTest extends TestCase
         $response->assertSessionHasErrors('name');
     }
 
+    public function test_slug_derived_from_name_must_be_unique_within_project_on_update(): void
+    {
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
+        $existing = Segment::factory()->create([
+            'project_id' => $project->id,
+            'slug' => 'frequent-homepage-visitors',
+        ]);
+        $segment = Segment::factory()->create(['project_id' => $project->id]);
+
+        $response = $this->actingAs($user)->put(route('projects.segments.update', [$project, $segment]), [
+            'name' => 'Frequent Homepage Visitors',
+            'active' => true,
+        ]);
+
+        $response->assertSessionHasErrors([
+            'slug' => 'A segment with this name already exists in this project.',
+        ]);
+        $this->assertSame($segment->slug, $segment->fresh()->slug);
+        $this->assertSame('frequent-homepage-visitors', $existing->fresh()->slug);
+    }
+
     public function test_user_can_update_segment_with_rules(): void
     {
         ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();

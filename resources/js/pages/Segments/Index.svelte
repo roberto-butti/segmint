@@ -1,8 +1,11 @@
 <script lang="ts">
-    import { Link } from '@inertiajs/svelte';
+    import { Link, page } from '@inertiajs/svelte';
+    import X from 'lucide-svelte/icons/x';
     import AppHead from '@/components/AppHead.svelte';
+    import CopySegmentsDialog from '@/components/CopySegmentsDialog.svelte';
     import DeleteSegmentDialog from '@/components/DeleteSegmentDialog.svelte';
     import DuplicateSegmentDialog from '@/components/DuplicateSegmentDialog.svelte';
+    import { Alert, AlertDescription } from '@/components/ui/alert';
     import { Button } from '@/components/ui/button';
     import {
         Card,
@@ -12,6 +15,7 @@
         CardHeader,
         CardTitle,
     } from '@/components/ui/card';
+    import { Checkbox } from '@/components/ui/checkbox';
     import AppLayout from '@/layouts/AppLayout.svelte';
     import projects from '@/routes/projects';
     import segments from '@/routes/projects/segments';
@@ -34,13 +38,46 @@
         created_at: string;
     }
 
+    interface DestinationProject {
+        id: number;
+        name: string;
+        slug: string;
+        organization_name: string;
+        segment_slugs: string[];
+    }
+
     let {
         project,
         segments: segmentList,
+        destinationProjects,
     }: {
         project: Project;
         segments: Segment[];
+        destinationProjects: DestinationProject[];
     } = $props();
+
+    let selected = $state<Record<number, boolean>>({});
+
+    const selectedSegments = $derived(
+        segmentList.filter((segment) => selected[segment.id]),
+    );
+    const allSelected = $derived(
+        segmentList.length > 0 &&
+            selectedSegments.length === segmentList.length,
+    );
+    const successMessage = $derived(page.props.flash.success);
+    const segmentCopy = $derived(page.props.flash.segmentCopy);
+    let dismissedCopyMessageId = $state<string | null>(null);
+
+    function selectAll(): void {
+        selected = Object.fromEntries(
+            segmentList.map((segment) => [segment.id, true]),
+        );
+    }
+
+    function clearSelection(): void {
+        selected = {};
+    }
 
     const breadcrumbs: BreadcrumbItem[] = $derived([
         {
@@ -65,6 +102,11 @@
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-semibold">Segments</h2>
             <div class="flex items-center gap-2">
+                <CopySegmentsDialog
+                    sourceProjectSlug={project.slug}
+                    {selectedSegments}
+                    {destinationProjects}
+                />
                 <Button variant="outline" size="sm">
                     <Link href={segments.suggestions.url(project.slug)}>
                         Suggestions
@@ -78,6 +120,36 @@
             </div>
         </div>
 
+        {#if segmentCopy && dismissedCopyMessageId !== segmentCopy.id}
+            <Alert class="pr-12">
+                <AlertDescription>
+                    <p>
+                        {segmentCopy.message}
+                        <Link
+                            href={segmentCopy.destination_url}
+                            class="font-medium text-foreground underline underline-offset-4"
+                        >
+                            View {segmentCopy.destination_name} segments
+                        </Link>
+                    </p>
+                </AlertDescription>
+                <button
+                    type="button"
+                    class="absolute top-3 right-3 rounded-sm p-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label="Dismiss copy result"
+                    onclick={() => {
+                        dismissedCopyMessageId = segmentCopy.id;
+                    }}
+                >
+                    <X class="size-4" />
+                </button>
+            </Alert>
+        {:else if successMessage}
+            <Alert>
+                <AlertDescription>{successMessage}</AlertDescription>
+            </Alert>
+        {/if}
+
         {#if segmentList.length === 0}
             <div
                 class="flex flex-1 items-center justify-center rounded-xl border border-dashed border-sidebar-border p-12"
@@ -87,14 +159,48 @@
                 </p>
             </div>
         {:else}
+            <div class="flex items-center gap-2">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onclick={allSelected ? clearSelection : selectAll}
+                >
+                    {allSelected ? 'Clear selection' : 'Select all'}
+                </Button>
+                {#if selectedSegments.length > 0}
+                    <span class="text-sm text-muted-foreground">
+                        {selectedSegments.length}
+                        {selectedSegments.length === 1
+                            ? 'segment selected'
+                            : 'segments selected'}
+                    </span>
+                {/if}
+                {#if destinationProjects.length === 0}
+                    <span class="text-sm text-muted-foreground">
+                        No other manageable projects available.
+                    </span>
+                {/if}
+            </div>
             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {#each segmentList as segment (segment.id)}
                     <Card>
                         <CardHeader>
                             <div class="flex items-center justify-between">
-                                <CardTitle class="text-base">
-                                    {segment.name}
-                                </CardTitle>
+                                <div class="flex items-center gap-2">
+                                    <Checkbox
+                                        id={`segment-${segment.id}`}
+                                        aria-label={`Select ${segment.name}`}
+                                        checked={selected[segment.id] ?? false}
+                                        onclick={() => {
+                                            selected[segment.id] = !(
+                                                selected[segment.id] ?? false
+                                            );
+                                        }}
+                                    />
+                                    <CardTitle class="text-base">
+                                        {segment.name}
+                                    </CardTitle>
+                                </div>
                                 <span
                                     class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {segment.active
                                         ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'

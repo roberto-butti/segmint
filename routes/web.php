@@ -26,6 +26,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('projects/{project:slug}/segments/suggestions', [SegmentSuggestionController::class, 'index'])->name('projects.segments.suggestions');
     Route::get('projects/{project:slug}/segments/create', [SegmentController::class, 'create'])->name('projects.segments.create');
     Route::post('projects/{project:slug}/segments', [SegmentController::class, 'store'])->name('projects.segments.store');
+    Route::post('projects/{project:slug}/segments/copy', [SegmentController::class, 'copy'])->name('projects.segments.copy');
     Route::get('projects/{project:slug}/segments/{segment}', [SegmentController::class, 'show'])->name('projects.segments.show');
     Route::get('projects/{project:slug}/segments/{segment}/edit', [SegmentController::class, 'edit'])->name('projects.segments.edit');
     Route::put('projects/{project:slug}/segments/{segment}', [SegmentController::class, 'update'])->name('projects.segments.update');

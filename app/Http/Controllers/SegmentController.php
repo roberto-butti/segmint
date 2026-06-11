@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\OrganizationRole;
+use App\Http\Requests\CopySegmentsRequest;
 use App\Http\Requests\StoreSegmentRequest;
 use App\Http\Requests\UpdateSegmentRequest;
 use App\Models\Project;
@@ -10,7 +12,9 @@ use App\Services\SegmentRules\SegmentRuleOperator;
 use App\Services\SegmentRules\SegmentRuleType;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -28,9 +32,36 @@ class SegmentController extends Controller
             ->latest()
             ->get();
 
+        $manageableOrganizationIds = $request->user()
+            ->organizations()
+            ->get()
+            ->filter(fn ($organization) => OrganizationRole::from($organization->pivot->role)->canManageProjects())
+            ->pluck('id');
+
+        $destinationProjects = Project::query()
+            ->whereIn('organization_id', $manageableOrganizationIds)
+            ->whereKeyNot($project->id)
+            ->with([
+                'organization:id,name',
+                'segments' => fn ($query) => $query
+                    ->select(['id', 'project_id', 'slug'])
+                    ->whereIn('slug', $segments->pluck('slug')),
+            ])
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Project $destination) => [
+                'id' => $destination->id,
+                'name' => $destination->name,
+                'slug' => $destination->slug,
+                'organization_name' => $destination->organization->name,
+                'segment_slugs' => $destination->segments->pluck('slug')->values(),
+            ])
+            ->values();
+
         return Inertia::render('Segments/Index', [
             'project' => $project,
             'segments' => $segments,
+            'destinationProjects' => $destinationProjects,
         ]);
     }
 
@@ -56,7 +87,7 @@ class SegmentController extends Controller
     {
         $segment = $project->segments()->create([
             'name' => $request->validated('name'),
-            'slug' => Str::slug($request->validated('name')),
+            'slug' => $request->validated('slug'),
             'description' => $request->validated('description'),
             'active' => $request->validated('active'),
         ]);
@@ -112,7 +143,7 @@ class SegmentController extends Controller
 
         $segment->update([
             'name' => $request->validated('name'),
-            'slug' => Str::slug($request->validated('name')),
+            'slug' => $request->validated('slug'),
             'description' => $request->validated('description'),
             'active' => $request->validated('active'),
         ]);
@@ -127,12 +158,17 @@ class SegmentController extends Controller
      */
     public function duplicate(Request $request, Project $project, Segment $segment): RedirectResponse
     {
-        $this->authorize('view', $project);
+        $this->authorize('update', $project);
         abort_unless($segment->project_id === $project->id, 404);
 
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', 'unique:segments,slug'],
+            'slug' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('segments')->where('project_id', $project->id),
+            ],
         ]);
 
         $segment->load('rules');
@@ -155,6 +191,62 @@ class SegmentController extends Controller
         }
 
         return redirect()->route('projects.segments.edit', [$project->slug, $newSegment]);
+    }
+
+    /**
+     * Copy selected segments and their rules into another project.
+     */
+    public function copy(CopySegmentsRequest $request, Project $project): RedirectResponse
+    {
+        $destination = Project::findOrFail($request->validated('destination_project_id'));
+        $this->authorize('update', $destination);
+
+        $segments = $project->segments()
+            ->with('rules')
+            ->whereKey($request->validated('segment_ids'))
+            ->get();
+
+        $existingSlugs = $destination->segments()
+            ->whereIn('slug', $segments->pluck('slug'))
+            ->pluck('slug');
+
+        $segmentsToCopy = $segments->whereNotIn('slug', $existingSlugs);
+
+        DB::transaction(function () use ($destination, $segmentsToCopy): void {
+            foreach ($segmentsToCopy as $segment) {
+                $newSegment = $destination->segments()->create([
+                    'name' => $segment->name,
+                    'slug' => $segment->slug,
+                    'description' => $segment->description,
+                    'active' => $segment->active,
+                ]);
+
+                $newSegment->rules()->createMany($segment->rules->map(fn ($rule) => [
+                    'type' => $rule->type,
+                    'key' => $rule->key,
+                    'operator' => $rule->operator,
+                    'value' => $rule->value,
+                    'priority' => $rule->priority,
+                ])->all());
+            }
+        });
+
+        $copiedCount = $segmentsToCopy->count();
+        $skippedCount = $segments->count() - $copiedCount;
+        $message = "{$copiedCount} ".Str::plural('segment', $copiedCount)." copied into {$destination->name}.";
+
+        if ($skippedCount > 0) {
+            $message .= " {$skippedCount} ".Str::plural('segment', $skippedCount).' skipped because the slug already exists.';
+        }
+
+        return redirect()
+            ->route('projects.segments.index', $project->slug)
+            ->with('segmentCopy', [
+                'id' => Str::uuid()->toString(),
+                'message' => $message,
+                'destination_name' => $destination->name,
+                'destination_url' => route('projects.segments.index', $destination->slug),
+            ]);
     }
 
     /**
