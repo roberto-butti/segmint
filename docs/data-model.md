@@ -46,6 +46,7 @@ An organization is a workspace that groups projects and team members.
 | Field | Type | Description |
 |---|---|---|
 | `id` | integer | Primary key |
+| `public_id` | string | Immutable, globally unique public route identifier |
 | `name` | string | Display name |
 | `slug` | string | URL-safe identifier (unique) |
 
@@ -90,7 +91,7 @@ A project belongs to one organization. It groups segments, access tokens, rule t
 | `id` | integer | Primary key |
 | `organization_id` | FK | The organization this project belongs to |
 | `name` | string | Display name |
-| `slug` | string | URL-safe identifier (used in URLs) |
+| `public_id` | string | Immutable, globally unique public route identifier |
 | `description` | text (nullable) | Optional description |
 | `active` | boolean | Whether the project is receiving events |
 
@@ -112,24 +113,24 @@ There is no per-project access control. If you're in the org, you see all its pr
 
 ### User creates a project
 
-1. User selects which organization to create the project in (must have `admin` or `member` role)
+1. User opens the create page within an organization's project collection URL (must have `admin` or `member` role)
 2. Project is created with `organization_id` pointing to the chosen org
 3. Default rule templates and access token are auto-created
 4. All members of that organization can now see the project
 
 ### User views projects
 
-The `/projects` page shows all projects the user can access, filtered by organization:
+The `/organizations/{organization_public_id}/projects` page shows projects belonging to
+the organization identified in the URL:
 - A dropdown lists all organizations the user belongs to
-- The user's owned organization appears first
-- Selecting an org filters the project list
-- The selection is remembered in the session
+- Selecting an organization navigates to its project collection URL
+- `/projects` redirects to the remembered, owned, or first accessible organization
 
 ### Authorization flow
 
 ```
-Request to /projects/{slug}/segments
-  → Route resolves Project by slug
+Request to /projects/{public_id}/segments
+  → Route resolves Project by its globally unique public ID
   → ProjectPolicy::view(User, Project)
     → Does User belong to Project's Organization?
       → Yes: allow (any role can view)
@@ -157,6 +158,7 @@ users
 
 organizations
   ├── id
+  ├── public_id (unique)
   ├── name
   └── slug (unique)
 
@@ -169,12 +171,23 @@ organization_memberships
 
 projects
   ├── id
+  ├── public_id (unique)
   ├── organization_id (FK → organizations)
   ├── name
-  ├── slug
   ├── description
   └── active
 ```
+
+Project routes use immutable public IDs rather than names or slugs. See
+[Project Public Identifiers](decisions/0001-project-public-identifiers.md) for the
+decision and its tradeoffs.
+
+Project collection routes use organization public IDs. See
+[Organization-Scoped Project Collections](decisions/0002-organization-scoped-project-collections.md).
+
+The global dashboard lists the user's accessible organizations. Operational
+metrics are shown on organization-scoped dashboards. See
+[Global and Organization Dashboards](decisions/0003-global-and-organization-dashboards.md).
 
 ## Examples
 
@@ -204,4 +217,4 @@ Bob (owned_organization_id: null)
   └── Organization "Agency Pro" → role: viewer
 ```
 
-Bob doesn't own any organization. He can create projects in "Acme Corp" (member) but can only view in "Agency Pro" (viewer). The dashboard prompts him to create his own organization.
+Bob doesn't own any organization. He can create projects in "Acme Corp" (member) but can only view in "Agency Pro" (viewer). The global dashboard lists both organizations with his role in each.

@@ -49,7 +49,7 @@ class RuleTemplateController extends Controller
             ->map(fn (Project $destination) => [
                 'id' => $destination->id,
                 'name' => $destination->name,
-                'slug' => $destination->slug,
+                'public_id' => $destination->public_id,
                 'organization_name' => $destination->organization->name,
                 'rule_template_names' => $destination->ruleTemplates->pluck('name')->values(),
             ])
@@ -87,7 +87,7 @@ class RuleTemplateController extends Controller
             'value' => $validated['value'] ?? '',
         ]);
 
-        return redirect()->route('projects.rule-templates.index', $project->slug);
+        return redirect()->route('projects.rule-templates.index', $project);
     }
 
     /**
@@ -127,12 +127,12 @@ class RuleTemplateController extends Controller
         }
 
         return redirect()
-            ->route('projects.rule-templates.index', $project->slug)
+            ->route('projects.rule-templates.index', $project)
             ->with('ruleTemplateCopy', [
                 'id' => Str::uuid()->toString(),
                 'message' => $message,
                 'destination_name' => $destination->name,
-                'destination_url' => route('projects.rule-templates.index', $destination->slug),
+                'destination_url' => route('projects.rule-templates.index', $destination),
             ]);
     }
 
@@ -160,7 +160,7 @@ class RuleTemplateController extends Controller
             'value' => $validated['value'] ?? '',
         ]);
 
-        return redirect()->route('projects.rule-templates.index', $project->slug);
+        return redirect()->route('projects.rule-templates.index', $project);
     }
 
     /**
@@ -173,7 +173,7 @@ class RuleTemplateController extends Controller
 
         $ruleTemplate->delete();
 
-        return redirect()->route('projects.rule-templates.index', $project->slug);
+        return redirect()->route('projects.rule-templates.index', $project);
     }
 
     /**

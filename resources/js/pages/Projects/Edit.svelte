@@ -15,7 +15,7 @@
     interface Project {
         id: number;
         name: string;
-        slug: string;
+        public_id: string;
         description: string | null;
         active: boolean;
     }
@@ -31,11 +31,11 @@
         },
         {
             title: project.name,
-            href: projects.show.url(project.slug),
+            href: projects.show.url(project.public_id),
         },
         {
             title: 'Edit',
-            href: projects.edit.url(project.slug),
+            href: projects.edit.url(project.public_id),
         },
     ]);
 </script>
@@ -51,7 +51,7 @@
         />
 
         <Form
-            action={projects.update.url(project.slug)}
+            action={projects.update.url(project.public_id)}
             method="put"
             class="max-w-lg space-y-6"
             options={{ preserveScroll: true }}

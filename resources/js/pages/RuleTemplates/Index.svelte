@@ -39,7 +39,7 @@
     interface Project {
         id: number;
         name: string;
-        slug: string;
+        public_id: string;
     }
 
     interface EnumOption {
@@ -59,7 +59,7 @@
     interface DestinationProject {
         id: number;
         name: string;
-        slug: string;
+        public_id: string;
         organization_name: string;
         rule_template_names: string[];
     }
@@ -106,11 +106,11 @@
         },
         {
             title: project.name,
-            href: projects.show.url(project.slug),
+            href: projects.show.url(project.public_id),
         },
         {
             title: 'Rule Templates',
-            href: ruleTemplatesRoute.index.url(project.slug),
+            href: ruleTemplatesRoute.index.url(project.public_id),
         },
     ]);
 
@@ -156,7 +156,7 @@
     function handleCreate(): void {
         createProcessing = true;
         router.post(
-            ruleTemplatesRoute.store.url(project.slug),
+            ruleTemplatesRoute.store.url(project.public_id),
             {
                 name: createName,
                 type: createType,
@@ -210,7 +210,7 @@
         editProcessing = true;
         router.put(
             ruleTemplatesRoute.update.url({
-                project: project.slug,
+                project: project.public_id,
                 ruleTemplate: editId,
             }),
             {
@@ -238,7 +238,7 @@
         deleteProcessing = template.id;
         router.delete(
             ruleTemplatesRoute.destroy.url({
-                project: project.slug,
+                project: project.public_id,
                 ruleTemplate: template.id,
             }),
             {
@@ -258,7 +258,7 @@
             <h2 class="text-xl font-semibold">Rule Templates</h2>
             <div class="flex items-center gap-2">
                 <CopyRuleTemplatesDialog
-                    sourceProjectSlug={project.slug}
+                    sourceProjectPublicId={project.public_id}
                     {selectedTemplates}
                     {destinationProjects}
                 />

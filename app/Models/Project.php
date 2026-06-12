@@ -10,13 +10,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Str;
 
-#[Fillable(['slug', 'organization_id', 'name', 'description', 'active'])]
+#[Fillable(['organization_id', 'name', 'description', 'active'])]
 class Project extends Model
 {
     use HasFactory;
 
     protected static function booted(): void
     {
+        static::creating(function (Project $project): void {
+            $project->public_id ??= self::generateUniquePublicId();
+        });
+
         static::created(function (Project $project): void {
             foreach (RuleTemplate::defaults() as $template) {
                 $project->ruleTemplates()->create($template);
@@ -37,6 +41,11 @@ class Project extends Model
             'description' => 'string',
             'active' => 'boolean',
         ];
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'public_id';
     }
 
     public function accessTokens(): HasMany
@@ -80,5 +89,14 @@ class Project extends Model
             ->project()
             ->where('active', true)
             ->first();
+    }
+
+    private static function generateUniquePublicId(): string
+    {
+        do {
+            $publicId = Str::random(12);
+        } while (self::where('public_id', $publicId)->exists());
+
+        return $publicId;
     }
 }

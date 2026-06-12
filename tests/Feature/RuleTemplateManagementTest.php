@@ -83,7 +83,7 @@ class RuleTemplateManagementTest extends TestCase
             'value' => 'email',
         ]);
 
-        $response->assertRedirect(route('projects.rule-templates.index', $project->slug));
+        $response->assertRedirect(route('projects.rule-templates.index', $project));
 
         $this->assertDatabaseHas('rule_templates', [
             'project_id' => $project->id,
@@ -110,7 +110,7 @@ class RuleTemplateManagementTest extends TestCase
             'value' => '',
         ]);
 
-        $response->assertRedirect(route('projects.rule-templates.index', $project->slug));
+        $response->assertRedirect(route('projects.rule-templates.index', $project));
 
         $this->assertDatabaseHas('rule_templates', [
             'project_id' => $project->id,
@@ -152,7 +152,7 @@ class RuleTemplateManagementTest extends TestCase
             'value' => 'summer',
         ]);
 
-        $response->assertRedirect(route('projects.rule-templates.index', $project->slug));
+        $response->assertRedirect(route('projects.rule-templates.index', $project));
 
         $this->assertDatabaseHas('rule_templates', [
             'id' => $template->id,
@@ -190,7 +190,7 @@ class RuleTemplateManagementTest extends TestCase
 
         $response = $this->delete(route('projects.rule-templates.destroy', [$project, $template]));
 
-        $response->assertRedirect(route('projects.rule-templates.index', $project->slug));
+        $response->assertRedirect(route('projects.rule-templates.index', $project));
         $this->assertDatabaseMissing('rule_templates', ['id' => $template->id]);
     }
 

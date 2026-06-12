@@ -6,13 +6,10 @@ use App\Enums\OrganizationRole;
 use App\Models\Organization;
 use App\Models\Project;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
      */
@@ -57,7 +54,6 @@ class DatabaseSeeder extends Seeder
         Project::create([
             'organization_id' => $org3->id,
             'name' => 'Acme Website',
-            'slug' => 'acme-website',
             'description' => 'Main marketing website tracking',
             'active' => true,
         ]);
@@ -72,7 +68,6 @@ class DatabaseSeeder extends Seeder
         Project::create([
             'organization_id' => $org4->id,
             'name' => 'Startup App',
-            'slug' => 'startup-app',
             'description' => 'Mobile app event tracking',
             'active' => true,
         ]);
@@ -80,7 +75,6 @@ class DatabaseSeeder extends Seeder
         Project::create([
             'organization_id' => $org4->id,
             'name' => 'Startup Landing',
-            'slug' => 'startup-landing',
             'description' => 'Landing page A/B testing',
             'active' => true,
         ]);
@@ -95,7 +89,6 @@ class DatabaseSeeder extends Seeder
         Project::create([
             'organization_id' => $org5->id,
             'name' => 'Client Campaign',
-            'slug' => 'client-campaign',
             'description' => 'Campaign tracking for client X',
             'active' => true,
         ]);

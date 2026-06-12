@@ -52,7 +52,7 @@ class SegmentController extends Controller
             ->map(fn (Project $destination) => [
                 'id' => $destination->id,
                 'name' => $destination->name,
-                'slug' => $destination->slug,
+                'public_id' => $destination->public_id,
                 'organization_name' => $destination->organization->name,
                 'segment_slugs' => $destination->segments->pluck('slug')->values(),
             ])
@@ -94,7 +94,7 @@ class SegmentController extends Controller
 
         $this->syncRules($segment, $request->validated('rules', []));
 
-        return redirect()->route('projects.segments.edit', [$project->slug, $segment]);
+        return redirect()->route('projects.segments.edit', [$project, $segment]);
     }
 
     /**
@@ -150,7 +150,7 @@ class SegmentController extends Controller
 
         $this->syncRules($segment, $request->validated('rules', []));
 
-        return redirect()->route('projects.segments.index', $project->slug);
+        return redirect()->route('projects.segments.index', $project);
     }
 
     /**
@@ -190,7 +190,7 @@ class SegmentController extends Controller
             ]);
         }
 
-        return redirect()->route('projects.segments.edit', [$project->slug, $newSegment]);
+        return redirect()->route('projects.segments.edit', [$project, $newSegment]);
     }
 
     /**
@@ -240,12 +240,12 @@ class SegmentController extends Controller
         }
 
         return redirect()
-            ->route('projects.segments.index', $project->slug)
+            ->route('projects.segments.index', $project)
             ->with('segmentCopy', [
                 'id' => Str::uuid()->toString(),
                 'message' => $message,
                 'destination_name' => $destination->name,
-                'destination_url' => route('projects.segments.index', $destination->slug),
+                'destination_url' => route('projects.segments.index', $destination),
             ]);
     }
 
@@ -260,7 +260,7 @@ class SegmentController extends Controller
         $segment->rules()->delete();
         $segment->delete();
 
-        return redirect()->route('projects.segments.index', $project->slug);
+        return redirect()->route('projects.segments.index', $project);
     }
 
     /**

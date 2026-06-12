@@ -28,17 +28,17 @@
     interface DestinationProject {
         id: number;
         name: string;
-        slug: string;
+        public_id: string;
         organization_name: string;
         rule_template_names: string[];
     }
 
     let {
-        sourceProjectSlug,
+        sourceProjectPublicId,
         selectedTemplates,
         destinationProjects,
     }: {
-        sourceProjectSlug: string;
+        sourceProjectPublicId: string;
         selectedTemplates: RuleTemplate[];
         destinationProjects: DestinationProject[];
     } = $props();
@@ -80,7 +80,7 @@
 
         processing = true;
         router.post(
-            ruleTemplates.copy.url(sourceProjectSlug),
+            ruleTemplates.copy.url(sourceProjectPublicId),
             {
                 destination_project_id: destinationProject.id,
                 rule_template_ids: selectedTemplates.map(

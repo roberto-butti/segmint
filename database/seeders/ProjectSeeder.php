@@ -18,11 +18,10 @@ class ProjectSeeder extends Seeder
 
         $project = Project::firstOrCreate(
             [
-                'slug' => 'demo-project',
-            ],
-            [
                 'organization_id' => $org1->id,
                 'name' => 'Demo Project',
+            ],
+            [
                 'description' => 'This is a demo project',
                 'active' => true,
             ],
@@ -39,11 +38,10 @@ class ProjectSeeder extends Seeder
 
         $project = Project::firstOrCreate(
             [
-                'slug' => 'demo-project-2',
-            ],
-            [
                 'organization_id' => $org1->id,
                 'name' => 'Second Demo Project',
+            ],
+            [
                 'description' => 'This is another demo project',
                 'active' => true,
             ],
@@ -61,11 +59,10 @@ class ProjectSeeder extends Seeder
 
         Project::firstOrCreate(
             [
-                'slug' => 'demo-project-user-2',
-            ],
-            [
                 'organization_id' => $org2->id,
                 'name' => 'Second Demo Project for user 2',
+            ],
+            [
                 'description' => 'This is another demo project for another user',
                 'active' => true,
             ],

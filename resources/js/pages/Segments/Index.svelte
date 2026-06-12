@@ -24,7 +24,7 @@
     interface Project {
         id: number;
         name: string;
-        slug: string;
+        public_id: string;
     }
 
     interface Segment {
@@ -41,7 +41,7 @@
     interface DestinationProject {
         id: number;
         name: string;
-        slug: string;
+        public_id: string;
         organization_name: string;
         segment_slugs: string[];
     }
@@ -86,11 +86,11 @@
         },
         {
             title: project.name,
-            href: projects.show.url(project.slug),
+            href: projects.show.url(project.public_id),
         },
         {
             title: 'Segments',
-            href: segments.index.url(project.slug),
+            href: segments.index.url(project.public_id),
         },
     ]);
 </script>
@@ -103,17 +103,17 @@
             <h2 class="text-xl font-semibold">Segments</h2>
             <div class="flex items-center gap-2">
                 <CopySegmentsDialog
-                    sourceProjectSlug={project.slug}
+                    sourceProjectPublicId={project.public_id}
                     {selectedSegments}
                     {destinationProjects}
                 />
                 <Button variant="outline" size="sm">
-                    <Link href={segments.suggestions.url(project.slug)}>
+                    <Link href={segments.suggestions.url(project.public_id)}>
                         Suggestions
                     </Link>
                 </Button>
                 <Button variant="default" size="sm">
-                    <Link href={segments.create.url(project.slug)}>
+                    <Link href={segments.create.url(project.public_id)}>
                         Create segment
                     </Link>
                 </Button>
@@ -228,7 +228,7 @@
                             <Button variant="outline" size="sm" class="flex-1">
                                 <Link
                                     href={segments.show.url({
-                                        project: project.slug,
+                                        project: project.public_id,
                                         segment: segment.id,
                                     })}>View</Link
                                 >
@@ -236,20 +236,20 @@
                             <Button variant="outline" size="sm" class="flex-1">
                                 <Link
                                     href={segments.edit.url({
-                                        project: project.slug,
+                                        project: project.public_id,
                                         segment: segment.id,
                                     })}>Edit</Link
                                 >
                             </Button>
                             <DuplicateSegmentDialog
-                                projectSlug={project.slug}
+                                projectPublicId={project.public_id}
                                 segmentId={segment.id}
                                 segmentName={segment.name}
                                 segmentSlug={segment.slug}
                                 class="flex-1"
                             />
                             <DeleteSegmentDialog
-                                projectSlug={project.slug}
+                                projectPublicId={project.public_id}
                                 segmentId={segment.id}
                                 segmentName={segment.name}
                                 class="flex-1"

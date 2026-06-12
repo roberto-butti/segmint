@@ -13,14 +13,14 @@
     import segments from '@/routes/projects/segments';
 
     let {
-        projectSlug,
+        projectPublicId,
         segmentId,
         segmentName,
         variant = 'outline' as 'outline' | 'default' | 'ghost',
         size = 'sm' as 'sm' | 'default',
         class: className = '',
     }: {
-        projectSlug: string;
+        projectPublicId: string;
         segmentId: number;
         segmentName: string;
         variant?: 'outline' | 'default' | 'ghost';
@@ -34,7 +34,10 @@
     function handleDelete(): void {
         processing = true;
         router.delete(
-            segments.destroy.url({ project: projectSlug, segment: segmentId }),
+            segments.destroy.url({
+                project: projectPublicId,
+                segment: segmentId,
+            }),
             {
                 onFinish: () => {
                     processing = false;

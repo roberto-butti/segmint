@@ -19,7 +19,7 @@
     interface Project {
         id: number;
         name: string;
-        slug: string;
+        public_id: string;
     }
 
     interface EventLog {
@@ -72,8 +72,8 @@
 
     const breadcrumbs: BreadcrumbItem[] = $derived([
         { title: 'Projects', href: projects.index.url() },
-        { title: project.name, href: projects.show.url(project.slug) },
-        { title: 'Events', href: events.index.url(project.slug) },
+        { title: project.name, href: projects.show.url(project.public_id) },
+        { title: 'Events', href: events.index.url(project.public_id) },
     ]);
 
     function applyFilters(): void {
@@ -91,7 +91,7 @@
             params.utm_source = utmSourceFilter;
         }
 
-        router.get(events.index.url(project.slug), params, {
+        router.get(events.index.url(project.public_id), params, {
             preserveState: true,
         });
     }
@@ -101,7 +101,7 @@
         eventTypeFilter = '';
         utmSourceFilter = '';
         router.get(
-            events.index.url(project.slug),
+            events.index.url(project.public_id),
             {},
             { preserveState: false },
         );
@@ -109,7 +109,7 @@
 
     function filterByVisitor(visitorId: string): void {
         router.get(
-            events.index.url(project.slug),
+            events.index.url(project.public_id),
             { visitor_id: visitorId },
             { preserveState: false },
         );
@@ -166,7 +166,7 @@
                 >
             </h2>
             <Button variant="outline" size="sm">
-                <Link href={segments.suggestions.url(project.slug)}>
+                <Link href={segments.suggestions.url(project.public_id)}>
                     Suggest segments
                 </Link>
             </Button>

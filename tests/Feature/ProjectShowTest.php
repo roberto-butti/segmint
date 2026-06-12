@@ -11,6 +11,14 @@ class ProjectShowTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_project_routes_use_the_public_id(): void
+    {
+        $project = Project::factory()->create();
+
+        $this->assertStringEndsWith("/projects/{$project->public_id}", route('projects.show', $project));
+        $this->assertSame('public_id', $project->getRouteKeyName());
+    }
+
     public function test_guests_are_redirected_to_login(): void
     {
         $project = Project::factory()->create();

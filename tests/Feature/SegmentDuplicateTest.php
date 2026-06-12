@@ -66,7 +66,7 @@ class SegmentDuplicateTest extends TestCase
         $newSegment = Segment::where('name', 'Duplicated Segment')->first();
         $this->assertNotNull($newSegment);
 
-        $response->assertRedirect(route('projects.segments.edit', [$project->slug, $newSegment]));
+        $response->assertRedirect(route('projects.segments.edit', [$project, $newSegment]));
 
         $this->assertDatabaseHas('segments', [
             'id' => $newSegment->id,

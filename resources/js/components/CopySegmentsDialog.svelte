@@ -29,17 +29,17 @@
     interface DestinationProject {
         id: number;
         name: string;
-        slug: string;
+        public_id: string;
         organization_name: string;
         segment_slugs: string[];
     }
 
     let {
-        sourceProjectSlug,
+        sourceProjectPublicId,
         selectedSegments,
         destinationProjects,
     }: {
-        sourceProjectSlug: string;
+        sourceProjectPublicId: string;
         selectedSegments: Segment[];
         destinationProjects: DestinationProject[];
     } = $props();
@@ -79,7 +79,7 @@
 
         processing = true;
         router.post(
-            segments.copy.url(sourceProjectSlug),
+            segments.copy.url(sourceProjectPublicId),
             {
                 destination_project_id: destinationProject.id,
                 segment_ids: selectedSegments.map((segment) => segment.id),

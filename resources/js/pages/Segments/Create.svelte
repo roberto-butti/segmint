@@ -16,7 +16,7 @@
     interface Project {
         id: number;
         name: string;
-        slug: string;
+        public_id: string;
     }
 
     interface EnumOption {
@@ -63,15 +63,15 @@
         },
         {
             title: project.name,
-            href: projects.show.url(project.slug),
+            href: projects.show.url(project.public_id),
         },
         {
             title: 'Segments',
-            href: segments.index.url(project.slug),
+            href: segments.index.url(project.public_id),
         },
         {
             title: 'Create',
-            href: segments.create.url(project.slug),
+            href: segments.create.url(project.public_id),
         },
     ]);
 </script>
@@ -87,7 +87,7 @@
         />
 
         <Form
-            action={segments.store.url(project.slug)}
+            action={segments.store.url(project.public_id)}
             method="post"
             class="max-w-2xl space-y-6"
         >

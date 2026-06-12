@@ -21,7 +21,7 @@
     interface Project {
         id: number;
         name: string;
-        slug: string;
+        public_id: string;
     }
 
     interface SuggestionRule {
@@ -74,9 +74,12 @@
 
     const breadcrumbs: BreadcrumbItem[] = $derived([
         { title: 'Projects', href: projects.index.url() },
-        { title: project.name, href: projects.show.url(project.slug) },
-        { title: 'Segments', href: segments.index.url(project.slug) },
-        { title: 'Suggestions', href: segments.suggestions.url(project.slug) },
+        { title: project.name, href: projects.show.url(project.public_id) },
+        { title: 'Segments', href: segments.index.url(project.public_id) },
+        {
+            title: 'Suggestions',
+            href: segments.suggestions.url(project.public_id),
+        },
     ]);
 
     function getTypeLabel(value: string): string {
@@ -100,7 +103,7 @@
     function createSegment(suggestion: Suggestion): void {
         creating = suggestion.slug;
         router.post(
-            segments.store.url(project.slug),
+            segments.store.url(project.public_id),
             {
                 name: suggestion.name,
                 description: suggestion.description,
@@ -152,7 +155,8 @@
                 <Button
                     variant="outline"
                     size="sm"
-                    onclick={() => router.get(segments.index.url(project.slug))}
+                    onclick={() =>
+                        router.get(segments.index.url(project.public_id))}
                 >
                     Back to segments
                 </Button>
@@ -255,7 +259,8 @@
                                                 Already exists as
                                                 <Link
                                                     href={segments.show.url({
-                                                        project: project.slug,
+                                                        project:
+                                                            project.public_id,
                                                         segment:
                                                             suggestion
                                                                 .existingSegment
@@ -278,7 +283,8 @@
                                                 Similar to
                                                 <Link
                                                     href={segments.show.url({
-                                                        project: project.slug,
+                                                        project:
+                                                            project.public_id,
                                                         segment:
                                                             suggestion
                                                                 .existingSegment
@@ -323,7 +329,7 @@
                                         >
                                             <Link
                                                 href={segments.show.url({
-                                                    project: project.slug,
+                                                    project: project.public_id,
                                                     segment:
                                                         suggestion
                                                             .existingSegment

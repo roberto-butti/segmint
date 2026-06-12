@@ -2,7 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Enums\OrganizationRole;
+use App\Models\EventLog;
+use App\Models\Organization;
 use App\Models\Project;
+use App\Models\Segment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -11,37 +15,100 @@ class DashboardTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_guests_are_redirected_to_the_login_page()
+    public function test_guests_are_redirected_to_the_login_page(): void
     {
-        $response = $this->get(route('dashboard'));
-        $response->assertRedirect(route('login'));
+        $this->get(route('dashboard'))
+            ->assertRedirect(route('login'));
     }
 
-    public function test_authenticated_users_can_visit_the_dashboard()
+    public function test_global_dashboard_lists_only_accessible_organizations_with_context(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        ['user' => $user, 'organization' => $ownedOrganization] = $this->createUserWithOrganization();
+        $ownedOrganization->update(['name' => 'Owned workspace']);
+        Project::factory()->count(2)->create(['organization_id' => $ownedOrganization->id]);
 
-        $response = $this->get(route('dashboard'));
-        $response->assertOk();
+        $memberOrganization = Organization::factory()->create(['name' => 'Member workspace']);
+        $memberOrganization->members()->attach($user, ['role' => OrganizationRole::Member->value]);
+        Project::factory()->create(['organization_id' => $memberOrganization->id, 'active' => false]);
+
+        Project::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Dashboard')
+                ->has('organizations', 2)
+                ->where('organizations.0.name', 'Owned workspace')
+                ->where('organizations.0.role', 'owner')
+                ->where('organizations.0.projects_count', 2)
+                ->where('organizations.0.members_count', 1)
+                ->where('organizations.1.name', 'Member workspace')
+                ->where('organizations.1.role', 'member')
+                ->where('organizations.1.projects_count', 1)
+                ->where('organizations.1.active_projects_count', 0)
+            );
     }
 
-    public function test_dashboard_displays_projects_count_for_authenticated_user(): void
+    public function test_member_can_view_an_organization_dashboard_with_scoped_metrics(): void
     {
         ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
-        Project::factory()->count(3)->create(['organization_id' => $organization->id]);
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
+        $inactiveProject = Project::factory()->create([
+            'organization_id' => $organization->id,
+            'active' => false,
+        ]);
+        Segment::factory()->create(['project_id' => $project->id]);
+        Segment::factory()->create(['project_id' => $inactiveProject->id, 'active' => false]);
+        EventLog::create(['project_id' => $project->id, 'visitor_id' => 'visitor-1', 'event_type' => 'page_view']);
+        EventLog::create(['project_id' => $project->id, 'visitor_id' => 'visitor-1', 'event_type' => 'click']);
+        EventLog::create(['project_id' => $inactiveProject->id, 'visitor_id' => 'visitor-2', 'event_type' => 'page_view']);
 
-        // Create projects for another organization to ensure they are not counted
-        Project::factory()->count(2)->create();
+        $otherProject = Project::factory()->create();
+        Segment::factory()->create(['project_id' => $otherProject->id]);
+        EventLog::create(['project_id' => $otherProject->id, 'visitor_id' => 'outside']);
 
-        $this->actingAs($user);
+        $this->actingAs($user)
+            ->get(route('organizations.dashboard', $organization))
+            ->assertOk()
+            ->assertSessionHas('projects_organization_id', $organization->id)
+            ->assertInertia(fn ($page) => $page
+                ->component('Organizations/Dashboard')
+                ->where('organization.public_id', $organization->public_id)
+                ->where('currentUserRole.label', 'Owner')
+                ->where('canManageProjects', true)
+                ->where('stats.projects_count', 2)
+                ->where('stats.active_projects_count', 1)
+                ->where('stats.segments_count', 2)
+                ->where('stats.active_segments_count', 1)
+                ->where('stats.events_count', 3)
+                ->where('stats.unique_visitors_count', 2)
+                ->has('projects', 2)
+            );
+    }
 
-        $response = $this->get(route('dashboard'));
+    public function test_viewer_can_view_but_cannot_manage_projects_from_organization_dashboard(): void
+    {
+        $organization = Organization::factory()->create();
+        $viewer = User::factory()->create();
+        $organization->members()->attach($viewer, ['role' => OrganizationRole::Viewer->value]);
 
-        $response->assertOk();
-        $response->assertInertia(fn ($page) => $page
-            ->component('Dashboard')
-            ->where('projectsCount', 3)
-        );
+        $this->actingAs($viewer)
+            ->get(route('organizations.dashboard', $organization))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('currentUserRole.label', 'Viewer')
+                ->where('canManageProjects', false)
+            );
+    }
+
+    public function test_user_cannot_view_an_unrelated_organization_dashboard(): void
+    {
+        $user = User::factory()->create();
+        $organization = Organization::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('organizations.dashboard', $organization))
+            ->assertForbidden();
     }
 }

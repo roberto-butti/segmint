@@ -24,7 +24,7 @@
     interface Project {
         id: number;
         name: string;
-        slug: string;
+        public_id: string;
         description: string | null;
         active: boolean;
         created_at: string;
@@ -68,7 +68,7 @@
         },
         {
             title: project.name,
-            href: projects.show.url(project.slug),
+            href: projects.show.url(project.public_id),
         },
     ]);
 
@@ -127,7 +127,8 @@
                     {project.active ? 'Active' : 'Inactive'}
                 </span>
                 <Button variant="outline" size="sm">
-                    <Link href={projects.edit.url(project.slug)}>Edit</Link>
+                    <Link href={projects.edit.url(project.public_id)}>Edit</Link
+                    >
                 </Button>
             </div>
         </div>
@@ -145,7 +146,7 @@
                 </CardContent>
                 <CardFooter>
                     <Button variant="outline" size="sm" class="w-full">
-                        <Link href={segments.index.url(project.slug)}
+                        <Link href={segments.index.url(project.public_id)}
                             >View segments</Link
                         >
                     </Button>
@@ -165,7 +166,7 @@
                 </CardContent>
                 <CardFooter>
                     <Button variant="outline" size="sm" class="w-full">
-                        <Link href={eventsRoute.index.url(project.slug)}
+                        <Link href={eventsRoute.index.url(project.public_id)}
                             >View events</Link
                         >
                     </Button>
@@ -184,7 +185,7 @@
                 </CardContent>
                 <CardFooter>
                     <Button variant="outline" size="sm" class="w-full">
-                        <Link href={accessTokens.index.url(project.slug)}
+                        <Link href={accessTokens.index.url(project.public_id)}
                             >View access tokens</Link
                         >
                     </Button>
@@ -205,7 +206,7 @@
                 </CardContent>
                 <CardFooter>
                     <Button variant="outline" size="sm" class="w-full">
-                        <Link href={ruleTemplates.index.url(project.slug)}
+                        <Link href={ruleTemplates.index.url(project.public_id)}
                             >Manage templates</Link
                         >
                     </Button>

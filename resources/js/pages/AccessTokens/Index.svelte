@@ -16,7 +16,7 @@
     interface Project {
         id: number;
         name: string;
-        slug: string;
+        public_id: string;
     }
 
     interface AccessToken {
@@ -43,11 +43,11 @@
         },
         {
             title: project.name,
-            href: projects.show.url(project.slug),
+            href: projects.show.url(project.public_id),
         },
         {
             title: 'Access Tokens',
-            href: accessTokens.index.url(project.slug),
+            href: accessTokens.index.url(project.public_id),
         },
     ]);
 

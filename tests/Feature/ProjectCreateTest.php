@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\OrganizationRole;
 use App\Models\Organization;
+use App\Models\Project;
 use App\Models\RuleTemplate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -14,7 +15,10 @@ class ProjectCreateTest extends TestCase
 
     public function test_guests_are_redirected_to_login(): void
     {
-        $this->get(route('projects.create'))->assertRedirect(route('login'));
+        $organization = Organization::factory()->create();
+
+        $this->get(route('organizations.projects.create', $organization))
+            ->assertRedirect(route('login'));
     }
 
     public function test_authenticated_user_can_view_create_form(): void
@@ -23,30 +27,26 @@ class ProjectCreateTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = $this->get(route('projects.create'));
+        $response = $this->get(route('organizations.projects.create', $organization));
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
             ->component('Projects/Create')
-            ->has('organizations', 1)
+            ->where('organization.id', $organization->id)
         );
     }
 
-    public function test_create_form_only_shows_orgs_with_manage_permission(): void
+    public function test_viewer_cannot_view_create_form(): void
     {
-        ['user' => $user, 'organization' => $ownedOrg] = $this->createUserWithOrganization();
+        ['user' => $user] = $this->createUserWithOrganization();
 
         $viewerOrg = Organization::factory()->create();
         $viewerOrg->members()->attach($user, ['role' => OrganizationRole::Viewer->value]);
 
         $this->actingAs($user);
 
-        $response = $this->get(route('projects.create'));
-
-        $response->assertInertia(fn ($page) => $page
-            ->has('organizations', 1)
-            ->where('organizations.0.id', $ownedOrg->id)
-        );
+        $this->get(route('organizations.projects.create', $viewerOrg))
+            ->assertForbidden();
     }
 
     public function test_user_can_create_a_project(): void
@@ -55,22 +55,32 @@ class ProjectCreateTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = $this->post(route('projects.store'), [
+        $response = $this->post(route('organizations.projects.store', $organization), [
             'name' => 'My New Project',
             'description' => 'A test project',
-            'organization_id' => $organization->id,
         ]);
 
         $this->assertDatabaseHas('projects', [
             'organization_id' => $organization->id,
             'name' => 'My New Project',
-            'slug' => 'my-new-project',
             'description' => 'A test project',
             'active' => true,
         ]);
 
         $project = $organization->projects()->where('name', 'My New Project')->first();
+        $this->assertMatchesRegularExpression('/^[A-Za-z0-9]{12}$/', $project->public_id);
         $response->assertRedirect(route('projects.show', $project));
+    }
+
+    public function test_projects_receive_globally_unique_public_ids(): void
+    {
+        $projects = Project::factory()->count(20)->create();
+
+        $this->assertCount(20, $projects->pluck('public_id')->unique());
+        $projects->each(fn ($project) => $this->assertMatchesRegularExpression(
+            '/^[A-Za-z0-9]{12}$/',
+            $project->public_id,
+        ));
     }
 
     public function test_user_cannot_create_project_in_org_they_dont_belong_to(): void
@@ -80,9 +90,8 @@ class ProjectCreateTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = $this->post(route('projects.store'), [
+        $response = $this->post(route('organizations.projects.store', $otherOrg), [
             'name' => 'Sneaky Project',
-            'organization_id' => $otherOrg->id,
         ]);
 
         $response->assertForbidden();
@@ -97,9 +106,8 @@ class ProjectCreateTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = $this->post(route('projects.store'), [
+        $response = $this->post(route('organizations.projects.store', $viewerOrg), [
             'name' => 'Viewer Project',
-            'organization_id' => $viewerOrg->id,
         ]);
 
         $response->assertForbidden();
@@ -111,9 +119,8 @@ class ProjectCreateTest extends TestCase
 
         $this->actingAs($user);
 
-        $this->post(route('projects.store'), [
+        $this->post(route('organizations.projects.store', $organization), [
             'name' => 'Template Test Project',
-            'organization_id' => $organization->id,
         ]);
 
         $project = $organization->projects()->where('name', 'Template Test Project')->first();
@@ -127,9 +134,8 @@ class ProjectCreateTest extends TestCase
 
         $this->actingAs($user);
 
-        $this->post(route('projects.store'), [
+        $this->post(route('organizations.projects.store', $organization), [
             'name' => 'Token Test Project',
-            'organization_id' => $organization->id,
         ]);
 
         $project = $organization->projects()->where('name', 'Token Test Project')->first();
@@ -148,9 +154,8 @@ class ProjectCreateTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = $this->post(route('projects.store'), [
+        $response = $this->post(route('organizations.projects.store', $organization), [
             'name' => '',
-            'organization_id' => $organization->id,
         ]);
 
         $response->assertSessionHasErrors('name');
@@ -162,9 +167,8 @@ class ProjectCreateTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = $this->post(route('projects.store'), [
+        $response = $this->post(route('organizations.projects.store', $organization), [
             'name' => 'No Description Project',
-            'organization_id' => $organization->id,
         ]);
 
         $project = $organization->projects()->where('name', 'No Description Project')->first();

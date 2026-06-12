@@ -19,7 +19,7 @@
     interface Project {
         id: number;
         name: string;
-        slug: string;
+        public_id: string;
     }
 
     interface SegmentRule {
@@ -66,16 +66,16 @@
         },
         {
             title: project.name,
-            href: projects.show.url(project.slug),
+            href: projects.show.url(project.public_id),
         },
         {
             title: 'Segments',
-            href: segments.index.url(project.slug),
+            href: segments.index.url(project.public_id),
         },
         {
             title: segment.name,
             href: segments.show.url({
-                project: project.slug,
+                project: project.public_id,
                 segment: segment.id,
             }),
         },
@@ -144,7 +144,7 @@
                     {segment.active ? 'Active' : 'Inactive'}
                 </span>
                 <DuplicateSegmentDialog
-                    projectSlug={project.slug}
+                    projectPublicId={project.public_id}
                     segmentId={segment.id}
                     segmentName={segment.name}
                     segmentSlug={segment.slug}
@@ -152,13 +152,13 @@
                 <Button variant="outline" size="sm">
                     <Link
                         href={segments.edit.url({
-                            project: project.slug,
+                            project: project.public_id,
                             segment: segment.id,
                         })}>Edit</Link
                     >
                 </Button>
                 <DeleteSegmentDialog
-                    projectSlug={project.slug}
+                    projectPublicId={project.public_id}
                     segmentId={segment.id}
                     segmentName={segment.name}
                 />

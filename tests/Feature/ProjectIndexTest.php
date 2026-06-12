@@ -28,6 +28,10 @@ class ProjectIndexTest extends TestCase
 
         $response = $this->get(route('projects.index'));
 
+        $response->assertRedirect(route('organizations.projects.index', $organization));
+
+        $response = $this->get(route('organizations.projects.index', $organization));
+
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
             ->component('Projects/Index')
@@ -49,7 +53,7 @@ class ProjectIndexTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = $this->get(route('projects.index', ['organization_id' => $org2->id]));
+        $response = $this->get(route('organizations.projects.index', $org2));
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
@@ -69,19 +73,14 @@ class ProjectIndexTest extends TestCase
 
         $this->actingAs($user);
 
-        // Select org2
-        $this->get(route('projects.index', ['organization_id' => $org2->id]));
+        $this->get(route('organizations.projects.index', $org2));
 
-        // Visit without param — should remember org2
         $response = $this->get(route('projects.index'));
 
-        $response->assertInertia(fn ($page) => $page
-            ->where('selectedOrganizationId', $org2->id)
-            ->has('projects', 1)
-        );
+        $response->assertRedirect(route('organizations.projects.index', $org2));
     }
 
-    public function test_user_without_owned_org_sees_no_selection(): void
+    public function test_user_without_owned_org_is_redirected_to_first_accessible_organization(): void
     {
         // Create a user that does NOT own any org
         $user = User::factory()->create(['owned_organization_id' => null]);
@@ -93,11 +92,7 @@ class ProjectIndexTest extends TestCase
 
         $response = $this->get(route('projects.index'));
 
-        $response->assertOk();
-        $response->assertInertia(fn ($page) => $page
-            ->where('selectedOrganizationId', null)
-            ->has('projects', 0)
-        );
+        $response->assertRedirect(route('organizations.projects.index', $viewerOrg));
     }
 
     public function test_user_does_not_see_orgs_they_dont_belong_to(): void
@@ -109,10 +104,31 @@ class ProjectIndexTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = $this->get(route('projects.index'));
+        $response = $this->get(route('organizations.projects.index', $organization));
 
         $response->assertInertia(fn ($page) => $page
             ->has('organizations', 1)
+        );
+    }
+
+    public function test_user_cannot_view_another_organizations_project_collection(): void
+    {
+        ['user' => $user] = $this->createUserWithOrganization();
+        $otherOrganization = Organization::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('organizations.projects.index', $otherOrganization))
+            ->assertForbidden();
+    }
+
+    public function test_organization_routes_use_public_ids(): void
+    {
+        $organization = Organization::factory()->create();
+
+        $this->assertMatchesRegularExpression('/^[A-Za-z0-9]{12}$/', $organization->public_id);
+        $this->assertStringEndsWith(
+            "/organizations/{$organization->public_id}/projects",
+            route('organizations.projects.index', $organization),
         );
     }
 }

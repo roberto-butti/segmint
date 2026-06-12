@@ -40,7 +40,7 @@ class SegmentDeleteTest extends TestCase
 
         $response = $this->delete(route('projects.segments.destroy', [$project, $segment]));
 
-        $response->assertRedirect(route('projects.segments.index', $project->slug));
+        $response->assertRedirect(route('projects.segments.index', $project));
         $this->assertDatabaseMissing('segments', ['id' => $segment->id]);
         $this->assertDatabaseMissing('segment_rules', ['segment_id' => $segment->id]);
     }

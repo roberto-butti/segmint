@@ -5,7 +5,6 @@
     import { Button } from '@/components/ui/button';
     import {
         Card,
-        CardContent,
         CardDescription,
         CardHeader,
         CardTitle,
@@ -17,13 +16,15 @@
         SelectTrigger,
     } from '@/components/ui/select';
     import AppLayout from '@/layouts/AppLayout.svelte';
+    import organizationsRoutes from '@/routes/organizations';
+    import organizationProjects from '@/routes/organizations/projects';
     import projects from '@/routes/projects';
     import type { BreadcrumbItem } from '@/types';
 
     interface Project {
         id: number;
         name: string;
-        slug: string;
+        public_id: string;
         description: string | null;
         active: boolean;
         created_at: string;
@@ -31,6 +32,7 @@
 
     interface OrganizationOption {
         id: number;
+        public_id: string;
         name: string;
         role: string;
     }
@@ -45,12 +47,18 @@
         projects: Project[];
     } = $props();
 
-    const breadcrumbs: BreadcrumbItem[] = [
+    const selectedOrganization = $derived(
+        organizations.find((org) => org.id === selectedOrganizationId),
+    );
+
+    const breadcrumbs: BreadcrumbItem[] = $derived([
         {
             title: 'Projects',
-            href: projects.index.url(),
+            href: selectedOrganization
+                ? organizationProjects.index.url(selectedOrganization.public_id)
+                : projects.index.url(),
         },
-    ];
+    ]);
 
     function roleLabel(role: string): string {
         return role.charAt(0).toUpperCase() + role.slice(1);
@@ -71,11 +79,13 @@
             return;
         }
 
-        router.get(
-            projects.index.url(),
-            { organization_id: value },
-            { preserveState: false },
+        const organization = organizations.find(
+            (org) => org.id.toString() === value,
         );
+
+        if (organization) {
+            router.get(organizationProjects.index.url(organization.public_id));
+        }
     }
 
     const selectedValue = $derived(selectedOrganizationId?.toString() ?? '');
@@ -121,9 +131,32 @@
                 </div>
             </div>
             {#if hasSelection}
-                <Button variant="default" size="sm">
-                    <Link href={projects.create.url()}>Create project</Link>
-                </Button>
+                <div class="flex items-center gap-2">
+                    <Button variant="outline" size="sm" asChild>
+                        {#snippet children(props)}
+                            <Link
+                                href={organizationsRoutes.dashboard.url(
+                                    selectedOrganization!.public_id,
+                                )}
+                                class={props.class}
+                            >
+                                Organization dashboard
+                            </Link>
+                        {/snippet}
+                    </Button>
+                    <Button variant="default" size="sm" asChild>
+                        {#snippet children(props)}
+                            <Link
+                                href={organizationProjects.create.url(
+                                    selectedOrganization!.public_id,
+                                )}
+                                class={props.class}
+                            >
+                                Create project
+                            </Link>
+                        {/snippet}
+                    </Button>
+                </div>
             {/if}
         </div>
 
@@ -146,7 +179,10 @@
         {:else}
             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {#each projectList as project (project.id)}
-                    <Link href={projects.show.url(project.slug)} class="block">
+                    <Link
+                        href={projects.show.url(project.public_id)}
+                        class="block"
+                    >
                         <Card
                             class="transition-colors hover:border-foreground/20"
                         >
@@ -169,11 +205,6 @@
                                     </CardDescription>
                                 {/if}
                             </CardHeader>
-                            <CardContent>
-                                <p class="text-xs text-muted-foreground">
-                                    {project.slug}
-                                </p>
-                            </CardContent>
                         </Card>
                     </Link>
                 {/each}

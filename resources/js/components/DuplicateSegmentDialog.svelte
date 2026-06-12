@@ -16,7 +16,7 @@
     import segments from '@/routes/projects/segments';
 
     let {
-        projectSlug,
+        projectPublicId,
         segmentId,
         segmentName,
         segmentSlug,
@@ -24,7 +24,7 @@
         size = 'sm' as 'sm' | 'default',
         class: className = '',
     }: {
-        projectSlug: string;
+        projectPublicId: string;
         segmentId: number;
         segmentName: string;
         segmentSlug: string;
@@ -62,7 +62,7 @@
         processing = true;
         router.post(
             segments.duplicate.url({
-                project: projectSlug,
+                project: projectPublicId,
                 segment: segmentId,
             }),
             { name: nameInput, slug: slugInput },
