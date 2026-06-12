@@ -35,8 +35,8 @@ class ProjectIndexTest extends TestCase
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
             ->component('Projects/Index')
-            ->has('organizations', 1)
-            ->where('selectedOrganizationId', $organization->id)
+            ->where('organization.id', $organization->id)
+            ->where('canManageProjects', true)
             ->has('projects', 3)
         );
     }
@@ -57,7 +57,7 @@ class ProjectIndexTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
-            ->where('selectedOrganizationId', $org2->id)
+            ->where('organization.id', $org2->id)
             ->has('projects', 4)
         );
     }
@@ -95,7 +95,7 @@ class ProjectIndexTest extends TestCase
         $response->assertRedirect(route('organizations.projects.index', $viewerOrg));
     }
 
-    public function test_user_does_not_see_orgs_they_dont_belong_to(): void
+    public function test_project_collection_does_not_include_other_organization_options(): void
     {
         ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
 
@@ -107,8 +107,23 @@ class ProjectIndexTest extends TestCase
         $response = $this->get(route('organizations.projects.index', $organization));
 
         $response->assertInertia(fn ($page) => $page
-            ->has('organizations', 1)
+            ->missing('organizations')
+            ->where('organization.id', $organization->id)
         );
+    }
+
+    public function test_viewer_cannot_create_projects_from_project_collection(): void
+    {
+        $user = User::factory()->create();
+        $organization = Organization::factory()->create();
+        $organization->members()->attach($user, ['role' => OrganizationRole::Viewer->value]);
+
+        $this->actingAs($user)
+            ->get(route('organizations.projects.index', $organization))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('canManageProjects', false)
+            );
     }
 
     public function test_user_cannot_view_another_organizations_project_collection(): void

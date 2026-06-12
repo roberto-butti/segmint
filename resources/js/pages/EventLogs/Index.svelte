@@ -11,7 +11,8 @@
         SelectTrigger,
     } from '@/components/ui/select';
     import AppLayout from '@/layouts/AppLayout.svelte';
-    import projects from '@/routes/projects';
+    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
+    import type { BreadcrumbOrganization } from '@/lib/breadcrumbs';
     import events from '@/routes/projects/events';
     import segments from '@/routes/projects/segments';
     import type { BreadcrumbItem } from '@/types';
@@ -54,12 +55,14 @@
 
     let {
         project,
+        organization,
         eventLogs,
         eventTypes,
         utmSources,
         filters,
     }: {
         project: Project;
+        organization: BreadcrumbOrganization;
         eventLogs: PaginatedData;
         eventTypes: string[];
         utmSources: string[];
@@ -71,8 +74,7 @@
     let utmSourceFilter = $state(untrack(() => filters.utm_source));
 
     const breadcrumbs: BreadcrumbItem[] = $derived([
-        { title: 'Projects', href: projects.index.url() },
-        { title: project.name, href: projects.show.url(project.public_id) },
+        ...projectBreadcrumbs(organization, project),
         { title: 'Events', href: events.index.url(project.public_id) },
     ]);
 

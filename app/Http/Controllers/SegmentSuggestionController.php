@@ -23,6 +23,7 @@ class SegmentSuggestionController extends Controller
 
         return Inertia::render('Segments/Suggestions', [
             'project' => $project,
+            'organization' => $this->organizationContext($project->organization),
             'suggestions' => $suggestions,
             'ruleTypes' => array_map(
                 fn ($case) => ['value' => $case->value, 'label' => $case->label()],

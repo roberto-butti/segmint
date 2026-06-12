@@ -14,6 +14,8 @@
         CardTitle,
     } from '@/components/ui/card';
     import AppLayout from '@/layouts/AppLayout.svelte';
+    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
+    import type { BreadcrumbOrganization } from '@/lib/breadcrumbs';
     import projects from '@/routes/projects';
     import accessTokens from '@/routes/projects/access-tokens';
     import eventsRoute from '@/routes/projects/events';
@@ -32,6 +34,7 @@
 
     let {
         project,
+        organization,
         segmentsCount,
         activeSegmentsCount,
         eventLogsCount,
@@ -45,6 +48,7 @@
         topSegments,
     }: {
         project: Project;
+        organization: BreadcrumbOrganization;
         segmentsCount: number;
         activeSegmentsCount: number;
         eventLogsCount: number;
@@ -61,16 +65,9 @@
         topSegments: Record<string, number>;
     } = $props();
 
-    const breadcrumbs: BreadcrumbItem[] = $derived([
-        {
-            title: 'Projects',
-            href: projects.index.url(),
-        },
-        {
-            title: project.name,
-            href: projects.show.url(project.public_id),
-        },
-    ]);
+    const breadcrumbs: BreadcrumbItem[] = $derived(
+        projectBreadcrumbs(organization, project),
+    );
 
     const eventsLabels = $derived(
         Object.keys(eventsOverTime).map((d) => {

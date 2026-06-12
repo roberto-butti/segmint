@@ -9,7 +9,8 @@
         CardTitle,
     } from '@/components/ui/card';
     import AppLayout from '@/layouts/AppLayout.svelte';
-    import projects from '@/routes/projects';
+    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
+    import type { BreadcrumbOrganization } from '@/lib/breadcrumbs';
     import accessTokens from '@/routes/projects/access-tokens';
     import type { BreadcrumbItem } from '@/types';
 
@@ -30,21 +31,16 @@
 
     let {
         project,
+        organization,
         accessTokens: tokenList,
     }: {
         project: Project;
+        organization: BreadcrumbOrganization;
         accessTokens: AccessToken[];
     } = $props();
 
     const breadcrumbs: BreadcrumbItem[] = $derived([
-        {
-            title: 'Projects',
-            href: projects.index.url(),
-        },
-        {
-            title: project.name,
-            href: projects.show.url(project.public_id),
-        },
+        ...projectBreadcrumbs(organization, project),
         {
             title: 'Access Tokens',
             href: accessTokens.index.url(project.public_id),

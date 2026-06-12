@@ -57,6 +57,7 @@ class RuleTemplateController extends Controller
 
         return Inertia::render('RuleTemplates/Index', [
             'project' => $project,
+            'organization' => $this->organizationContext($project->organization),
             'templates' => $templates,
             'destinationProjects' => $destinationProjects,
             'ruleTypes' => $this->enumOptions(SegmentRuleType::class),

@@ -9,6 +9,8 @@
     import { Input } from '@/components/ui/input';
     import { Label } from '@/components/ui/label';
     import AppLayout from '@/layouts/AppLayout.svelte';
+    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
+    import type { BreadcrumbOrganization } from '@/lib/breadcrumbs';
     import projects from '@/routes/projects';
     import type { BreadcrumbItem } from '@/types';
 
@@ -20,19 +22,18 @@
         active: boolean;
     }
 
-    let { project }: { project: Project } = $props();
+    let {
+        project,
+        organization,
+    }: {
+        project: Project;
+        organization: BreadcrumbOrganization;
+    } = $props();
 
     let isActive = $state(untrack(() => project.active));
 
     const breadcrumbs: BreadcrumbItem[] = $derived([
-        {
-            title: 'Projects',
-            href: projects.index.url(),
-        },
-        {
-            title: project.name,
-            href: projects.show.url(project.public_id),
-        },
+        ...projectBreadcrumbs(organization, project),
         {
             title: 'Edit',
             href: projects.edit.url(project.public_id),

@@ -22,6 +22,7 @@ class AccessTokenController extends Controller
 
         return Inertia::render('AccessTokens/Index', [
             'project' => $project,
+            'organization' => $this->organizationContext($project->organization),
             'accessTokens' => $accessTokens,
         ]);
     }

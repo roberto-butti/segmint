@@ -38,35 +38,13 @@ class ProjectController extends Controller
     {
         abort_unless($request->user()->belongsToOrganization($organization), 403);
 
-        $userOrgs = $request->user()
-            ->organizations()
-            ->orderBy('name')
-            ->get();
-
-        $ownedOrgId = $request->user()->owned_organization_id;
         session(['projects_organization_id' => $organization->id]);
 
-        // Sort: owned org first, then alphabetically
-        $orgOptions = $userOrgs
-            ->sortBy(fn ($org) => [
-                $org->id === $ownedOrgId ? 0 : 1,
-                $org->name,
-            ])
-            ->values()
-            ->map(fn ($org) => [
-                'id' => $org->id,
-                'public_id' => $org->public_id,
-                'name' => $org->name,
-                'role' => $org->id === $ownedOrgId ? 'owner' : $org->pivot->role,
-                'isOwned' => $org->id === $ownedOrgId,
-            ]);
-
-        $selectedOrg = $userOrgs->firstWhere('id', $organization->id);
+        $role = $request->user()->roleInOrganization($organization);
 
         return Inertia::render('Projects/Index', [
-            'organizations' => $orgOptions,
-            'selectedOrganizationId' => $organization->id,
-            'selectedOrganizationRole' => $selectedOrg?->pivot->role,
+            'organization' => $this->organizationContext($organization),
+            'canManageProjects' => $role?->canManageProjects() ?? false,
             'projects' => $organization->projects()->latest()->get(),
         ]);
     }
@@ -193,6 +171,7 @@ class ProjectController extends Controller
 
         return Inertia::render('Projects/Show', [
             'project' => $project,
+            'organization' => $this->organizationContext($project->organization),
             'segmentsCount' => $project->segments()->count(),
             'activeSegmentsCount' => $project->segments()->where('active', true)->count(),
             'eventLogsCount' => $project->eventLogs()->count(),
@@ -219,6 +198,7 @@ class ProjectController extends Controller
 
         return Inertia::render('Projects/Edit', [
             'project' => $project,
+            'organization' => $this->organizationContext($project->organization),
         ]);
     }
 

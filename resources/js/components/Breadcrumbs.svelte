@@ -15,13 +15,24 @@
     }: {
         breadcrumbs: BreadcrumbItemType[];
     } = $props();
+
+    const lastLocationIndex = $derived(
+        breadcrumbs.findLastIndex((item) => item.variant !== 'action'),
+    );
 </script>
 
 <Breadcrumb>
     <BreadcrumbList>
         {#each breadcrumbs as item, index (item.href)}
             <BreadcrumbItem>
-                {#if index === breadcrumbs.length - 1}
+                {#if item.variant === 'action'}
+                    <Link
+                        href={item.href}
+                        class="inline-flex h-7 items-center justify-center rounded-md border border-input bg-background px-2.5 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                    >
+                        {item.title}
+                    </Link>
+                {:else if index === lastLocationIndex}
                     <BreadcrumbPage>{item.title}</BreadcrumbPage>
                 {:else}
                     <BreadcrumbLink asChild>
@@ -33,7 +44,7 @@
                     </BreadcrumbLink>
                 {/if}
             </BreadcrumbItem>
-            {#if index !== breadcrumbs.length - 1}
+            {#if index !== breadcrumbs.length - 1 && item.variant !== 'action'}
                 <BreadcrumbSeparator />
             {/if}
         {/each}

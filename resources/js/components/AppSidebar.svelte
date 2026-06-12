@@ -2,10 +2,10 @@
     import { Link } from '@inertiajs/svelte';
     import BookOpen from 'lucide-svelte/icons/book-open';
     import FolderGit2 from 'lucide-svelte/icons/folder-git-2';
-    import FolderKanban from 'lucide-svelte/icons/folder-kanban';
     import LayoutGrid from 'lucide-svelte/icons/layout-grid';
     import type { Snippet } from 'svelte';
     import AppLogo from '@/components/AppLogo.svelte';
+    import NavContext from '@/components/NavContext.svelte';
     import NavFooter from '@/components/NavFooter.svelte';
     import NavMain from '@/components/NavMain.svelte';
     import NavUser from '@/components/NavUser.svelte';
@@ -20,7 +20,6 @@
     } from '@/components/ui/sidebar';
     import { toUrl } from '@/lib/utils';
     import { dashboard } from '@/routes';
-    import projects from '@/routes/projects';
     import type { NavItem } from '@/types';
 
     let {
@@ -31,14 +30,9 @@
 
     const mainNavItems: NavItem[] = [
         {
-            title: 'Dashboard',
+            title: 'Organizations',
             href: dashboard(),
             icon: LayoutGrid,
-        },
-        {
-            title: 'Projects',
-            href: projects.index.url(),
-            icon: FolderKanban,
         },
     ];
 
@@ -77,6 +71,7 @@
 
     <SidebarContent>
         <NavMain items={mainNavItems} />
+        <NavContext />
     </SidebarContent>
 
     <SidebarFooter>

@@ -60,6 +60,7 @@ class SegmentController extends Controller
 
         return Inertia::render('Segments/Index', [
             'project' => $project,
+            'organization' => $this->organizationContext($project->organization),
             'segments' => $segments,
             'destinationProjects' => $destinationProjects,
         ]);
@@ -74,6 +75,7 @@ class SegmentController extends Controller
 
         return Inertia::render('Segments/Create', [
             'project' => $project,
+            'organization' => $this->organizationContext($project->organization),
             'ruleTypes' => $this->enumOptions(SegmentRuleType::class),
             'ruleOperators' => $this->enumOptions(SegmentRuleOperator::class),
             'ruleTemplates' => $project->ruleTemplates()->orderBy('name')->get(),
@@ -109,6 +111,7 @@ class SegmentController extends Controller
 
         return Inertia::render('Segments/Show', [
             'project' => $project,
+            'organization' => $this->organizationContext($project->organization),
             'segment' => $segment,
             'ruleTypes' => $this->enumOptions(SegmentRuleType::class),
             'ruleOperators' => $this->enumOptions(SegmentRuleOperator::class),
@@ -127,6 +130,7 @@ class SegmentController extends Controller
 
         return Inertia::render('Segments/Edit', [
             'project' => $project,
+            'organization' => $this->organizationContext($project->organization),
             'segment' => $segment,
             'ruleTypes' => $this->enumOptions(SegmentRuleType::class),
             'ruleOperators' => $this->enumOptions(SegmentRuleOperator::class),

@@ -71,6 +71,7 @@ class EventLogViewController extends Controller
 
         return Inertia::render('EventLogs/Index', [
             'project' => $project,
+            'organization' => $this->organizationContext($project->organization),
             'eventLogs' => $eventLogs,
             'eventTypes' => $eventTypes,
             'utmSources' => $utmSources,

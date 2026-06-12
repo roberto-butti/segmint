@@ -32,7 +32,8 @@
         SelectTrigger,
     } from '@/components/ui/select';
     import AppLayout from '@/layouts/AppLayout.svelte';
-    import projects from '@/routes/projects';
+    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
+    import type { BreadcrumbOrganization } from '@/lib/breadcrumbs';
     import ruleTemplatesRoute from '@/routes/projects/rule-templates';
     import type { BreadcrumbItem } from '@/types';
 
@@ -66,12 +67,14 @@
 
     let {
         project,
+        organization,
         templates,
         destinationProjects,
         ruleTypes,
         ruleOperators,
     }: {
         project: Project;
+        organization: BreadcrumbOrganization;
         templates: RuleTemplateItem[];
         destinationProjects: DestinationProject[];
         ruleTypes: EnumOption[];
@@ -100,14 +103,7 @@
     }
 
     const breadcrumbs: BreadcrumbItem[] = $derived([
-        {
-            title: 'Projects',
-            href: projects.index.url(),
-        },
-        {
-            title: project.name,
-            href: projects.show.url(project.public_id),
-        },
+        ...projectBreadcrumbs(organization, project),
         {
             title: 'Rule Templates',
             href: ruleTemplatesRoute.index.url(project.public_id),

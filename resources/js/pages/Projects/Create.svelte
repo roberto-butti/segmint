@@ -7,6 +7,7 @@
     import { Input } from '@/components/ui/input';
     import { Label } from '@/components/ui/label';
     import AppLayout from '@/layouts/AppLayout.svelte';
+    import { organizationBreadcrumbs } from '@/lib/breadcrumbs';
     import organizationProjects from '@/routes/organizations/projects';
     import type { BreadcrumbItem } from '@/types';
 
@@ -19,6 +20,7 @@
     let { organization }: { organization: Organization } = $props();
 
     const breadcrumbs: BreadcrumbItem[] = $derived([
+        ...organizationBreadcrumbs(organization),
         {
             title: 'Projects',
             href: organizationProjects.index.url(organization.public_id),

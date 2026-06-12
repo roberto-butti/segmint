@@ -73,6 +73,11 @@
             title: organization.name,
             href: organizations.dashboard.url(organization.public_id),
         },
+        {
+            title: 'View projects',
+            href: organizationProjects.index.url(organization.public_id),
+            variant: 'action',
+        },
     ]);
 
     const eventLabels = $derived(

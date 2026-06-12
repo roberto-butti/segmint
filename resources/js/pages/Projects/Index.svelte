@@ -1,6 +1,5 @@
 <script lang="ts">
-    import { Link, router } from '@inertiajs/svelte';
-    import Building2 from 'lucide-svelte/icons/building-2';
+    import { Link } from '@inertiajs/svelte';
     import AppHead from '@/components/AppHead.svelte';
     import { Button } from '@/components/ui/button';
     import {
@@ -9,13 +8,9 @@
         CardHeader,
         CardTitle,
     } from '@/components/ui/card';
-    import {
-        Select,
-        SelectContent,
-        SelectItem,
-        SelectTrigger,
-    } from '@/components/ui/select';
     import AppLayout from '@/layouts/AppLayout.svelte';
+    import { organizationBreadcrumbs } from '@/lib/breadcrumbs';
+    import type { BreadcrumbOrganization } from '@/lib/breadcrumbs';
     import organizationsRoutes from '@/routes/organizations';
     import organizationProjects from '@/routes/organizations/projects';
     import projects from '@/routes/projects';
@@ -30,125 +25,57 @@
         created_at: string;
     }
 
-    interface OrganizationOption {
-        id: number;
-        public_id: string;
-        name: string;
-        role: string;
-    }
-
     let {
-        organizations,
-        selectedOrganizationId,
+        organization,
+        canManageProjects,
         projects: projectList,
     }: {
-        organizations: OrganizationOption[];
-        selectedOrganizationId: number | null;
+        organization: BreadcrumbOrganization;
+        canManageProjects: boolean;
         projects: Project[];
     } = $props();
 
-    const selectedOrganization = $derived(
-        organizations.find((org) => org.id === selectedOrganizationId),
-    );
-
     const breadcrumbs: BreadcrumbItem[] = $derived([
+        ...organizationBreadcrumbs(organization),
         {
             title: 'Projects',
-            href: selectedOrganization
-                ? organizationProjects.index.url(selectedOrganization.public_id)
-                : projects.index.url(),
+            href: organizationProjects.index.url(organization.public_id),
         },
     ]);
-
-    function roleLabel(role: string): string {
-        return role.charAt(0).toUpperCase() + role.slice(1);
-    }
-
-    function getOrgLabel(id: string): string {
-        const org = organizations.find((o) => o.id.toString() === id);
-
-        if (!org) {
-            return 'Select organization';
-        }
-
-        return `${org.name} (${roleLabel(org.role)})`;
-    }
-
-    function onOrgChange(value: string | undefined): void {
-        if (!value) {
-            return;
-        }
-
-        const organization = organizations.find(
-            (org) => org.id.toString() === value,
-        );
-
-        if (organization) {
-            router.get(organizationProjects.index.url(organization.public_id));
-        }
-    }
-
-    const selectedValue = $derived(selectedOrganizationId?.toString() ?? '');
-    const hasSelection = $derived(selectedOrganizationId !== null);
 </script>
 
-<AppHead title="Projects" />
+<AppHead title={`${organization.name} projects`} />
 
 <AppLayout {breadcrumbs}>
     <div class="flex h-full flex-1 flex-col gap-6 rounded-xl p-4">
         <div class="flex items-center justify-between">
-            <div class="flex items-center gap-4">
-                <h2 class="text-xl font-semibold">Projects</h2>
-                <div class="w-64">
-                    <Select
-                        type="single"
-                        value={selectedValue}
-                        onValueChange={onOrgChange}
-                    >
-                        <SelectTrigger class="w-full">
-                            <div class="flex items-center gap-2">
-                                <Building2
-                                    class="size-4 text-muted-foreground"
-                                />
-                                <span class="truncate">
-                                    {hasSelection
-                                        ? getOrgLabel(selectedValue)
-                                        : 'Select organization'}
-                                </span>
-                            </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                            {#each organizations as org (org.id)}
-                                <SelectItem value={org.id.toString()}>
-                                    {org.name}
-                                    <span class="ml-1 text-muted-foreground"
-                                        >({roleLabel(org.role)})</span
-                                    >
-                                </SelectItem>
-                            {/each}
-                        </SelectContent>
-                    </Select>
-                </div>
+            <div>
+                <h2 class="text-xl font-semibold">
+                    {organization.name} projects
+                </h2>
+                <p class="mt-1 text-sm text-muted-foreground">
+                    Projects belonging to this organization
+                </p>
             </div>
-            {#if hasSelection}
-                <div class="flex items-center gap-2">
-                    <Button variant="outline" size="sm" asChild>
-                        {#snippet children(props)}
-                            <Link
-                                href={organizationsRoutes.dashboard.url(
-                                    selectedOrganization!.public_id,
-                                )}
-                                class={props.class}
-                            >
-                                Organization dashboard
-                            </Link>
-                        {/snippet}
-                    </Button>
+            <div class="flex items-center gap-2">
+                <Button variant="outline" size="sm" asChild>
+                    {#snippet children(props)}
+                        <Link
+                            href={organizationsRoutes.dashboard.url(
+                                organization.public_id,
+                            )}
+                            class={props.class}
+                        >
+                            Organization dashboard
+                        </Link>
+                    {/snippet}
+                </Button>
+                {#if canManageProjects}
                     <Button variant="default" size="sm" asChild>
                         {#snippet children(props)}
                             <Link
                                 href={organizationProjects.create.url(
-                                    selectedOrganization!.public_id,
+                                    organization.public_id,
                                 )}
                                 class={props.class}
                             >
@@ -156,19 +83,11 @@
                             </Link>
                         {/snippet}
                     </Button>
-                </div>
-            {/if}
+                {/if}
+            </div>
         </div>
 
-        {#if !hasSelection}
-            <div
-                class="flex flex-1 items-center justify-center rounded-xl border border-dashed border-sidebar-border p-12"
-            >
-                <p class="text-muted-foreground">
-                    Select an organization to see its projects.
-                </p>
-            </div>
-        {:else if projectList.length === 0}
+        {#if projectList.length === 0}
             <div
                 class="flex flex-1 items-center justify-center rounded-xl border border-dashed border-sidebar-border p-12"
             >

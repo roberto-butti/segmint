@@ -10,7 +10,8 @@
     import { Input } from '@/components/ui/input';
     import { Label } from '@/components/ui/label';
     import AppLayout from '@/layouts/AppLayout.svelte';
-    import projects from '@/routes/projects';
+    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
+    import type { BreadcrumbOrganization } from '@/lib/breadcrumbs';
     import segments from '@/routes/projects/segments';
     import type { BreadcrumbItem } from '@/types';
 
@@ -54,12 +55,14 @@
 
     let {
         project,
+        organization,
         segment,
         ruleTypes,
         ruleOperators,
         ruleTemplates = [],
     }: {
         project: Project;
+        organization: BreadcrumbOrganization;
         segment: Segment;
         ruleTypes: EnumOption[];
         ruleOperators: EnumOption[];
@@ -80,14 +83,7 @@
     );
 
     const breadcrumbs: BreadcrumbItem[] = $derived([
-        {
-            title: 'Projects',
-            href: projects.index.url(),
-        },
-        {
-            title: project.name,
-            href: projects.show.url(project.public_id),
-        },
+        ...projectBreadcrumbs(organization, project),
         {
             title: 'Segments',
             href: segments.index.url(project.public_id),
