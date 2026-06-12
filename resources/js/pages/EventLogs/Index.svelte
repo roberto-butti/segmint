@@ -1,7 +1,11 @@
 <script lang="ts">
     import { Link, router } from '@inertiajs/svelte';
+    import Activity from 'lucide-svelte/icons/activity';
+    import CircleCheck from 'lucide-svelte/icons/circle-check';
+    import CircleDashed from 'lucide-svelte/icons/circle-dashed';
     import { untrack } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
+    import EmptyState from '@/components/EmptyState.svelte';
     import { Button } from '@/components/ui/button';
     import { Input } from '@/components/ui/input';
     import {
@@ -53,12 +57,18 @@
         page_path: string;
     }
 
+    interface TrackingReadiness {
+        has_active_token: boolean;
+        has_active_segment_with_rules: boolean;
+    }
+
     let {
         project,
         organization,
         eventLogs,
         eventTypes,
         utmSources,
+        trackingReadiness,
         filters,
     }: {
         project: Project;
@@ -66,6 +76,7 @@
         eventLogs: PaginatedData;
         eventTypes: string[];
         utmSources: string[];
+        trackingReadiness: TrackingReadiness;
         filters: Filters;
     } = $props();
 
@@ -155,6 +166,74 @@
         return label.replace('&laquo;', '\u00AB').replace('&raquo;', '\u00BB');
     }
 </script>
+
+{#snippet eventIcon()}
+    <Activity class="size-8" />
+{/snippet}
+
+{#snippet clearFiltersAction()}
+    <Button size="sm" onclick={clearFilters}>Clear filters</Button>
+{/snippet}
+
+{#snippet trackingReadinessDetails()}
+    <div
+        class="w-full max-w-lg space-y-3 rounded-lg border bg-muted/30 p-4 text-left"
+    >
+        <p class="text-sm font-medium">Tracking readiness</p>
+        <div class="flex items-start gap-3">
+            {#if trackingReadiness.has_active_token}
+                <CircleCheck class="mt-0.5 size-4 shrink-0 text-green-600" />
+            {:else}
+                <CircleDashed
+                    class="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                />
+            {/if}
+            <div>
+                <p class="text-sm font-medium">
+                    {trackingReadiness.has_active_token
+                        ? 'Active access token is ready'
+                        : 'No active access token'}
+                </p>
+                <p class="text-xs text-muted-foreground">
+                    The SDK or tracking API uses an active token to identify
+                    this project.
+                </p>
+            </div>
+        </div>
+        <div class="flex items-start gap-3">
+            <CircleDashed
+                class="mt-0.5 size-4 shrink-0 text-muted-foreground"
+            />
+            <div>
+                <p class="text-sm font-medium">Waiting for the first event</p>
+                <p class="text-xs text-muted-foreground">
+                    Events are created automatically when your application sends
+                    activity through the SDK or tracking API.
+                </p>
+            </div>
+        </div>
+        <div class="flex items-start gap-3">
+            {#if trackingReadiness.has_active_segment_with_rules}
+                <CircleCheck class="mt-0.5 size-4 shrink-0 text-green-600" />
+            {:else}
+                <CircleDashed
+                    class="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                />
+            {/if}
+            <div>
+                <p class="text-sm font-medium">
+                    {trackingReadiness.has_active_segment_with_rules
+                        ? 'Audience matching is configured'
+                        : 'Audience matching is not configured'}
+                </p>
+                <p class="text-xs text-muted-foreground">
+                    An active segment with rules is optional for tracking, but
+                    required to match visitors into an audience.
+                </p>
+            </div>
+        </div>
+    </div>
+{/snippet}
 
 <AppHead title={`Events - ${project.name}`} />
 
@@ -254,15 +333,20 @@
 
         <!-- Table -->
         {#if eventLogs.data.length === 0}
-            <div
-                class="flex flex-1 items-center justify-center rounded-xl border border-dashed border-sidebar-border p-12"
-            >
-                <p class="text-muted-foreground">
-                    {hasActiveFilters
-                        ? 'No events match your filters.'
-                        : 'No events tracked yet.'}
-                </p>
-            </div>
+            <EmptyState
+                icon={eventIcon}
+                title={hasActiveFilters
+                    ? 'No events match your filters'
+                    : `No events tracked for ${project.name}`}
+                description={hasActiveFilters
+                    ? 'Change or clear the current filters to see other tracked events.'
+                    : 'Events are activity records sent automatically by your application through the Segmint SDK or tracking API.'}
+                class="flex-1"
+                details={hasActiveFilters
+                    ? undefined
+                    : trackingReadinessDetails}
+                actions={hasActiveFilters ? clearFiltersAction : undefined}
+            />
         {:else}
             <div class="overflow-x-auto rounded-lg border">
                 <table class="w-full text-sm">

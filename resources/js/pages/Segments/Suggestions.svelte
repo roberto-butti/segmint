@@ -5,6 +5,7 @@
     import Lightbulb from 'lucide-svelte/icons/lightbulb';
     import Sparkles from 'lucide-svelte/icons/sparkles';
     import AppHead from '@/components/AppHead.svelte';
+    import EmptyState from '@/components/EmptyState.svelte';
     import { Button } from '@/components/ui/button';
     import {
         Card,
@@ -16,6 +17,7 @@
     import AppLayout from '@/layouts/AppLayout.svelte';
     import { projectBreadcrumbs } from '@/lib/breadcrumbs';
     import type { BreadcrumbOrganization } from '@/lib/breadcrumbs';
+    import events from '@/routes/projects/events';
     import segments from '@/routes/projects/segments';
     import type { BreadcrumbItem } from '@/types';
 
@@ -129,6 +131,10 @@
     );
 </script>
 
+{#snippet suggestionIcon()}
+    <Lightbulb class="size-8" />
+{/snippet}
+
 <AppHead title={`Segment Suggestions - ${project.name}`} />
 
 <AppLayout {breadcrumbs}>
@@ -146,23 +152,35 @@
         </div>
 
         {#if suggestions.length === 0}
-            <div
-                class="flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-sidebar-border p-12"
+            <EmptyState
+                icon={suggestionIcon}
+                title={`No segment suggestions for ${project.name}`}
+                description="Suggestions are generated from tracked event patterns. Collect more events, then return here to review recommendations."
+                class="flex-1"
             >
-                <Lightbulb class="size-8 text-muted-foreground" />
-                <p class="text-muted-foreground">
-                    No suggestions yet. Track more events to get data-driven
-                    segment recommendations.
-                </p>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onclick={() =>
-                        router.get(segments.index.url(project.public_id))}
-                >
-                    Back to segments
-                </Button>
-            </div>
+                {#snippet actions()}
+                    <Button size="sm" asChild>
+                        {#snippet children(props)}
+                            <Link
+                                href={events.index.url(project.public_id)}
+                                class={props.class}
+                            >
+                                View events
+                            </Link>
+                        {/snippet}
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                        {#snippet children(props)}
+                            <Link
+                                href={segments.index.url(project.public_id)}
+                                class={props.class}
+                            >
+                                Back to segments
+                            </Link>
+                        {/snippet}
+                    </Button>
+                {/snippet}
+            </EmptyState>
         {:else}
             {#each categories as category (category)}
                 <div class="space-y-3">

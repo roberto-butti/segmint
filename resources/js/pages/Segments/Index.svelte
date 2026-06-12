@@ -1,10 +1,12 @@
 <script lang="ts">
     import { Link, page } from '@inertiajs/svelte';
+    import Target from 'lucide-svelte/icons/target';
     import X from 'lucide-svelte/icons/x';
     import AppHead from '@/components/AppHead.svelte';
     import CopySegmentsDialog from '@/components/CopySegmentsDialog.svelte';
     import DeleteSegmentDialog from '@/components/DeleteSegmentDialog.svelte';
     import DuplicateSegmentDialog from '@/components/DuplicateSegmentDialog.svelte';
+    import EmptyState from '@/components/EmptyState.svelte';
     import { Alert, AlertDescription } from '@/components/ui/alert';
     import { Button } from '@/components/ui/button';
     import {
@@ -52,11 +54,13 @@
         organization,
         segments: segmentList,
         destinationProjects,
+        canManageProject,
     }: {
         project: Project;
         organization: BreadcrumbOrganization;
         segments: Segment[];
         destinationProjects: DestinationProject[];
+        canManageProject: boolean;
     } = $props();
 
     let selected = $state<Record<number, boolean>>({});
@@ -91,6 +95,23 @@
     ]);
 </script>
 
+{#snippet segmentIcon()}
+    <Target class="size-8" />
+{/snippet}
+
+{#snippet createSegmentAction()}
+    <Button size="sm" asChild>
+        {#snippet children(props)}
+            <Link
+                href={segments.create.url(project.public_id)}
+                class={props.class}
+            >
+                Create segment
+            </Link>
+        {/snippet}
+    </Button>
+{/snippet}
+
 <AppHead title={`Segments - ${project.name}`} />
 
 <AppLayout {breadcrumbs}>
@@ -98,21 +119,35 @@
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-semibold">Segments</h2>
             <div class="flex items-center gap-2">
-                <CopySegmentsDialog
-                    sourceProjectPublicId={project.public_id}
-                    {selectedSegments}
-                    {destinationProjects}
-                />
-                <Button variant="outline" size="sm">
-                    <Link href={segments.suggestions.url(project.public_id)}>
-                        Suggestions
-                    </Link>
+                {#if canManageProject}
+                    <CopySegmentsDialog
+                        sourceProjectPublicId={project.public_id}
+                        {selectedSegments}
+                        {destinationProjects}
+                    />
+                {/if}
+                <Button variant="outline" size="sm" asChild>
+                    {#snippet children(props)}
+                        <Link
+                            href={segments.suggestions.url(project.public_id)}
+                            class={props.class}
+                        >
+                            Suggestions
+                        </Link>
+                    {/snippet}
                 </Button>
-                <Button variant="default" size="sm">
-                    <Link href={segments.create.url(project.public_id)}>
-                        Create segment
-                    </Link>
-                </Button>
+                {#if canManageProject}
+                    <Button variant="default" size="sm" asChild>
+                        {#snippet children(props)}
+                            <Link
+                                href={segments.create.url(project.public_id)}
+                                class={props.class}
+                            >
+                                Create segment
+                            </Link>
+                        {/snippet}
+                    </Button>
+                {/if}
             </div>
         </div>
 
@@ -147,52 +182,58 @@
         {/if}
 
         {#if segmentList.length === 0}
-            <div
-                class="flex flex-1 items-center justify-center rounded-xl border border-dashed border-sidebar-border p-12"
-            >
-                <p class="text-muted-foreground">
-                    No segments yet. Create your first segment to get started.
-                </p>
-            </div>
+            <EmptyState
+                icon={segmentIcon}
+                title={`No segments in ${project.name}`}
+                description="Segments define audiences from the events collected by this project."
+                class="flex-1"
+                actions={canManageProject ? createSegmentAction : undefined}
+            />
         {:else}
-            <div class="flex items-center gap-2">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onclick={allSelected ? clearSelection : selectAll}
-                >
-                    {allSelected ? 'Clear selection' : 'Select all'}
-                </Button>
-                {#if selectedSegments.length > 0}
-                    <span class="text-sm text-muted-foreground">
-                        {selectedSegments.length}
-                        {selectedSegments.length === 1
-                            ? 'segment selected'
-                            : 'segments selected'}
-                    </span>
-                {/if}
-                {#if destinationProjects.length === 0}
-                    <span class="text-sm text-muted-foreground">
-                        No other manageable projects available.
-                    </span>
-                {/if}
-            </div>
+            {#if canManageProject}
+                <div class="flex items-center gap-2">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onclick={allSelected ? clearSelection : selectAll}
+                    >
+                        {allSelected ? 'Clear selection' : 'Select all'}
+                    </Button>
+                    {#if selectedSegments.length > 0}
+                        <span class="text-sm text-muted-foreground">
+                            {selectedSegments.length}
+                            {selectedSegments.length === 1
+                                ? 'segment selected'
+                                : 'segments selected'}
+                        </span>
+                    {/if}
+                    {#if destinationProjects.length === 0}
+                        <span class="text-sm text-muted-foreground">
+                            No other manageable projects available.
+                        </span>
+                    {/if}
+                </div>
+            {/if}
             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {#each segmentList as segment (segment.id)}
                     <Card>
                         <CardHeader>
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
-                                    <Checkbox
-                                        id={`segment-${segment.id}`}
-                                        aria-label={`Select ${segment.name}`}
-                                        checked={selected[segment.id] ?? false}
-                                        onclick={() => {
-                                            selected[segment.id] = !(
-                                                selected[segment.id] ?? false
-                                            );
-                                        }}
-                                    />
+                                    {#if canManageProject}
+                                        <Checkbox
+                                            id={`segment-${segment.id}`}
+                                            aria-label={`Select ${segment.name}`}
+                                            checked={selected[segment.id] ??
+                                                false}
+                                            onclick={() => {
+                                                selected[segment.id] = !(
+                                                    selected[segment.id] ??
+                                                    false
+                                                );
+                                            }}
+                                        />
+                                    {/if}
                                     <CardTitle class="text-base">
                                         {segment.name}
                                     </CardTitle>
@@ -221,35 +262,53 @@
                             </p>
                         </CardContent>
                         <CardFooter class="gap-2">
-                            <Button variant="outline" size="sm" class="flex-1">
-                                <Link
-                                    href={segments.show.url({
-                                        project: project.public_id,
-                                        segment: segment.id,
-                                    })}>View</Link
-                                >
-                            </Button>
-                            <Button variant="outline" size="sm" class="flex-1">
-                                <Link
-                                    href={segments.edit.url({
-                                        project: project.public_id,
-                                        segment: segment.id,
-                                    })}>Edit</Link
-                                >
-                            </Button>
-                            <DuplicateSegmentDialog
-                                projectPublicId={project.public_id}
-                                segmentId={segment.id}
-                                segmentName={segment.name}
-                                segmentSlug={segment.slug}
+                            <Button
+                                variant="outline"
+                                size="sm"
                                 class="flex-1"
-                            />
-                            <DeleteSegmentDialog
-                                projectPublicId={project.public_id}
-                                segmentId={segment.id}
-                                segmentName={segment.name}
-                                class="flex-1"
-                            />
+                                asChild
+                            >
+                                {#snippet children(props)}
+                                    <Link
+                                        href={segments.show.url({
+                                            project: project.public_id,
+                                            segment: segment.id,
+                                        })}
+                                        class={props.class}>View</Link
+                                    >
+                                {/snippet}
+                            </Button>
+                            {#if canManageProject}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    class="flex-1"
+                                    asChild
+                                >
+                                    {#snippet children(props)}
+                                        <Link
+                                            href={segments.edit.url({
+                                                project: project.public_id,
+                                                segment: segment.id,
+                                            })}
+                                            class={props.class}>Edit</Link
+                                        >
+                                    {/snippet}
+                                </Button>
+                                <DuplicateSegmentDialog
+                                    projectPublicId={project.public_id}
+                                    segmentId={segment.id}
+                                    segmentName={segment.name}
+                                    segmentSlug={segment.slug}
+                                    class="flex-1"
+                                />
+                                <DeleteSegmentDialog
+                                    projectPublicId={project.public_id}
+                                    segmentId={segment.id}
+                                    segmentName={segment.name}
+                                    class="flex-1"
+                                />
+                            {/if}
                         </CardFooter>
                     </Card>
                 {/each}

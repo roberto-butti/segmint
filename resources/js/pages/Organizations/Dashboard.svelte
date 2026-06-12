@@ -7,6 +7,7 @@
     import AppHead from '@/components/AppHead.svelte';
     import AreaChart from '@/components/charts/AreaChart.svelte';
     import DoughnutChart from '@/components/charts/DoughnutChart.svelte';
+    import EmptyState from '@/components/EmptyState.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
     import {
@@ -92,6 +93,23 @@
     const roleLabels = $derived(Object.keys(roleCounts));
     const roleData = $derived(Object.values(roleCounts));
 </script>
+
+{#snippet projectIcon()}
+    <FolderKanban class="size-8" />
+{/snippet}
+
+{#snippet createProjectAction()}
+    <Button size="sm" asChild>
+        {#snippet children(props)}
+            <Link
+                href={organizationProjects.create.url(organization.public_id)}
+                class={props.class}
+            >
+                Create project
+            </Link>
+        {/snippet}
+    </Button>
+{/snippet}
 
 <AppHead title={`${organization.name} dashboard`} />
 
@@ -250,13 +268,14 @@
                 </Button>
             </div>
             {#if projects.length === 0}
-                <div
-                    class="rounded-xl border border-dashed border-sidebar-border p-10 text-center"
-                >
-                    <p class="text-sm text-muted-foreground">
-                        No projects in this organization yet.
-                    </p>
-                </div>
+                <EmptyState
+                    icon={projectIcon}
+                    title={`No projects in ${organization.name}`}
+                    description="Create a project to start collecting events and defining audience segments."
+                    actions={canManageProjects
+                        ? createProjectAction
+                        : undefined}
+                />
             {:else}
                 <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     {#each projects as project (project.id)}

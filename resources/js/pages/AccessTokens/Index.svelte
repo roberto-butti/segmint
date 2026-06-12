@@ -1,5 +1,7 @@
 <script lang="ts">
+    import KeyRound from 'lucide-svelte/icons/key-round';
     import AppHead from '@/components/AppHead.svelte';
+    import EmptyState from '@/components/EmptyState.svelte';
     import { Button } from '@/components/ui/button';
     import {
         Card,
@@ -52,16 +54,21 @@
     }
 </script>
 
+{#snippet tokenIcon()}
+    <KeyRound class="size-8" />
+{/snippet}
+
 <AppHead title={`Access Tokens - ${project.name}`} />
 
 <AppLayout {breadcrumbs}>
     <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
         {#if tokenList.length === 0}
-            <div
-                class="flex flex-1 items-center justify-center rounded-xl border border-dashed border-sidebar-border p-12"
-            >
-                <p class="text-muted-foreground">No access tokens yet.</p>
-            </div>
+            <EmptyState
+                icon={tokenIcon}
+                title={`No access tokens for ${project.name}`}
+                description="An access token is required to send events to this project. New projects normally receive one automatically."
+                class="flex-1"
+            />
         {:else}
             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {#each tokenList as token (token.id)}

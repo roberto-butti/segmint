@@ -4,6 +4,7 @@
     import { untrack } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
     import CopyRuleTemplatesDialog from '@/components/CopyRuleTemplatesDialog.svelte';
+    import EmptyState from '@/components/EmptyState.svelte';
     import { Alert, AlertDescription } from '@/components/ui/alert';
     import { Button } from '@/components/ui/button';
     import {
@@ -72,6 +73,7 @@
         destinationProjects,
         ruleTypes,
         ruleOperators,
+        canManageProject,
     }: {
         project: Project;
         organization: BreadcrumbOrganization;
@@ -79,6 +81,7 @@
         destinationProjects: DestinationProject[];
         ruleTypes: EnumOption[];
         ruleOperators: EnumOption[];
+        canManageProject: boolean;
     } = $props();
 
     let selected = $state<Record<number, boolean>>({});
@@ -246,6 +249,12 @@
     }
 </script>
 
+{#snippet createTemplateAction()}
+    <Button size="sm" onclick={() => (createOpen = true)}>
+        Create template
+    </Button>
+{/snippet}
+
 <AppHead title={`Rule Templates - ${project.name}`} />
 
 <AppLayout {breadcrumbs}>
@@ -259,17 +268,19 @@
                     {destinationProjects}
                 />
                 <Dialog bind:open={createOpen}>
-                    <DialogTrigger asChild>
-                        {#snippet children(props)}
-                            <Button
-                                variant="default"
-                                size="sm"
-                                onclick={props.onclick}
-                                aria-expanded={props['aria-expanded']}
-                                >Create template</Button
-                            >
-                        {/snippet}
-                    </DialogTrigger>
+                    {#if canManageProject}
+                        <DialogTrigger asChild>
+                            {#snippet children(props)}
+                                <Button
+                                    variant="default"
+                                    size="sm"
+                                    onclick={props.onclick}
+                                    aria-expanded={props['aria-expanded']}
+                                    >Create template</Button
+                                >
+                            {/snippet}
+                        </DialogTrigger>
+                    {/if}
                     <DialogContent>
                         <DialogTitle>Create rule template</DialogTitle>
                         <DialogDescription>
@@ -408,14 +419,12 @@
         {/if}
 
         {#if templates.length === 0}
-            <div
-                class="flex flex-1 items-center justify-center rounded-xl border border-dashed border-sidebar-border p-12"
-            >
-                <p class="text-muted-foreground">
-                    No rule templates yet. Create one to speed up segment
-                    building.
-                </p>
-            </div>
+            <EmptyState
+                title={`No rule templates in ${project.name}`}
+                description="Rule templates store reusable rule presets for faster segment creation."
+                class="flex-1"
+                actions={canManageProject ? createTemplateAction : undefined}
+            />
         {:else}
             <div class="flex items-center gap-2">
                 <Button
@@ -487,25 +496,27 @@
                             </p>
                         </CardContent>
                         <CardFooter class="gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                class="flex-1"
-                                onclick={() => openEdit(template)}
-                            >
-                                Edit
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                class="flex-1 text-destructive hover:text-destructive"
-                                onclick={() => handleDelete(template)}
-                                disabled={deleteProcessing === template.id}
-                            >
-                                {deleteProcessing === template.id
-                                    ? 'Deleting...'
-                                    : 'Delete'}
-                            </Button>
+                            {#if canManageProject}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    class="flex-1"
+                                    onclick={() => openEdit(template)}
+                                >
+                                    Edit
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    class="flex-1 text-destructive hover:text-destructive"
+                                    onclick={() => handleDelete(template)}
+                                    disabled={deleteProcessing === template.id}
+                                >
+                                    {deleteProcessing === template.id
+                                        ? 'Deleting...'
+                                        : 'Delete'}
+                                </Button>
+                            {/if}
                         </CardFooter>
                     </Card>
                 {/each}

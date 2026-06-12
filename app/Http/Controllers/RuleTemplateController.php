@@ -62,6 +62,7 @@ class RuleTemplateController extends Controller
             'destinationProjects' => $destinationProjects,
             'ruleTypes' => $this->enumOptions(SegmentRuleType::class),
             'ruleOperators' => $this->enumOptions(SegmentRuleOperator::class),
+            'canManageProject' => $request->user()->roleInOrganization($project->organization)?->canManageProjects() ?? false,
         ]);
     }
 
@@ -70,7 +71,7 @@ class RuleTemplateController extends Controller
      */
     public function store(Request $request, Project $project): RedirectResponse
     {
-        $this->authorize('view', $project);
+        $this->authorize('update', $project);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -142,7 +143,7 @@ class RuleTemplateController extends Controller
      */
     public function update(Request $request, Project $project, RuleTemplate $ruleTemplate): RedirectResponse
     {
-        $this->authorize('view', $project);
+        $this->authorize('update', $project);
         abort_unless($ruleTemplate->project_id === $project->id, 404);
 
         $validated = $request->validate([
@@ -169,7 +170,7 @@ class RuleTemplateController extends Controller
      */
     public function destroy(Request $request, Project $project, RuleTemplate $ruleTemplate): RedirectResponse
     {
-        $this->authorize('view', $project);
+        $this->authorize('update', $project);
         abort_unless($ruleTemplate->project_id === $project->id, 404);
 
         $ruleTemplate->delete();

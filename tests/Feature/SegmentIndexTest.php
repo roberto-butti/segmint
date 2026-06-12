@@ -36,6 +36,7 @@ class SegmentIndexTest extends TestCase
         $response->assertInertia(fn ($page) => $page
             ->component('Segments/Index')
             ->where('project.id', $project->id)
+            ->where('canManageProject', true)
             ->has('segments', 3)
         );
     }
@@ -81,6 +82,21 @@ class SegmentIndexTest extends TestCase
         $response->assertInertia(fn ($page) => $page
             ->has('destinationProjects', 1)
             ->where('destinationProjects.0.id', $manageable->id)
+        );
+    }
+
+    public function test_viewer_cannot_manage_segments_from_the_index(): void
+    {
+        ['user' => $user] = $this->createUserWithOrganization();
+        $organization = Organization::factory()->create();
+        $organization->members()->attach($user, ['role' => OrganizationRole::Viewer->value]);
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
+
+        $response = $this->actingAs($user)->get(route('projects.segments.index', $project));
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('canManageProject', false)
+            ->has('destinationProjects', 0)
         );
     }
 }

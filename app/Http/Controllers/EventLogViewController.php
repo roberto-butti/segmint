@@ -75,6 +75,13 @@ class EventLogViewController extends Controller
             'eventLogs' => $eventLogs,
             'eventTypes' => $eventTypes,
             'utmSources' => $utmSources,
+            'trackingReadiness' => [
+                'has_active_token' => $project->accessTokens()->where('active', true)->exists(),
+                'has_active_segment_with_rules' => $project->segments()
+                    ->where('active', true)
+                    ->whereHas('rules')
+                    ->exists(),
+            ],
             'filters' => [
                 'search' => $request->input('search', ''),
                 'event_type' => $request->input('event_type', ''),

@@ -18,6 +18,6 @@ URL-scoped collection page.
 [DONE] make the sidebar contextual with organization and project switchers,
 organization navigation, and project-section navigation.
 
-[UI] when some screen is empty because no data , add the CTA for creating a new data directly in the message . For exaple if i don't have any segment in a project , at the moment is shown:
-No segments yet. Create your first segment to get started.
-Maybe we can: provide more context (org and project where the user is), and the CTA for creating a new segment (even though the CTA is alrready present in the right top side).
+[DONE] add contextual empty states with organization/project context and a
+relevant next action where one exists. Management actions are only shown when
+the current organization role permits them.

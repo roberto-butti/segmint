@@ -34,6 +34,7 @@ class RuleTemplateManagementTest extends TestCase
         $response->assertInertia(fn ($page) => $page
             ->component('RuleTemplates/Index')
             ->where('project.id', $project->id)
+            ->where('canManageProject', true)
             ->has('templates', count(RuleTemplate::defaults()))
             ->has('ruleTypes')
             ->has('ruleOperators')
@@ -48,6 +49,41 @@ class RuleTemplateManagementTest extends TestCase
         $this->actingAs($user);
 
         $this->get(route('projects.rule-templates.index', $otherProject))
+            ->assertForbidden();
+    }
+
+    public function test_viewer_cannot_manage_templates(): void
+    {
+        ['user' => $user] = $this->createUserWithOrganization();
+        $organization = Organization::factory()->create();
+        $organization->members()->attach($user, ['role' => OrganizationRole::Viewer->value]);
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
+        $template = $project->ruleTemplates()->firstOrFail();
+
+        $this->actingAs($user)
+            ->get(route('projects.rule-templates.index', $project))
+            ->assertInertia(fn ($page) => $page->where('canManageProject', false));
+
+        $this->actingAs($user)
+            ->post(route('projects.rule-templates.store', $project), [
+                'name' => 'Not allowed',
+                'type' => 'comparison',
+                'key' => 'event',
+                'operator' => '=',
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->put(route('projects.rule-templates.update', [$project, $template]), [
+                'name' => 'Not allowed',
+                'type' => 'comparison',
+                'key' => 'event',
+                'operator' => '=',
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->delete(route('projects.rule-templates.destroy', [$project, $template]))
             ->assertForbidden();
     }
 

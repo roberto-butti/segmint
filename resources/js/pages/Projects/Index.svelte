@@ -1,6 +1,8 @@
 <script lang="ts">
     import { Link } from '@inertiajs/svelte';
+    import FolderKanban from 'lucide-svelte/icons/folder-kanban';
     import AppHead from '@/components/AppHead.svelte';
+    import EmptyState from '@/components/EmptyState.svelte';
     import { Button } from '@/components/ui/button';
     import {
         Card,
@@ -43,6 +45,23 @@
         },
     ]);
 </script>
+
+{#snippet projectIcon()}
+    <FolderKanban class="size-8" />
+{/snippet}
+
+{#snippet createProjectAction()}
+    <Button size="sm" asChild>
+        {#snippet children(props)}
+            <Link
+                href={organizationProjects.create.url(organization.public_id)}
+                class={props.class}
+            >
+                Create project
+            </Link>
+        {/snippet}
+    </Button>
+{/snippet}
 
 <AppHead title={`${organization.name} projects`} />
 
@@ -88,13 +107,13 @@
         </div>
 
         {#if projectList.length === 0}
-            <div
-                class="flex flex-1 items-center justify-center rounded-xl border border-dashed border-sidebar-border p-12"
-            >
-                <p class="text-muted-foreground">
-                    No projects in this organization yet.
-                </p>
-            </div>
+            <EmptyState
+                icon={projectIcon}
+                title={`No projects in ${organization.name}`}
+                description="Projects keep event data, segments, and access tokens separated within this organization."
+                class="flex-1"
+                actions={canManageProjects ? createProjectAction : undefined}
+            />
         {:else}
             <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {#each projectList as project (project.id)}

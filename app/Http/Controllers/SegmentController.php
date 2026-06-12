@@ -63,6 +63,7 @@ class SegmentController extends Controller
             'organization' => $this->organizationContext($project->organization),
             'segments' => $segments,
             'destinationProjects' => $destinationProjects,
+            'canManageProject' => $request->user()->roleInOrganization($project->organization)?->canManageProjects() ?? false,
         ]);
     }
 

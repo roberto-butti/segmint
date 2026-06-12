@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\EventLog;
 use App\Models\Project;
+use App\Models\Segment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -42,6 +43,37 @@ class EventLogIndexTest extends TestCase
             ->where('project.id', $project->id)
             ->where('eventLogs.total', 1)
         );
+    }
+
+    public function test_empty_event_index_includes_tracking_readiness(): void
+    {
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
+
+        $response = $this->actingAs($user)->get(route('projects.events.index', $project));
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('trackingReadiness.has_active_token', true)
+            ->where('trackingReadiness.has_active_segment_with_rules', false)
+        );
+
+        $segment = Segment::factory()->create([
+            'project_id' => $project->id,
+            'active' => true,
+        ]);
+        $segment->rules()->create([
+            'type' => 'comparison',
+            'key' => 'event_type',
+            'operator' => '=',
+            'value' => 'page-view',
+            'priority' => 0,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('projects.events.index', $project))
+            ->assertInertia(fn ($page) => $page
+                ->where('trackingReadiness.has_active_segment_with_rules', true)
+            );
     }
 
     public function test_user_cannot_view_events_for_another_users_project(): void
