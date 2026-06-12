@@ -49,6 +49,7 @@
     } = $props();
 
     let isActive = $state(true);
+    let segmentName = $state('');
     let rules = $state<
         {
             type: string;
@@ -70,6 +71,12 @@
             href: segments.create.url(project.public_id),
         },
     ]);
+
+    function suggestNameFromTemplate(template: RuleTemplateItem): void {
+        if (segmentName.trim() === '') {
+            segmentName = template.name;
+        }
+    }
 </script>
 
 <AppHead title={`Create segment - ${project.name}`} />
@@ -94,6 +101,7 @@
                         id="name"
                         name="name"
                         class="mt-1 block w-full"
+                        bind:value={segmentName}
                         required
                         placeholder="Segment name"
                     />
@@ -130,6 +138,7 @@
                     {ruleOperators}
                     {ruleTemplates}
                     {errors}
+                    onTemplateSelected={suggestNameFromTemplate}
                 />
 
                 <div class="flex items-center gap-4">

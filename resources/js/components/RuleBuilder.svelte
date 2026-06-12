@@ -46,12 +46,14 @@
         ruleOperators,
         ruleTemplates = [],
         errors = {},
+        onTemplateSelected,
     }: {
         rules: Rule[];
         ruleTypes: EnumOption[];
         ruleOperators: EnumOption[];
         ruleTemplates?: RuleTemplateItem[];
         errors: Record<string, string>;
+        onTemplateSelected?: (template: RuleTemplateItem) => void;
     } = $props();
 
     const keyDefaults: Record<string, string> = {
@@ -101,6 +103,7 @@
                 priority: rules.length,
             },
         ];
+        onTemplateSelected?.(template);
     }
 
     function onTypeChange(index: number, newType: string): void {
