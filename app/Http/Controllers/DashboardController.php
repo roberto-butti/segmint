@@ -39,7 +39,7 @@ class DashboardController extends Controller
                 'name' => $organization->name,
                 'role' => $user->isOwnerOf($organization)
                     ? 'owner'
-                    : $organization->pivot->role,
+                    : $organization->pivot->role->value,
                 'projects_count' => $organization->projects_count,
                 'active_projects_count' => $organization->active_projects_count,
                 'members_count' => $organization->members_count,

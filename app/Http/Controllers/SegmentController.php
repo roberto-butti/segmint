@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\OrganizationRole;
 use App\Http\Requests\CopySegmentsRequest;
 use App\Http\Requests\StoreSegmentRequest;
 use App\Http\Requests\UpdateSegmentRequest;
@@ -35,7 +34,7 @@ class SegmentController extends Controller
         $manageableOrganizationIds = $request->user()
             ->organizations()
             ->get()
-            ->filter(fn ($organization) => OrganizationRole::from($organization->pivot->role)->canManageProjects())
+            ->filter(fn ($organization) => $organization->pivot->role->canManageProjects())
             ->pluck('id');
 
         $destinationProjects = Project::query()

@@ -1,6 +1,5 @@
 <script lang="ts">
-    import Eye from 'lucide-svelte/icons/eye';
-    import EyeOff from 'lucide-svelte/icons/eye-off';
+    import EyeIcon from '@/components/EyeIcon.svelte';
     import { Input } from '@/components/ui/input';
     import { cn } from '@/lib/utils';
 
@@ -22,10 +21,6 @@
         aria-label={showPassword ? 'Hide password' : 'Show password'}
         tabindex={-1}
     >
-        {#if showPassword}
-            <EyeOff class="size-4" />
-        {:else}
-            <Eye class="size-4" />
-        {/if}
+        <EyeIcon crossed={showPassword} class="size-4" />
     </button>
 </div>

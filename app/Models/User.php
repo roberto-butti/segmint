@@ -53,6 +53,7 @@ class User extends Authenticatable
     public function organizations(): BelongsToMany
     {
         return $this->belongsToMany(Organization::class, 'organization_memberships')
+            ->using(OrganizationMembership::class)
             ->withPivot('role')
             ->withTimestamps();
     }
@@ -105,7 +106,7 @@ class User extends Authenticatable
             return null;
         }
 
-        return OrganizationRole::from($membership->pivot->role);
+        return $membership->pivot->role;
     }
 
     public static function me(): self

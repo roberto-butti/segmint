@@ -35,7 +35,8 @@ class OrganizationFactory extends Factory
     {
         return $this->afterCreating(function (Organization $organization) use ($user): void {
             $owner = $user ?? User::factory()->create();
-            $organization->members()->attach($owner, ['role' => OrganizationRole::Owner->value]);
+            $owner->update(['owned_organization_id' => $organization->id]);
+            $organization->members()->attach($owner, ['role' => OrganizationRole::Admin->value]);
         });
     }
 }

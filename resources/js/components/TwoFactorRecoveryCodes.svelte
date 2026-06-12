@@ -1,11 +1,10 @@
 <script lang="ts">
     import { Form } from '@inertiajs/svelte';
-    import Eye from 'lucide-svelte/icons/eye';
-    import EyeOff from 'lucide-svelte/icons/eye-off';
     import LockKeyhole from 'lucide-svelte/icons/lock-keyhole';
     import RefreshCw from 'lucide-svelte/icons/refresh-cw';
     import { onMount, tick } from 'svelte';
     import AlertError from '@/components/AlertError.svelte';
+    import EyeIcon from '@/components/EyeIcon.svelte';
     import { Button } from '@/components/ui/button';
     import {
         Card,
@@ -59,11 +58,7 @@
             class="flex flex-col gap-3 select-none sm:flex-row sm:items-center sm:justify-between"
         >
             <Button onclick={toggleRecoveryCodesVisibility} class="w-fit">
-                {#if isRecoveryCodesVisible}
-                    <EyeOff class="size-4" />
-                {:else}
-                    <Eye class="size-4" />
-                {/if}
+                <EyeIcon crossed={isRecoveryCodesVisible} class="size-4" />
                 {isRecoveryCodesVisible ? 'Hide' : 'View'} recovery codes
             </Button>
 

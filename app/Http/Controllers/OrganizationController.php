@@ -24,7 +24,7 @@ class OrganizationController extends Controller
                 'id' => $org->id,
                 'name' => $org->name,
                 'slug' => $org->slug,
-                'role' => $org->pivot->role,
+                'role' => $org->pivot->role->value,
                 'projects_count' => $org->projects_count,
             ]);
 
