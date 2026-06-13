@@ -53,19 +53,13 @@
                         required
                         autocomplete="email"
                         placeholder="email@example.com"
+                        autofocus
                     />
                     <InputError message={errors.email} />
                 </div>
 
                 <div class="grid gap-2">
-                    <div class="flex items-center justify-between">
-                        <Label for="password">Password</Label>
-                        {#if canResetPassword}
-                            <TextLink href={request()} class="text-sm">
-                                Forgot password?
-                            </TextLink>
-                        {/if}
-                    </div>
+                    <Label for="password">Password</Label>
                     <PasswordInput
                         id="password"
                         name="password"
@@ -81,6 +75,11 @@
                         <Checkbox id="remember" name="remember" />
                         <span>Remember me</span>
                     </Label>
+                    {#if canResetPassword}
+                        <TextLink href={request()} class="text-sm">
+                            Forgot password?
+                        </TextLink>
+                    {/if}
                 </div>
 
                 <Button
