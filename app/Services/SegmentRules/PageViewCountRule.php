@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\DB;
 
 class PageViewCountRule extends AbstractRule
 {
-    public function passes(array $logValues): bool
+    public function passes(array $logValues, bool $includeCurrentEvent = false): bool
     {
         $visitorId = $logValues['visitor_id'];
         $minViews = (int) $this->rule->value;
@@ -21,6 +21,10 @@ class PageViewCountRule extends AbstractRule
             ->where('event_type', 'page-view')
             ->where('page_path', $currentPath)
             ->count();
+
+        if ($includeCurrentEvent && ($logValues['event_type'] ?? null) === 'page-view') {
+            $total++;
+        }
 
         return $total >= $minViews;
     }

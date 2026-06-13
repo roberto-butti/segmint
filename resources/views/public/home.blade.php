@@ -54,7 +54,7 @@
                         @else
                             @if ($canRegister)
                                 <a href="{{ route('register') }}" class="rounded-lg bg-gray-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-gray-800">
-                                    Get started free
+                                    Create account
                                 </a>
                             @endif
                             <a href="{{ route('login') }}" class="rounded-lg border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
@@ -136,21 +136,54 @@
 
             <section class="border-t border-gray-100 bg-gray-50 py-20">
                 <div class="mx-auto max-w-6xl px-6">
-                    <h2 class="text-center text-2xl font-bold text-gray-900">Built for developers</h2>
+                    <h2 class="text-center text-2xl font-bold text-gray-900">Server, API, and UI capabilities</h2>
+                    <p class="mx-auto mt-3 max-w-3xl text-center text-gray-600">
+                        Each project keeps its events, segment definitions, rule templates, and access tokens in a separate scope.
+                    </p>
                     <div class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                         @foreach ([
-                            ['Self-hosted', 'Run Segmint on infrastructure you control and keep event data in your chosen environment.'],
-                            ['Lightweight SDK', 'Track events and read visitor segment matches through a small JavaScript SDK.'],
-                            ['Real-time matching', 'Re-evaluate visitor segments whenever an event is received.'],
-                            ['CMS integration', 'Fetch segments through the API and associate them with content in a CMS.'],
-                            ['Flexible rules', 'Combine comparisons, visit counts, page views, and browser-language rules.'],
-                            ['Built-in analytics', 'Inspect per-project event trends, segment distribution, and recent activity.'],
+                            ['Tracking and evaluation API', 'Accept stored events or evaluate a hypothetical event with dry-run. Both paths use the same project token and matching rules.'],
+                            ['Segment rule engine', 'Combine comparison, visit-count, page-view-count, and browser-language rules to define an audience.'],
+                            ['Organization and project scope', 'Group projects by organization and apply admin, member, or viewer permissions to project data and management actions.'],
+                            ['Operational dashboards', 'Review organization and project totals, event trends, event types, visitor counts, and segment-match distribution.'],
+                            ['Event inspection', 'Search and filter stored events by type, visitor, UTM source, page path, and other tracked fields.'],
+                            ['Segment management', 'Create, edit, duplicate, and copy segments with their rules between projects you can manage.'],
+                            ['Reusable rule templates', 'Use project-scoped rule presets during segment creation and copy templates between manageable projects.'],
+                            ['Segments API for integrations', 'Retrieve a project\'s active segment catalog for CMS fields, content configuration, or other external tools.'],
+                            ['Self-hosted and open source', 'Run the application in your chosen environment, inspect its implementation, and adapt it to local requirements.'],
                         ] as [$title, $description])
                             <article class="rounded-xl border border-gray-200 bg-white p-5">
                                 <h3 class="font-semibold text-gray-900">{{ $title }}</h3>
                                 <p class="mt-1.5 text-sm text-gray-600">{{ $description }}</p>
                             </article>
                         @endforeach
+                    </div>
+                </div>
+            </section>
+
+            <section class="border-t border-gray-100 py-20">
+                <div class="mx-auto max-w-6xl px-6">
+                    <div class="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">Why the application is structured this way</h2>
+                            <p class="mt-3 text-gray-600">
+                                Segmint separates collection, evaluation, administration, and consumption so each integration can use
+                                only the part it needs.
+                            </p>
+                        </div>
+                        <dl class="grid gap-6 sm:grid-cols-2">
+                            @foreach ([
+                                ['Project isolation', 'Tokens, events, segments, and rules are scoped to a project, which prevents one integration from reading or changing another project\'s definitions.'],
+                                ['Testable rules', 'Dry-run uses the normal evaluation path without storing the candidate event, so rule testing does not add diagnostic activity to analytics.'],
+                                ['Inspectable activity', 'Dashboards and event filters provide a way to verify what was collected and how segment matching behaves before using results elsewhere.'],
+                                ['Shared segment vocabulary', 'The active-segments API lets a CMS or another tool use the same segment identifiers that the runtime SDK returns for visitors.'],
+                            ] as [$term, $description])
+                                <div class="rounded-xl border border-gray-200 p-5">
+                                    <dt class="font-semibold text-gray-900">{{ $term }}</dt>
+                                    <dd class="mt-1.5 text-sm leading-relaxed text-gray-600">{{ $description }}</dd>
+                                </div>
+                            @endforeach
+                        </dl>
                     </div>
                 </div>
             </section>
@@ -175,9 +208,9 @@
 
             <section class="border-t border-gray-100 bg-gray-50 py-20">
                 <div class="mx-auto max-w-3xl px-6 text-center">
-                    <h2 class="text-2xl font-bold text-gray-900">Start segmenting your audience</h2>
+                    <h2 class="text-2xl font-bold text-gray-900">Run Segmint on your infrastructure</h2>
                     <p class="mt-3 text-gray-600">
-                        Deploy Segmint on your own infrastructure and use tracked data to understand and serve your audience.
+                        Keep event collection, segment definitions, and operational data in an environment managed by your team.
                     </p>
                     <div class="mt-8 flex items-center justify-center gap-4">
                         @auth
@@ -187,7 +220,7 @@
                         @else
                             @if ($canRegister)
                                 <a href="{{ route('register') }}" class="rounded-lg bg-gray-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-gray-800">
-                                    Get started free
+                                    Create account
                                 </a>
                             @endif
                             <a href="{{ route('login') }}" class="rounded-lg border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-100">

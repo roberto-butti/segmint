@@ -83,12 +83,13 @@ class Project extends Model
      */
     public static function resolveFromAccessToken(string $plainToken): ?self
     {
-        return AccessToken::where('token', $plainToken)
+        return AccessToken::query()
+            ->with('project')
+            ->where('token', $plainToken)
             ->where('active', true)
+            ->whereHas('project', fn ($query) => $query->where('active', true))
             ->first()
-            ->project()
-            ->where('active', true)
-            ->first();
+            ?->project;
     }
 
     private static function generateUniquePublicId(): string

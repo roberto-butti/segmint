@@ -6,7 +6,7 @@ use Illuminate\Support\Arr;
 
 class ComparisonRule extends AbstractRule
 {
-    public function passes(array $logValues): bool
+    public function passes(array $logValues, bool $includeCurrentEvent = false): bool
     {
         $left = Arr::get($logValues, $this->rule->key);
         $operator = $this->rule->operator;

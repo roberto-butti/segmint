@@ -58,6 +58,9 @@ When integrating Segmint, follow these rules:
    segment check as authorization or to protect sensitive data.
 10. Reset the Segmint visitor identity on logout when the application's identity and
     privacy model requires the next user to start a separate visitor history.
+11. Use `visitor.event(type, properties, { dryRun: true })` only for explicit rule
+    testing, QA, or diagnostics. Never use dry-run results for authorization or normal
+    production page-view tracking.
 
 ## Recommended integration shape
 
@@ -154,6 +157,21 @@ component.
 
 ## Tracking pages and events
 
+Choose the sending method according to the required behavior:
+
+| Requirement | Method | Stored? | Segment response? |
+|---|---|---|---|
+| Automatic initial page view | `init({ token, autoTrack: true })` | Yes | Yes |
+| No automatic initial page view | `init({ token, autoTrack: false })` | No automatic event | No |
+| Normal page, interaction, or component tracking | `visitor.event(type, properties)` | Yes | Yes |
+| Non-blocking tracking during normal page use | Call `visitor.event(type, properties)` without `await`, and handle rejection | Yes | Yes, processed asynchronously |
+| Hypothetical rule evaluation or diagnostics | `visitor.event(type, properties, { dryRun: true })` | No | Yes |
+| Unload-safe fire-and-forget tracking | `visitor.beacon(type, properties)` | Yes | No |
+
+`autoTrack: false` does not disable later tracking calls. A normal `visitor.event()` or
+`visitor.beacon()` still stores its event. There is no dry-run beacon; skip the
+`beacon()` call when that event must not be stored.
+
 ### Multi-page application
 
 Initialise once on each full page load:
@@ -191,8 +209,66 @@ await trackEvent('add-to-cart', {
 });
 ```
 
+Use a normal event when an observable fact should be stored for future statistics or
+segment evaluation. For example, after a component is actually displayed:
+
+```js
+await trackEvent('component-viewed', {
+  component: 'pricing-hero',
+  variant: 'enterprise',
+});
+```
+
+Do not treat loading a component module or considering a render branch as an impression.
+Track the event only when the application considers the component displayed.
+
+When the event must be stored but the UI does not need to wait for its response, call
+the normal event method without `await` and handle rejection:
+
+```js
+trackEvent('component-viewed', {
+  component: 'pricing-hero',
+}).catch(() => {
+  // Tracking failure must not interrupt the UI flow.
+});
+```
+
+This still stores the event and lets the SDK process the segment response
+asynchronously. Prefer it over `beacon()` during normal page use. Reserve `beacon()` for
+events sent while the page is unloading.
+
 Do not send passwords, authentication tokens, payment details, or unnecessary personal
 data in event properties.
+
+### Rule testing and diagnostics
+
+Use dry-run to evaluate the segments an event would match without storing the event:
+
+```js
+// Recommended for a dedicated diagnostics flow: do not store an automatic page view.
+window.Segmint.init({
+  token: FRONTEND_SEGMINT_TOKEN,
+  autoTrack: false,
+});
+
+const result = await window.Segmint.visitor.event(
+  'page-view',
+  { test_case: 'pricing-page' },
+  { dryRun: true },
+);
+```
+
+`autoTrack: false` prevents only the automatic page-view event sent by `init()`. It is
+the recommended initialization mode for a dedicated rule-testing or diagnostics flow.
+When normal tracking is enabled elsewhere, use `{ dryRun: true }` surgically on an
+individual `visitor.event()` that must be evaluated without being stored.
+
+Dry-run evaluates visit-count and page-view-count rules as if the candidate event were
+stored, but does not add it to stored counts. Do not use dry-run for routine page
+tracking, CMS editor suppression, or authorization. `visitor.beacon()` does not support
+dry-run because it returns no evaluation response. To prevent a beacon event from being
+stored, skip the `beacon()` call. A dry-run response still updates the SDK's browser-side
+matched-segment cache.
 
 ## Verification checklist
 
@@ -209,6 +285,7 @@ The coding agent must verify all applicable items:
 - Tracking failures do not break rendering, navigation, or form submission.
 - Logout resets the visitor only when required by the application's identity policy.
 - No sensitive data is included in event properties.
+- Dry-run is used only for explicit testing or diagnostics and creates no stored events.
 - Automated tests cover matched, unmatched, loading, and failure behavior where the
   frontend test setup supports them.
 

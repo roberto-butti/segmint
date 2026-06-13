@@ -19,6 +19,7 @@ class ExampleTest extends TestCase
             ->assertOk()
             ->assertViewIs('public.home')
             ->assertSee('Know your audience.')
+            ->assertSee('Server, API, and UI capabilities')
             ->assertSee(route('login'), false)
             ->assertSee(route('register'), false)
             ->assertHeaderMissing('X-Inertia');

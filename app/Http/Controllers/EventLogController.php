@@ -11,6 +11,11 @@ class EventLogController extends Controller
 {
     public function track(Request $request): array
     {
+        $request->validate([
+            'dry_run' => ['sometimes', 'boolean:strict'],
+        ]);
+
+        $dryRun = $request->boolean('dry_run');
         $token = $request->input('token', '');
         if ($token === '') {
             abort(404, 'token_mandatory');
@@ -40,14 +45,25 @@ class EventLogController extends Controller
             'event_properties' => $request->input('event_properties', []),
             'metadata' => $request->input('metadata'),
         ]);
-        $log->save();
 
-        $segments = app(SegmentEngine::class)->assignSegments($log);
+        $engine = app(SegmentEngine::class);
+        if ($dryRun) {
+            $segments = $engine->evaluateSegments($log);
+        } else {
+            $log->save();
+            $segments = $engine->assignSegments($log);
+        }
 
-        return [
+        $response = [
             'status' => 'OK',
             'session' => $sessionId,
             'segments' => $segments,
         ];
+
+        if ($dryRun) {
+            $response['dry_run'] = true;
+        }
+
+        return $response;
     }
 }

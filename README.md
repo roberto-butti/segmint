@@ -170,14 +170,29 @@ Segmint ships with a lightweight SDK (`public/js/segmint.js`) organised into two
 ### Track events
 
 ```js
-// Track a custom event
+// Store a custom event and receive matched segments
 await Segmint.visitor.event('add-to-cart', { product_id: 42, price: 29.99 });
 
-// Fire-and-forget (page unload)
+// Store an event without blocking the current UI flow
+Segmint.visitor
+  .event('component-viewed', { component: 'pricing-hero' })
+  .catch(() => {});
+
+// Evaluate matching without storing the event
+await Segmint.visitor.event('page-view', { test_case: 'pricing' }, { dryRun: true });
+
+// Store an event during page unload; no response is available
 window.addEventListener('beforeunload', function () {
   Segmint.visitor.beacon('page-exit', { time_on_page: 45 });
 });
 ```
+
+Use `autoTrack: true` for an automatic stored initial page view, a normal
+`visitor.event()` for events that should contribute to analytics, and `{ dryRun: true }`
+only for rule testing or diagnostics. `visitor.beacon()` sends a normal stored event but
+does not return segment results; reserve it for page unload and skip the call when it
+must not be stored. During normal page use, call `visitor.event()` without `await` when
+the UI does not need to wait for its response.
 
 ### Read segments
 
@@ -205,8 +220,8 @@ const allSegments = await Segmint.fetch.segments();
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `init(options)` | `Promise` (if autoTrack) | Initialise the SDK |
-| `visitor.event(type?, props?)` | `Promise<{status, segments}>` | Track event, update cached segments |
-| `visitor.beacon(type?, props?)` | `void` | Fire-and-forget tracking (no response) |
+| `visitor.event(type?, props?, options?)` | `Promise<{status, segments}>` | Store an event and update cached segments, or evaluate without storing with `options.dryRun` |
+| `visitor.beacon(type?, props?)` | `void` | Store an event using fire-and-forget delivery; no response or dry-run |
 | `visitor.segments()` | `Object[]` | Get cached matched segments |
 | `visitor.hasSegment(slug)` | `boolean` | Check if visitor matches a segment |
 | `visitor.id()` | `string` | Get the persistent visitor ID |

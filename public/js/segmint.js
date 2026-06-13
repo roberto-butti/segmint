@@ -185,11 +185,14 @@
      *
      * @param  {string} [eventType='page-view']    - The event type.
      * @param  {Object} [eventProperties={}]       - Custom event properties.
+     * @param  {Object} [options={}]               - Event options.
+     * @param  {boolean} [options.dryRun=false]    - Evaluate without storing.
      * @return {Promise<Object>} Response with status and matched segments.
      */
-    event: function (eventType, eventProperties) {
+    event: function (eventType, eventProperties, options) {
       eventType = eventType || 'page-view';
       eventProperties = eventProperties || {};
+      options = options || {};
 
       if (!_config.token) {
         return Promise.reject(new Error('Segmint: call init() before visitor.event().'));
@@ -207,6 +210,10 @@
         event_properties: eventProperties,
         metadata: getMetadata(),
       };
+
+      if (options.dryRun === true) {
+        payload.dry_run = true;
+      }
 
       log('Tracking', payload);
 
@@ -243,6 +250,10 @@
      *
      * @param {string} [eventType='page-view']
      * @param {Object} [eventProperties={}]
+     *
+     * Additional options, including dryRun, are intentionally ignored because
+     * beacon requests do not return segment evaluation results. Skip this call
+     * when the beacon event must not be stored.
      */
     beacon: function (eventType, eventProperties) {
       eventType = eventType || 'page-view';

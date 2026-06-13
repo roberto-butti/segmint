@@ -35,6 +35,50 @@ see [Frontend Integration Guide for Coding Agents](frontend-integration-for-codi
 
 With `autoTrack: true`, `init()` immediately sends a `page-view` event and returns a Promise that resolves once the server responds with matched segments. This lets you personalise content on first paint.
 
+## Choosing how to send an event
+
+| Use case | Recommended method | Stored? | Returns matched segments? |
+|---|---|---|---|
+| Track the initial page view automatically | `Segmint.init({ token, autoTrack: true })` | Yes | Yes, through the returned Promise |
+| Initialise without automatically tracking a page view | `Segmint.init({ token, autoTrack: false })` | No automatic event | No |
+| Record a page view, interaction, or component impression | `Segmint.visitor.event(type, properties)` | Yes | Yes |
+| Record an event without blocking the current UI flow | Call `visitor.event(type, properties)` without `await`, and handle rejection | Yes | Yes, processed asynchronously |
+| Test which segments a hypothetical event would match | `Segmint.visitor.event(type, properties, { dryRun: true })` | No | Yes |
+| Record an event while the page is unloading | `Segmint.visitor.beacon(type, properties)` | Yes | No |
+| Prevent a specific beacon event from being stored | Do not call `visitor.beacon()` | No | No |
+
+Use a normal `visitor.event()` when an observable action should become part of the
+visitor's history and future analytics. For example, record that a component was
+actually displayed:
+
+```js
+await Segmint.visitor.event('component-viewed', {
+  component: 'pricing-hero',
+  variant: 'enterprise',
+});
+```
+
+When the event should be stored but the current UI flow does not need its response, call
+`visitor.event()` without `await` and handle a possible rejection:
+
+```js
+Segmint.visitor
+  .event('component-viewed', {
+    component: 'pricing-hero',
+  })
+  .catch(() => {
+    // Tracking failure must not interrupt the UI flow.
+  });
+```
+
+The request remains asynchronous, stores the event, and updates the SDK's cached
+segments when its response arrives. Prefer this over `beacon()` during normal page use,
+because `event()` can process the response and report failures.
+
+Use `{ dryRun: true }` only when the event is hypothetical and must not affect analytics.
+Use `beacon()` only when the page may unload before a normal `event()` request completes
+and the client does not need the resulting segment list.
+
 ## SDK structure
 
 The SDK is organised into two namespaces plus lifecycle methods:
@@ -105,14 +149,17 @@ if (Segmint.isReady()) {
 
 ### `Segmint.visitor` — current visitor's session
 
-#### `Segmint.visitor.event(eventType?, eventProperties?)`
+#### `Segmint.visitor.event(eventType?, eventProperties?, options?)`
 
-Send a tracking event to the Segmint API and update the internal segment cache with the response.
+Send a tracking event to the Segmint API and update the internal segment cache with the
+response. By default, the event is stored and becomes available for analytics and future
+segment evaluation.
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `eventType` | `string` | `"page-view"` | The type of event (e.g. `page-view`, `add-to-cart`, `signup`). |
 | `eventProperties` | `object` | `{}` | Arbitrary key-value pairs attached to the event. |
+| `options.dryRun` | `boolean` | `false` | Evaluate segment matches without storing the event or match records. |
 
 **Returns:** `Promise<Object>` — the API response containing `status`, `session`, and `segments`.
 
@@ -126,7 +173,33 @@ await Segmint.visitor.event('add-to-cart', {
   price: 29.99,
   currency: 'EUR',
 });
+
+// Evaluate rules without storing the event
+const result = await Segmint.visitor.event(
+  'page-view',
+  { test_case: 'pricing-page' },
+  { dryRun: true },
+);
+
+console.log(result.dry_run); // true
 ```
+
+Dry-run uses the same project token and matching logic as a real event. Visit-count and
+page-view-count rules include the candidate event during evaluation, but the event does
+not change stored counts. Use dry-run for rule testing, QA, and diagnostics only. A
+client-side segment result, including a dry-run result, must never be used for
+authorization. Like every `visitor.event()` response, a dry-run response updates the
+SDK's browser-side matched-segment cache.
+
+For a diagnostics or rule-testing flow, the recommended setup is
+`Segmint.init({ token, autoTrack: false })`. This prevents `init()` from storing its
+automatic page-view event. You can then surgically evaluate an individual event without
+storing it by calling `visitor.event(type, properties, { dryRun: true })`.
+
+`autoTrack: false` affects only the automatic page-view sent by `init()`; later calls to
+`visitor.event()` and `visitor.beacon()` still store events unless an individual
+`visitor.event()` uses `dryRun: true`. To prevent a beacon event from being stored, do
+not call `visitor.beacon()`.
 
 #### `Segmint.visitor.beacon(eventType?, eventProperties?)`
 
@@ -134,7 +207,11 @@ Fire-and-forget tracking using `navigator.sendBeacon()`. Ideal for events sent d
 
 Falls back to `fetch` with `keepalive: true` if `sendBeacon` is not available.
 
-> **Note:** Because beacon requests don't return a response, calling `beacon` does **not** update the internal segment cache.
+> **Note:** Because beacon requests don't return a response, calling `beacon` does **not**
+> update the internal segment cache or support dry-run. Any additional options passed to
+> `beacon()` are ignored. To prevent a beacon event from being stored, skip the
+> `beacon()` call. A beacon event is otherwise stored normally and can contribute to
+> future analytics and segment evaluation.
 
 ```js
 window.addEventListener('beforeunload', function () {
@@ -225,6 +302,7 @@ Each `visitor.event()` call sends a `POST` request to `/api/event-log/track` wit
     "utm_term": "running shoes"
   },
   "event_properties": {},
+  "dry_run": true,
   "metadata": {
     "path": "/products/shoes",
     "url": "https://example.com/products/shoes",
@@ -250,18 +328,43 @@ Each `visitor.event()` call sends a `POST` request to `/api/event-log/track` wit
 }
 ```
 
+`dry_run` is included only when `visitor.event(..., { dryRun: true })` is used.
+
 ### What the API returns
 
 ```json
 {
   "status": "OK",
   "session": "abc123sessionid",
+  "dry_run": true,
   "segments": [
     { "id": 1, "name": "Google Visitors", "slug": "google_visitors", "value": "google_visitors" },
     { "id": 3, "name": "High Intent", "slug": "high_intent", "value": "high_intent" }
   ]
 }
 ```
+
+`dry_run` is included only in dry-run responses. Normal responses remain unchanged.
+
+### Direct API dry-run
+
+Set `dry_run` to the JSON boolean `true` when calling the tracking endpoint directly:
+
+```bash
+curl -X POST https://your-segmint-host/api/event-log/track \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "token": "your-project-token",
+    "visitor_id": "diagnostic-visitor",
+    "type": "page-view",
+    "path": "/pricing",
+    "dry_run": true
+  }'
+```
+
+The API rejects non-boolean `dry_run` values with HTTP `422`. When omitted or set to
+`false`, the event and its segment-match records are stored normally.
 
 ## Data collected automatically
 
@@ -307,6 +410,21 @@ document.getElementById('signup-btn').addEventListener('click', function () {
   Segmint.visitor.event('signup-click', { plan: 'pro' });
 });
 ```
+
+### Track a displayed component
+
+Use a normal stored event when the component was actually displayed and that fact should
+be available for future analytics or segmentation:
+
+```js
+await Segmint.visitor.event('component-viewed', {
+  component: 'pricing-hero',
+  variant: 'enterprise',
+});
+```
+
+Send the event after the component is displayed. Avoid recording an impression merely
+because its module was loaded or its render function was considered.
 
 ### Track form submission
 

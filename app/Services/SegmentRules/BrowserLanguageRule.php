@@ -4,7 +4,7 @@ namespace App\Services\SegmentRules;
 
 class BrowserLanguageRule extends AbstractRule
 {
-    public function passes(array $logValues): bool
+    public function passes(array $logValues, bool $includeCurrentEvent = false): bool
     {
         $preferred = strtolower($this->rule->value);
         $header = $this->rule->key ?: 'Accept-Language';

@@ -7,7 +7,6 @@ use App\Models\Segment;
 use App\Models\SegmentMatch;
 use App\Services\SegmentRules\RuleFactory;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 
 class SegmentEngine
 {
@@ -17,6 +16,24 @@ class SegmentEngine
      * @return Collection<int, Segment>
      */
     public function assignSegments(EventLog $log): Collection
+    {
+        return $this->matchSegments($log, persistMatches: true);
+    }
+
+    /**
+     * Evaluate segments for an unsaved event without storing match records.
+     *
+     * @return Collection<int, Segment>
+     */
+    public function evaluateSegments(EventLog $log): Collection
+    {
+        return $this->matchSegments($log, persistMatches: false);
+    }
+
+    /**
+     * @return Collection<int, Segment>
+     */
+    private function matchSegments(EventLog $log, bool $persistMatches): Collection
     {
         $segments = Segment::with('rules')
             ->where('project_id', $log->project_id)
@@ -28,23 +45,24 @@ class SegmentEngine
         $matchRecords = [];
 
         foreach ($segments as $segment) {
-            $matched = $this->matchesSegment($log, $segment);
+            $matched = $this->matchesSegment($log, $segment, includeCurrentEvent: ! $log->exists);
 
-            $matchRecords[] = [
-                'event_log_id' => $log->id,
-                'segment_id' => $segment->id,
-                'matched' => $matched,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
+            if ($persistMatches) {
+                $matchRecords[] = [
+                    'event_log_id' => $log->id,
+                    'segment_id' => $segment->id,
+                    'matched' => $matched,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
 
             if ($matched) {
-                Log::info("$segment assigned");
                 $assigned->push($segment->id);
             }
         }
 
-        if (! empty($matchRecords)) {
+        if ($persistMatches && ! empty($matchRecords)) {
             SegmentMatch::insert($matchRecords);
         }
 
@@ -54,14 +72,14 @@ class SegmentEngine
     /**
      * Determine if the visitor matches the segment rules.
      */
-    protected function matchesSegment(EventLog $log, Segment $segment): bool
+    protected function matchesSegment(EventLog $log, Segment $segment, bool $includeCurrentEvent): bool
     {
         $logValues = $log->attributesToArray();
 
         foreach ($segment->rules as $rule) {
             $handler = RuleFactory::make($rule);
 
-            if (! $handler->passes($logValues)) {
+            if (! $handler->passes($logValues, $includeCurrentEvent)) {
                 return false;
             }
         }
