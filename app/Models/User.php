@@ -58,6 +58,12 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
+    public function favoriteProjects(): BelongsToMany
+    {
+        return $this->belongsToMany(Project::class, 'favorite_projects')
+            ->withTimestamps();
+    }
+
     /**
      * Get the organization this user owns (max 1).
      */

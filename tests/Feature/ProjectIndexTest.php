@@ -7,6 +7,7 @@ use App\Models\Organization;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Collection;
 use Tests\TestCase;
 
 class ProjectIndexTest extends TestCase
@@ -59,6 +60,23 @@ class ProjectIndexTest extends TestCase
         $response->assertInertia(fn ($page) => $page
             ->where('organization.id', $org2->id)
             ->has('projects', 4)
+        );
+    }
+
+    public function test_project_collection_marks_only_the_current_users_favorites(): void
+    {
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $favorite = Project::factory()->create(['organization_id' => $organization->id]);
+        $other = Project::factory()->create(['organization_id' => $organization->id]);
+        $user->favoriteProjects()->attach($favorite);
+
+        $response = $this->actingAs($user)
+            ->get(route('organizations.projects.index', $organization));
+
+        $response->assertInertia(fn ($page) => $page
+            ->has('projects', 2)
+            ->where('projects', fn (Collection $projects) => $projects->firstWhere('id', $favorite->id)['is_favorite'] === true
+                && $projects->firstWhere('id', $other->id)['is_favorite'] === false)
         );
     }
 

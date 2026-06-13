@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccessTokenController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventLogViewController;
+use App\Http\Controllers\FavoriteProjectController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RuleTemplateController;
@@ -22,6 +23,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
     Route::get('projects/{project}/edit', [ProjectController::class, 'edit'])->name('projects.edit');
     Route::put('projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
+    Route::post('projects/{project}/favorite', [FavoriteProjectController::class, 'store'])->name('projects.favorite.store');
+    Route::delete('projects/{project}/favorite', [FavoriteProjectController::class, 'destroy'])->name('projects.favorite.destroy');
     Route::get('projects/{project}/segments', [SegmentController::class, 'index'])->name('projects.segments.index');
     Route::get('projects/{project}/segments/suggestions', [SegmentSuggestionController::class, 'index'])->name('projects.segments.suggestions');
     Route::get('projects/{project}/segments/create', [SegmentController::class, 'create'])->name('projects.segments.create');

@@ -7,8 +7,9 @@ This document describes how users, organizations, and projects relate to each ot
 ```
 User
 ├── owns 0 or 1 Organization (via users.owned_organization_id)
-└── belongs to many Organizations (via organization_memberships)
-     └── each with a role: admin, member, or viewer
+├── belongs to many Organizations (via organization_memberships)
+│    └── each with a role: admin, member, or viewer
+└── favorites many Projects (via favorite_projects)
 
 Organization
 ├── has 1 owner (the User whose owned_organization_id points here)
@@ -30,6 +31,11 @@ A user is anyone with an account in Segmint. Users authenticate via email/passwo
 A user can:
 - **Own** at most one organization (0 or 1)
 - **Belong to** many organizations with different roles
+- **Favorite** accessible projects for personal quick access
+
+Project favorites are personal to each user. Favoriting a project does not change its
+state or affect how other organization members see it. The project collection displays
+the current user's favorites separately from their other accessible projects.
 
 ### Ownership
 
@@ -176,6 +182,11 @@ projects
   ├── name
   ├── description
   └── active
+
+favorite_projects
+  ├── user_id (FK → users)
+  ├── project_id (FK → projects)
+  └── unique(user_id, project_id)
 ```
 
 Project routes use immutable public IDs rather than names or slugs. See

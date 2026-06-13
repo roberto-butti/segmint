@@ -41,11 +41,21 @@ class ProjectController extends Controller
         session(['projects_organization_id' => $organization->id]);
 
         $role = $request->user()->roleInOrganization($organization);
+        $favoriteProjectIds = $request->user()
+            ->favoriteProjects()
+            ->where('organization_id', $organization->id)
+            ->pluck('projects.id');
 
         return Inertia::render('Projects/Index', [
             'organization' => $this->organizationContext($organization),
             'canManageProjects' => $role?->canManageProjects() ?? false,
-            'projects' => $organization->projects()->latest()->get(),
+            'projects' => $organization->projects()
+                ->latest()
+                ->get()
+                ->map(fn (Project $project) => [
+                    ...$project->toArray(),
+                    'is_favorite' => $favoriteProjectIds->contains($project->id),
+                ]),
         ]);
     }
 
