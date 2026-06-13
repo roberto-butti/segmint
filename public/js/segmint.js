@@ -15,12 +15,6 @@
  *       });
  *   </script>
  *
- * Usage (ES module):
- *
- *   import Segmint from 'https://your-segmint-host/js/segmint.js';
- *   await Segmint.init({ token: 'your-project-token', autoTrack: true });
- *   if (Segmint.visitor.hasSegment('vip')) showVipBanner();
- *
  * Namespaces:
  *
  *   Segmint.visitor.*  — about the current visitor (track events, read matches)

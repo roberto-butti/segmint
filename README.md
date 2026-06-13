@@ -83,6 +83,7 @@ deployment, monitoring, security, backups, and capacity planning.
 - PHP 8.5+
 - Composer
 - Bun
+- Node.js 22 LTS
 - PostgreSQL
 
 ## Installation
@@ -243,6 +244,7 @@ vendor/bin/pint
 
 ## Documentation
 
+- [Frontend Integration for Coding Agents](docs/frontend-integration-for-coding-agents.md) — Implementation contract and prompt template for integrating Segmint with Codex or Claude Code
 - [Tracking SDK](docs/tracking-sdk.md) — Full SDK reference, payload format, and integration recipes
 - [Segments API](docs/segments-api.md) — REST API for retrieving segments, CMS integration patterns
 - [Data Model](docs/data-model.md) — Users, Organizations, and Projects architecture

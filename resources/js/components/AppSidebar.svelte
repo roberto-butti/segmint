@@ -39,12 +39,12 @@
     const footerNavItems: NavItem[] = [
         {
             title: 'Repository',
-            href: 'https://github.com/laravel/svelte-starter-kit',
+            href: 'https://github.com/roberto-butti/segmint',
             icon: FolderGit2,
         },
         {
             title: 'Documentation',
-            href: 'https://laravel.com/docs/starter-kits#svelte',
+            href: 'https://github.com/roberto-butti/segmint/tree/main/docs',
             icon: BookOpen,
         },
     ];

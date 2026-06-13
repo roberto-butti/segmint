@@ -12,13 +12,12 @@ Include the script on any page you want to track. The SDK auto-detects the API e
 <script src="https://your-segmint-host/js/segmint.min.js"></script>
 ```
 
-### ES module
+Both `segmint.js` (readable) and `segmint.min.js` (minified) are served from `public/js/`
+as classic browser scripts and expose `window.Segmint`. The current SDK is not published
+as an npm package and does not provide an ES-module export.
 
-```js
-import Segmint from 'https://your-segmint-host/js/segmint.js';
-```
-
-Both `segmint.js` (readable) and `segmint.min.js` (minified) are served from `public/js/`.
+For an implementation contract designed for Codex, Claude Code, and other coding agents,
+see [Frontend Integration Guide for Coding Agents](frontend-integration-for-coding-agents.md).
 
 ## Quick start
 
