@@ -117,7 +117,7 @@ composer run dev
 
 Inertia application pages are client-rendered. Public content pages use Laravel Blade;
 see [Client-Rendered Inertia and Blade Public Pages](docs/decisions/0004-client-rendered-inertia-and-blade-public-pages.md)
-for the rationale and current homepage exception.
+for the rationale.
 
 Or run services individually:
 
