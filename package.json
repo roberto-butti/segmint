@@ -4,7 +4,6 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "build:ssr": "vite build && vite build --ssr",
     "dev": "vite",
     "format": "prettier --write resources/",
     "format:check": "prettier --check resources/",
@@ -41,7 +40,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "laravel-vite-plugin": "^3.0.0",
-    "lucide-svelte": "^0.468.0",
+    "lucide-svelte": "^1.0.1",
     "svelte": "^5.54.1",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.2",

@@ -83,7 +83,6 @@ deployment, monitoring, security, backups, and capacity planning.
 - PHP 8.5+
 - Composer
 - Bun
-- Node.js 22+ when running production SSR
 - PostgreSQL
 
 ## Installation
@@ -116,21 +115,15 @@ bun run build
 composer run dev
 ```
 
-Inertia SSR is handled automatically by the Vite development server.
+Inertia application pages are client-rendered. Public content pages use Laravel Blade;
+see [Client-Rendered Inertia and Blade Public Pages](docs/decisions/0004-client-rendered-inertia-and-blade-public-pages.md)
+for the rationale and current homepage exception.
 
 Or run services individually:
 
 ```bash
 php artisan serve
 bun run dev
-```
-
-For production SSR, build both client and server bundles and start the Inertia
-SSR process:
-
-```bash
-bun run build:ssr
-php artisan inertia:start-ssr
 ```
 
 ## Testing

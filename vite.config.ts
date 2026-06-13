@@ -11,7 +11,9 @@ export default defineConfig({
             input: ['resources/js/app.ts'],
             refresh: true,
         }),
-        inertia(),
+        inertia({
+            ssr: false,
+        }),
         tailwindcss(),
         svelte(),
         wayfinder({
