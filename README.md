@@ -81,14 +81,14 @@ deployment, monitoring, security, backups, and capacity planning.
 | Routing     | Laravel Wayfinder (type-safe TS)    |
 | Testing     | PHPUnit 12                          |
 | Database    | PostgreSQL (production), SQLite (test) |
-| Build       | Vite 8, Bun                         |
+| Build       | Vite 8, Bun (recommended), Node.js/npm supported |
 
 ## Requirements
 
 - PHP 8.5+
 - Composer
-- Bun
-- Node.js 22 LTS
+- Bun 1.3+ (recommended)
+- Alternatively, Node.js 22 LTS with npm
 - PostgreSQL
 
 ## Installation
@@ -98,9 +98,9 @@ deployment, monitoring, security, backups, and capacity planning.
 git clone https://github.com/your-username/segmint.git
 cd segmint
 
-# Install dependencies
+# Install dependencies with Bun (recommended)
 composer install
-bun install
+bun install --frozen-lockfile
 
 # Set up environment
 cp .env.example .env
@@ -114,12 +114,26 @@ php artisan db:seed
 bun run build
 ```
 
+Node.js 22 LTS and npm are also supported for frontend development:
+
+```bash
+npm ci
+npm run build
+```
+
+Both `bun.lock` and `package-lock.json` are committed. When frontend dependencies
+change, update both lockfiles so Bun remains the primary workflow while npm
+compatibility stays reproducible.
+
 ## Development
 
 ```bash
 # Start all dev services (Laravel server, queue worker, log viewer, Vite)
 composer run dev
 ```
+
+`composer run dev` uses Bun. When using Node.js/npm instead, start the services
+individually and run `npm run dev` for Vite.
 
 Inertia application pages are client-rendered. Public content pages use Laravel Blade;
 see [Client-Rendered Inertia and Blade Public Pages](docs/decisions/0004-client-rendered-inertia-and-blade-public-pages.md)
@@ -130,6 +144,9 @@ Or run services individually:
 ```bash
 php artisan serve
 bun run dev
+
+# Node.js/npm alternative
+npm run dev
 ```
 
 ## Testing
