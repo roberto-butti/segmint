@@ -88,7 +88,7 @@ deployment, monitoring, security, backups, and capacity planning.
 - PHP 8.5+
 - Composer
 - Bun 1.3+ (recommended)
-- Alternatively, Node.js 22 LTS with npm
+- Alternatively, Node.js 22.12.x with npm
 - PostgreSQL
 
 ## Installation
@@ -114,7 +114,7 @@ php artisan db:seed
 bun run build
 ```
 
-Node.js 22 LTS and npm are also supported for frontend development:
+Node.js 22.12.x and npm are also supported for frontend development:
 
 ```bash
 npm ci
@@ -124,6 +124,8 @@ npm run build
 Both `bun.lock` and `package-lock.json` are committed. When frontend dependencies
 change, update both lockfiles so Bun remains the primary workflow while npm
 compatibility stays reproducible.
+
+The repository pins the Node.js compatibility path in `./.nvmrc`.
 
 ## Development
 
