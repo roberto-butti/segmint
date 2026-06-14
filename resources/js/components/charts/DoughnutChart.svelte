@@ -38,10 +38,10 @@
         chart = new Chart(canvas, {
             type: 'doughnut',
             data: {
-                labels,
+                labels: [...labels],
                 datasets: [
                     {
-                        data,
+                        data: [...data],
                         backgroundColor: colors.slice(0, labels.length),
                         borderWidth: 2,
                         borderColor: 'white',

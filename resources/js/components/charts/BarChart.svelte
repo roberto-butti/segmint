@@ -33,15 +33,17 @@
     let chart: Chart | null = null;
 
     onMount(() => {
+        const chartData = [...data];
+
         chart = new Chart(canvas, {
             type: 'bar',
             data: {
-                labels,
+                labels: [...labels],
                 datasets: [
                     {
                         label,
-                        data,
-                        backgroundColor: data.map(
+                        data: chartData,
+                        backgroundColor: chartData.map(
                             (_, i) =>
                                 [
                                     '#6366F1',

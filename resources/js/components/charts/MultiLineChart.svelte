@@ -48,12 +48,14 @@
     ];
 
     onMount(() => {
-        const entries = Object.entries(datasets);
+        const entries: [string, number[]][] = Object.entries(datasets).map(
+            ([name, data]) => [name, [...data]],
+        );
 
         chart = new Chart(canvas, {
             type: 'line',
             data: {
-                labels,
+                labels: [...labels],
                 datasets: entries.map(([name, data], i) => ({
                     label: name,
                     data,

@@ -38,11 +38,11 @@
         chart = new Chart(canvas, {
             type: 'line',
             data: {
-                labels,
+                labels: [...labels],
                 datasets: [
                     {
                         label,
-                        data,
+                        data: [...data],
                         fill: true,
                         backgroundColor: 'rgba(99, 102, 241, 0.15)',
                         borderColor: '#6366F1',
