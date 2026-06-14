@@ -1,11 +1,14 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/svelte-starter-kit",
+    "name": "roberto-butti/segmint",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "Open-source event tracking and real-time audience segmentation application.",
     "keywords": [
+        "audience-segmentation",
+        "content-personalization",
+        "event-tracking",
         "laravel",
-        "framework"
+        "svelte"
     ],
     "license": "AGPL-3.0-or-later",
     "require": {
@@ -44,8 +47,8 @@
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php artisan key:generate",
             "@php artisan migrate --force",
-            "npm install",
-            "npm run build"
+            "bun install --frozen-lockfile",
+            "bun run build"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
