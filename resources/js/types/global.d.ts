@@ -36,6 +36,13 @@ declare module '@inertiajs/core' {
                     destination_name: string;
                     destination_url: string;
                 } | null;
+                accessTokenSecret: {
+                    id: string;
+                    access_token_id: number;
+                    name: string | null;
+                    token: string;
+                    action: 'created' | 'rotated';
+                } | null;
             };
             navigationContext: NavigationContext;
             sidebarOpen: boolean;

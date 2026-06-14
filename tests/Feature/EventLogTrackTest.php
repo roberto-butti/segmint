@@ -39,6 +39,7 @@ class EventLogTrackTest extends TestCase
 
         $this->assertDatabaseCount('event_logs', 0);
         $this->assertDatabaseCount('segment_matches', 0);
+        $this->assertNull($project->accessTokens()->firstOrFail()->last_used_at);
     }
 
     public function test_dry_run_count_rules_include_candidate_without_changing_stored_counts(): void
@@ -129,6 +130,7 @@ class EventLogTrackTest extends TestCase
         $this->assertDatabaseCount('event_logs', 1);
         $this->assertDatabaseCount('segment_matches', 1);
         $this->assertTrue(SegmentMatch::firstOrFail()->matched);
+        $this->assertNotNull($project->accessTokens()->firstOrFail()->last_used_at);
     }
 
     public function test_false_dry_run_preserves_normal_tracking_behavior(): void

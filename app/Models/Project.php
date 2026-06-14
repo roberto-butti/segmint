@@ -29,7 +29,7 @@ class Project extends Model
 
             $project->accessTokens()->create([
                 'name' => 'Default',
-                'token' => Str::random(64),
+                'token' => AccessToken::generateToken(),
                 'active' => true,
             ]);
         });
@@ -88,15 +88,24 @@ class Project extends Model
     /**
      * Resolve a project from a plain access token.
      */
-    public static function resolveFromAccessToken(string $plainToken): ?self
+    public static function resolveFromAccessToken(string $plainToken, bool $markAsUsed = true): ?self
     {
-        return AccessToken::query()
+        $accessToken = AccessToken::query()
             ->with('project')
             ->where('token', $plainToken)
             ->where('active', true)
             ->whereHas('project', fn ($query) => $query->where('active', true))
-            ->first()
-            ?->project;
+            ->first();
+
+        if (! $accessToken) {
+            return null;
+        }
+
+        if ($markAsUsed) {
+            $accessToken->markAsUsed();
+        }
+
+        return $accessToken->project;
     }
 
     private static function generateUniquePublicId(): string

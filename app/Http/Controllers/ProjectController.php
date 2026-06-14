@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -92,7 +93,16 @@ class ProjectController extends Controller
             'active' => true,
         ]);
 
-        return redirect()->route('projects.show', $project);
+        $defaultToken = $project->accessTokens()->firstOrFail();
+
+        return redirect()->route('projects.access-tokens.index', $project)
+            ->with('accessTokenSecret', [
+                'id' => Str::uuid()->toString(),
+                'access_token_id' => $defaultToken->id,
+                'name' => $defaultToken->name,
+                'token' => $defaultToken->token,
+                'action' => 'created',
+            ]);
     }
 
     /**

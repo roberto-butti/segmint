@@ -69,7 +69,10 @@ class ProjectCreateTest extends TestCase
 
         $project = $organization->projects()->where('name', 'My New Project')->first();
         $this->assertMatchesRegularExpression('/^[A-Za-z0-9]{12}$/', $project->public_id);
-        $response->assertRedirect(route('projects.show', $project));
+        $response
+            ->assertRedirect(route('projects.access-tokens.index', $project))
+            ->assertSessionHas('accessTokenSecret', fn (array $secret) => $secret['access_token_id'] === $project->accessTokens()->firstOrFail()->id
+                && $secret['token'] === $project->accessTokens()->firstOrFail()->token);
     }
 
     public function test_projects_receive_globally_unique_public_ids(): void
@@ -175,6 +178,6 @@ class ProjectCreateTest extends TestCase
         $this->assertNotNull($project);
         $this->assertNull($project->description);
 
-        $response->assertRedirect(route('projects.show', $project));
+        $response->assertRedirect(route('projects.access-tokens.index', $project));
     }
 }

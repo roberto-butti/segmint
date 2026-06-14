@@ -42,6 +42,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('projects/{project}/rule-templates/{ruleTemplate}', [RuleTemplateController::class, 'destroy'])->name('projects.rule-templates.destroy');
     Route::get('projects/{project}/events', [EventLogViewController::class, 'index'])->name('projects.events.index');
     Route::get('projects/{project}/access-tokens', [AccessTokenController::class, 'index'])->name('projects.access-tokens.index');
+    Route::post('projects/{project}/access-tokens', [AccessTokenController::class, 'store'])->name('projects.access-tokens.store');
+    Route::patch('projects/{project}/access-tokens/{accessToken}', [AccessTokenController::class, 'update'])->name('projects.access-tokens.update');
+    Route::post('projects/{project}/access-tokens/{accessToken}/rotate', [AccessTokenController::class, 'rotate'])->name('projects.access-tokens.rotate');
 });
 
 require __DIR__.'/settings.php';

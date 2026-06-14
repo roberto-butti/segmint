@@ -34,7 +34,10 @@ class AccessTokenIndexTest extends TestCase
         $response->assertInertia(fn ($page) => $page
             ->component('AccessTokens/Index')
             ->where('project.id', $project->id)
+            ->where('canManageProject', true)
             ->has('accessTokens', 4) // 3 created + 1 default
+            ->missing('accessTokens.0.token')
+            ->has('accessTokens.0.preview')
         );
     }
 

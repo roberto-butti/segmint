@@ -41,6 +41,8 @@ deployment, monitoring, security, backups, and capacity planning.
 - **Rule templates** — Provides reusable rule presets scoped to each project.
 - **Organizations and teams** — Supports multiple organizations and role-based access
   using admin, member, and viewer roles.
+- **Access-token lifecycle** — Create, revoke, reactivate, and rotate project tokens.
+  Newly created or rotated token values are displayed once.
 - **Analytics** — Provides per-project event trends, segment distribution, and recent
   activity.
 - **Playground** — Includes an HTML page for testing segment visibility using project

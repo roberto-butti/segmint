@@ -49,6 +49,7 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'segmentCopy' => fn () => $request->session()->get('segmentCopy'),
                 'ruleTemplateCopy' => fn () => $request->session()->get('ruleTemplateCopy'),
+                'accessTokenSecret' => fn () => $request->session()->get('accessTokenSecret'),
             ],
             'navigationContext' => $navigationContext,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',

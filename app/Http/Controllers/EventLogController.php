@@ -20,7 +20,7 @@ class EventLogController extends Controller
         if ($token === '') {
             abort(404, 'token_mandatory');
         }
-        $project = Project::resolveFromAccessToken($token);
+        $project = Project::resolveFromAccessToken($token, markAsUsed: ! $dryRun);
 
         if (is_null($project)) {
             abort(404, 'token_not_valid');

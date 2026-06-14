@@ -107,6 +107,20 @@ When a project is created, the following are automatically generated:
 - **12 default rule templates** (UTM matching, visit counts, language detection, etc.)
 - **1 default access token** (64-character random string, named "Default")
 
+The default token value is shown once after project creation. Project managers can create
+additional tokens, revoke or reactivate existing tokens, and rotate token values.
+
+Stored token values are not returned by the access-token management page. Creation and
+rotation reveal the new value through one-request flash data so it can be copied into the
+client configuration. After leaving or refreshing the page, the value cannot be
+recovered from the UI and must be rotated if it was not saved.
+
+Revoking a token prevents it from resolving a project. Rotating a token immediately
+invalidates its previous value and preserves its current active or revoked status.
+Successful stored-event tracking and active-segment API requests update the token's
+last-used timestamp. Dry-run evaluation does not update it because dry-run is
+side-effect free.
+
 ### Access control
 
 Project access is determined by organization membership:
