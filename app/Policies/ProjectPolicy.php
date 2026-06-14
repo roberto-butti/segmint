@@ -12,7 +12,10 @@ class ProjectPolicy
      */
     public function view(User $user, Project $project): bool
     {
-        return $user->belongsToOrganization($project->organization);
+        $role = $user->roleInOrganization($project->organization);
+
+        return $role?->canAccessAllProjects() === true
+            || $project->members()->whereKey($user->id)->exists();
     }
 
     /**
@@ -32,6 +35,7 @@ class ProjectPolicy
     {
         $role = $user->roleInOrganization($project->organization);
 
-        return $role !== null && $role->canManageOrganization();
+        return $user->isOwnerOf($project->organization)
+            || ($role !== null && $role->canManageOrganization());
     }
 }

@@ -31,6 +31,8 @@ export type NavigationProjectContextItem = NavigationContextItem & {
 export type NavigationContext = {
     organizations: NavigationContextItem[];
     organization: NavigationContextItem | null;
+    canViewOrganizationDashboard: boolean;
+    canManageOrganization: boolean;
     projects: NavigationProjectContextItem[];
     project: NavigationContextItem | null;
 };

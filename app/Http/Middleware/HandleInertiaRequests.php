@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Organization;
+use App\Models\OrganizationInvitation;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -44,6 +45,15 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => $request->user(),
+                'pendingInvitationCount' => fn () => $request->user()
+                    ? OrganizationInvitation::query()
+                        ->whereRaw('LOWER(email) = ?', [mb_strtolower($request->user()->email)])
+                        ->whereNull('accepted_at')
+                        ->whereNull('declined_at')
+                        ->whereNull('revoked_at')
+                        ->where('expires_at', '>', now())
+                        ->count()
+                    : 0,
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
@@ -60,6 +70,8 @@ class HandleInertiaRequests extends Middleware
      * @return array{
      *     organizations: array<int, array{id: int, public_id: string, name: string}>,
      *     organization: array{id: int, public_id: string, name: string}|null,
+     *     canViewOrganizationDashboard: bool,
+     *     canManageOrganization: bool,
      *     projects: array<int, array{id: int, public_id: string, name: string, is_favorite: bool}>,
      *     project: array{id: int, public_id: string, name: string}|null
      * }
@@ -72,6 +84,8 @@ class HandleInertiaRequests extends Middleware
             return [
                 'organizations' => [],
                 'organization' => null,
+                'canViewOrganizationDashboard' => false,
+                'canManageOrganization' => false,
                 'projects' => [],
                 'project' => null,
             ];
@@ -98,6 +112,12 @@ class HandleInertiaRequests extends Middleware
         return [
             'organizations' => $organizations,
             'organization' => $organization ? $this->navigationItem($organization) : null,
+            'canViewOrganizationDashboard' => $organization
+                ? $user->belongsToOrganization($organization)
+                : false,
+            'canManageOrganization' => $organization
+                ? $user->canManageOrganization($organization)
+                : false,
             'projects' => $projects,
             'project' => $project ? $this->navigationItem($project) : null,
         ];
@@ -113,9 +133,13 @@ class HandleInertiaRequests extends Middleware
             ->where('organization_id', $organization->id)
             ->pluck('projects.id');
 
-        return $organization->projects()
+        $projects = $request->user()->roleInOrganization($organization)?->canAccessAllProjects() === true
+            ? $organization->projects()
+            : $request->user()->assignedProjects()->where('organization_id', $organization->id);
+
+        return $projects
             ->orderBy('name')
-            ->get(['id', 'public_id', 'name'])
+            ->get(['projects.id', 'projects.public_id', 'projects.name'])
             ->map(fn (Project $project) => [
                 ...$this->navigationItem($project),
                 'is_favorite' => $favoriteProjectIds->contains($project->id),

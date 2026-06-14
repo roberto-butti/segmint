@@ -41,6 +41,11 @@ class Organization extends Model
         return $this->hasMany(Project::class);
     }
 
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(OrganizationInvitation::class);
+    }
+
     private static function generateUniquePublicId(): string
     {
         do {

@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { Link } from '@inertiajs/svelte';
+    import { Link, page } from '@inertiajs/svelte';
     import BookOpen from 'lucide-svelte/icons/book-open';
     import FolderGit2 from 'lucide-svelte/icons/folder-git-2';
     import LayoutGrid from 'lucide-svelte/icons/layout-grid';
+    import Mail from 'lucide-svelte/icons/mail';
     import type { Snippet } from 'svelte';
     import AppLogo from '@/components/AppLogo.svelte';
     import NavContext from '@/components/NavContext.svelte';
@@ -20,6 +21,7 @@
     } from '@/components/ui/sidebar';
     import { toUrl } from '@/lib/utils';
     import { dashboard } from '@/routes';
+    import invitations from '@/routes/invitations';
     import type { NavItem } from '@/types';
 
     let {
@@ -28,13 +30,21 @@
         children?: Snippet;
     } = $props();
 
-    const mainNavItems: NavItem[] = [
+    const mainNavItems: NavItem[] = $derived([
         {
             title: 'Organizations',
             href: dashboard(),
             icon: LayoutGrid,
         },
-    ];
+        {
+            title:
+                page.props.auth.pendingInvitationCount > 0
+                    ? `Invitations (${page.props.auth.pendingInvitationCount})`
+                    : 'Invitations',
+            href: invitations.index(),
+            icon: Mail,
+        },
+    ]);
 
     const footerNavItems: NavItem[] = [
         {

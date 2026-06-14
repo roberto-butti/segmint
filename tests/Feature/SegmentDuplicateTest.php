@@ -112,11 +112,11 @@ class SegmentDuplicateTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_viewer_cannot_duplicate_a_segment(): void
+    public function test_guest_cannot_duplicate_a_segment(): void
     {
         $user = User::factory()->create();
         $organization = Organization::factory()->create();
-        $organization->members()->attach($user, ['role' => OrganizationRole::Viewer->value]);
+        $organization->members()->attach($user, ['role' => OrganizationRole::Guest->value]);
         $project = Project::factory()->create(['organization_id' => $organization->id]);
         $segment = Segment::factory()->create(['project_id' => $project->id]);
 

@@ -8,6 +8,7 @@
     import LayoutDashboard from 'lucide-svelte/icons/layout-dashboard';
     import Star from 'lucide-svelte/icons/star';
     import Target from 'lucide-svelte/icons/target';
+    import Users from 'lucide-svelte/icons/users';
     import {
         Select,
         SelectContent,
@@ -23,6 +24,7 @@
     } from '@/components/ui/sidebar';
     import { currentUrlState } from '@/lib/currentUrl';
     import organizations from '@/routes/organizations';
+    import organizationMembers from '@/routes/organizations/members';
     import organizationProjects from '@/routes/organizations/projects';
     import projects from '@/routes/projects';
     import accessTokens from '@/routes/projects/access-tokens';
@@ -37,13 +39,17 @@
     const organizationItems: NavItem[] = $derived(
         context.organization
             ? [
-                  {
-                      title: 'Dashboard',
-                      href: organizations.dashboard.url(
-                          context.organization.public_id,
-                      ),
-                      icon: LayoutDashboard,
-                  },
+                  ...(context.canViewOrganizationDashboard
+                      ? [
+                            {
+                                title: 'Dashboard',
+                                href: organizations.dashboard.url(
+                                    context.organization.public_id,
+                                ),
+                                icon: LayoutDashboard,
+                            },
+                        ]
+                      : []),
                   {
                       title: 'Projects',
                       href: organizationProjects.index.url(
@@ -51,6 +57,17 @@
                       ),
                       icon: FolderKanban,
                   },
+                  ...(context.canManageOrganization
+                      ? [
+                            {
+                                title: 'Members',
+                                href: organizationMembers.index.url(
+                                    context.organization.public_id,
+                                ),
+                                icon: Users,
+                            },
+                        ]
+                      : []),
               ]
             : [],
     );

@@ -99,7 +99,7 @@ class SegmentCopyTest extends TestCase
         $source = Project::factory()->create(['organization_id' => $organization->id]);
         $segment = Segment::factory()->create(['project_id' => $source->id]);
         $viewerOrganization = Organization::factory()->create();
-        $viewerOrganization->members()->attach($user, ['role' => OrganizationRole::Viewer->value]);
+        $viewerOrganization->members()->attach($user, ['role' => OrganizationRole::Guest->value]);
         $destination = Project::factory()->create(['organization_id' => $viewerOrganization->id]);
 
         $response = $this->actingAs($user)->post(route('projects.segments.copy', $source), [

@@ -64,6 +64,12 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
+    public function assignedProjects(): BelongsToMany
+    {
+        return $this->belongsToMany(Project::class, 'project_memberships')
+            ->withTimestamps();
+    }
+
     /**
      * Get the organization this user owns (max 1).
      */
@@ -85,10 +91,14 @@ class User extends Authenticatable
      */
     public function accessibleProjects(): Builder
     {
-        return Project::query()->whereIn(
-            'organization_id',
-            $this->organizations()->pluck('organizations.id')
-        );
+        $allProjectOrganizationIds = $this->organizations()
+            ->get()
+            ->filter(fn (Organization $organization) => $organization->pivot->role->canAccessAllProjects())
+            ->pluck('id');
+
+        return Project::query()
+            ->whereIn('organization_id', $allProjectOrganizationIds)
+            ->orWhereHas('members', fn (Builder $query) => $query->whereKey($this->id));
     }
 
     /**
@@ -113,6 +123,12 @@ class User extends Authenticatable
         }
 
         return $membership->pivot->role;
+    }
+
+    public function canManageOrganization(Organization $organization): bool
+    {
+        return $this->isOwnerOf($organization)
+            || $this->roleInOrganization($organization)?->canManageOrganization() === true;
     }
 
     public static function me(): self

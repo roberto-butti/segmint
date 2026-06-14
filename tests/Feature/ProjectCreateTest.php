@@ -36,12 +36,12 @@ class ProjectCreateTest extends TestCase
         );
     }
 
-    public function test_viewer_cannot_view_create_form(): void
+    public function test_guest_cannot_view_create_form(): void
     {
         ['user' => $user] = $this->createUserWithOrganization();
 
         $viewerOrg = Organization::factory()->create();
-        $viewerOrg->members()->attach($user, ['role' => OrganizationRole::Viewer->value]);
+        $viewerOrg->members()->attach($user, ['role' => OrganizationRole::Guest->value]);
 
         $this->actingAs($user);
 
@@ -100,12 +100,12 @@ class ProjectCreateTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_viewer_cannot_create_project(): void
+    public function test_guest_cannot_create_project(): void
     {
         ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
 
         $viewerOrg = Organization::factory()->create();
-        $viewerOrg->members()->attach($user, ['role' => OrganizationRole::Viewer->value]);
+        $viewerOrg->members()->attach($user, ['role' => OrganizationRole::Guest->value]);
 
         $this->actingAs($user);
 

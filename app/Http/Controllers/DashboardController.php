@@ -33,17 +33,22 @@ class DashboardController extends Controller
                 $organization->name,
             ])
             ->values()
-            ->map(fn (Organization $organization) => [
-                'id' => $organization->id,
-                'public_id' => $organization->public_id,
-                'name' => $organization->name,
-                'role' => $user->isOwnerOf($organization)
-                    ? 'owner'
-                    : $organization->pivot->role->value,
-                'projects_count' => $organization->projects_count,
-                'active_projects_count' => $organization->active_projects_count,
-                'members_count' => $organization->members_count,
-            ]);
+            ->map(function (Organization $organization) use ($user) {
+                $role = $organization->pivot->role;
+                $guestProjects = $role === OrganizationRole::Guest
+                    ? $user->assignedProjects()->where('projects.organization_id', $organization->id)
+                    : null;
+
+                return [
+                    'id' => $organization->id,
+                    'public_id' => $organization->public_id,
+                    'name' => $organization->name,
+                    'role' => $user->isOwnerOf($organization) ? 'owner' : $role->value,
+                    'projects_count' => $guestProjects?->count() ?? $organization->projects_count,
+                    'active_projects_count' => $guestProjects?->where('active', true)->count() ?? $organization->active_projects_count,
+                    'members_count' => $organization->members_count,
+                ];
+            });
 
         return Inertia::render('Dashboard', [
             'organizations' => $organizations,
@@ -61,20 +66,12 @@ class DashboardController extends Controller
         session(['projects_organization_id' => $organization->id]);
 
         $role = $user->roleInOrganization($organization);
-        $projectIds = $organization->projects()->select('id');
-        $thirtyDaysAgo = Carbon::now()->subDays(30)->startOfDay();
+        $isGuest = $role === OrganizationRole::Guest;
+        $projectsQuery = $isGuest
+            ? $user->assignedProjects()->where('projects.organization_id', $organization->id)
+            : $organization->projects();
 
-        $eventsOverTime = EventLog::query()
-            ->whereIn('project_id', clone $projectIds)
-            ->where('created_at', '>=', $thirtyDaysAgo)
-            ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as count'))
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get()
-            ->pluck('count', 'date')
-            ->toArray();
-
-        $projects = $organization->projects()
+        $projects = $projectsQuery
             ->withCount(['segments', 'eventLogs'])
             ->latest()
             ->get()
@@ -87,6 +84,48 @@ class DashboardController extends Controller
                 'segments_count' => $project->segments_count,
                 'event_logs_count' => $project->event_logs_count,
             ]);
+
+        if ($isGuest) {
+            return Inertia::render('Organizations/Dashboard', [
+                'organization' => [
+                    'id' => $organization->id,
+                    'public_id' => $organization->public_id,
+                    'name' => $organization->name,
+                ],
+                'currentUserRole' => [
+                    'value' => $role->value,
+                    'label' => $role->label(),
+                ],
+                'canManageProjects' => false,
+                'canManageOrganization' => false,
+                'limitedGuestView' => true,
+                'stats' => [
+                    'members_count' => 0,
+                    'projects_count' => $projects->count(),
+                    'active_projects_count' => $projects->where('active', true)->count(),
+                    'segments_count' => 0,
+                    'active_segments_count' => 0,
+                    'events_count' => 0,
+                    'unique_visitors_count' => 0,
+                ],
+                'eventsOverTime' => [],
+                'roleCounts' => [],
+                'projects' => $projects,
+            ]);
+        }
+
+        $projectIds = $organization->projects()->select('id');
+        $thirtyDaysAgo = Carbon::now()->subDays(30)->startOfDay();
+
+        $eventsOverTime = EventLog::query()
+            ->whereIn('project_id', clone $projectIds)
+            ->where('created_at', '>=', $thirtyDaysAgo)
+            ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as count'))
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->pluck('count', 'date')
+            ->toArray();
 
         $roleCounts = $organization->members()
             ->select('organization_memberships.role', DB::raw('COUNT(*) as count'))
@@ -108,6 +147,8 @@ class DashboardController extends Controller
                 'label' => $user->isOwnerOf($organization) ? 'Owner' : $role?->label(),
             ],
             'canManageProjects' => $role?->canManageProjects() ?? false,
+            'canManageOrganization' => $user->canManageOrganization($organization),
+            'limitedGuestView' => false,
             'stats' => [
                 'members_count' => $organization->members()->count(),
                 'projects_count' => $organization->projects()->count(),

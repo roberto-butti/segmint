@@ -155,18 +155,20 @@
                 </p>
             </div>
             <div class="flex items-center gap-2">
-                <Button variant="outline" size="sm" asChild>
-                    {#snippet children(props)}
-                        <Link
-                            href={organizationsRoutes.dashboard.url(
-                                organization.public_id,
-                            )}
-                            class={props.class}
-                        >
-                            Organization dashboard
-                        </Link>
-                    {/snippet}
-                </Button>
+                {#if organization.can_view_dashboard}
+                    <Button variant="outline" size="sm" asChild>
+                        {#snippet children(props)}
+                            <Link
+                                href={organizationsRoutes.dashboard.url(
+                                    organization.public_id,
+                                )}
+                                class={props.class}
+                            >
+                                Organization dashboard
+                            </Link>
+                        {/snippet}
+                    </Button>
+                {/if}
                 {#if canManageProjects}
                     <Button variant="default" size="sm" asChild>
                         {#snippet children(props)}

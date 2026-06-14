@@ -65,6 +65,12 @@ class Project extends Model
             ->withTimestamps();
     }
 
+    public function members(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'project_memberships')
+            ->withTimestamps();
+    }
+
     public function segments(): HasMany
     {
         return $this->hasMany(Segment::class);

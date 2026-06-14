@@ -71,7 +71,7 @@ class SegmentController extends Controller
      */
     public function create(Request $request, Project $project): Response
     {
-        $this->authorize('view', $project);
+        $this->authorize('update', $project);
 
         return Inertia::render('Segments/Create', [
             'project' => $project,

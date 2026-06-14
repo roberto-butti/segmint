@@ -8,16 +8,19 @@ This document describes how users, organizations, and projects relate to each ot
 User
 ├── owns 0 or 1 Organization (via users.owned_organization_id)
 ├── belongs to many Organizations (via organization_memberships)
-│    └── each with a role: admin, member, or viewer
+│    └── each with a role: admin, member, or guest
+├── receives guest Project assignments (via project_memberships)
 └── favorites many Projects (via favorite_projects)
 
 Organization
 ├── has 1 owner (the User whose owned_organization_id points here)
 ├── has many members (via organization_memberships)
-└── has many Projects
+├── has many Projects
+└── has many Invitations
 
 Project
 ├── belongs to 1 Organization
+├── has many assigned guest users
 ├── has many Segments
 ├── has many Access Tokens
 ├── has many Rule Templates
@@ -64,19 +67,30 @@ Members are linked via the `organization_memberships` pivot table:
 |---|---|---|
 | `organization_id` | FK | The organization |
 | `user_id` | FK | The user |
-| `role` | string | `admin`, `member`, or `viewer` |
+| `role` | string | `admin`, `member`, or `guest` |
 
 A user can only appear once per organization (unique compound index on `organization_id + user_id`).
 
 ### Roles
 
-| Role | Manage projects | Manage segments & rules | View projects & data | Manage org settings |
+| Role | Manage projects | Manage segments & rules | Project access | Manage org settings |
 |---|---|---|---|---|
 | **Admin** | Yes | Yes | Yes | Yes |
 | **Member** | Yes | Yes | Yes | No |
-| **Viewer** | No | No | Yes | No |
+| **Guest** | No | No | Assigned projects only | No |
 
 The organization **owner** has the `admin` role in the pivot. Ownership is determined by `users.owned_organization_id`, not by the role value.
+
+### Invitations
+
+Owners and admins can invite users by email. Invitations expire after seven days and
+can be accepted or declined from the user's internal invitations page. Existing users
+also receive a database notification; users without an account receive the email and
+see the pending invitation after registering with the invited address.
+
+Owners can assign any role. Admins can manage members and guests, but cannot invite,
+change, or remove another admin or the owner. Guest invitations may include initial
+project assignments.
 
 ### Who is the owner?
 
@@ -123,11 +137,9 @@ side-effect free.
 
 ### Access control
 
-Project access is determined by organization membership:
-- If a user belongs to the project's organization → they can access the project
-- Their permissions depend on their role in that organization (see roles table above)
-
-There is no per-project access control. If you're in the org, you see all its projects.
+Project access is determined by organization membership and guest assignments:
+- Owners, admins, and members can access every project in the organization.
+- Guests can only access projects explicitly linked through `project_memberships`.
 
 ## How it all connects
 
@@ -136,7 +148,7 @@ There is no per-project access control. If you're in the org, you see all its pr
 1. User opens the create page within an organization's project collection URL (must have `admin` or `member` role)
 2. Project is created with `organization_id` pointing to the chosen org
 3. Default rule templates and access token are auto-created
-4. All members of that organization can now see the project
+4. Owners, admins, and members can see the project; guests require an explicit assignment
 
 ### User views projects
 
@@ -152,9 +164,9 @@ the organization identified in the URL:
 Request to /projects/{public_id}/segments
   → Route resolves Project by its globally unique public ID
   → ProjectPolicy::view(User, Project)
-    → Does User belong to Project's Organization?
-      → Yes: allow (any role can view)
-      → No: 403 Forbidden
+    → admin or member: allow
+    → assigned guest: allow
+    → otherwise: 403 Forbidden
 ```
 
 For mutations (create/update segments, manage templates):
@@ -162,7 +174,7 @@ For mutations (create/update segments, manage templates):
 ProjectPolicy::update(User, Project)
   → User's role in Project's Organization
     → admin or member: allow
-    → viewer: 403 Forbidden
+    → guest: 403 Forbidden
     → not a member: 403 Forbidden
 ```
 
@@ -186,7 +198,7 @@ organization_memberships
   ├── id
   ├── organization_id (FK → organizations)
   ├── user_id (FK → users)
-  ├── role (admin | member | viewer)
+  ├── role (admin | member | guest)
   └── unique(organization_id, user_id)
 
 projects
@@ -201,6 +213,19 @@ favorite_projects
   ├── user_id (FK → users)
   ├── project_id (FK → projects)
   └── unique(user_id, project_id)
+
+project_memberships
+  ├── user_id (FK → users)
+  ├── project_id (FK → projects)
+  └── unique(user_id, project_id)
+
+organization_invitations
+  ├── organization_id (FK → organizations)
+  ├── invited_by_id (FK → users)
+  ├── email
+  ├── role
+  ├── expires_at
+  └── accepted_at | declined_at | revoked_at
 ```
 
 Project routes use immutable public IDs rather than names or slugs. See
@@ -214,6 +239,9 @@ The global dashboard lists the user's accessible organizations. Operational
 metrics are shown on organization-scoped dashboards. See
 [Global and Organization Dashboards](decisions/0003-global-and-organization-dashboards.md).
 
+Guest access and project assignments are described in
+[Organization Guests and Project Assignments](decisions/0004-organization-guests-and-project-assignments.md).
+
 ## Examples
 
 ### User who owns an org and is invited to others
@@ -225,21 +253,23 @@ Alice (owned_organization_id: 1)
   │   └── Project "Mobile App"
   ├── Organization "Acme Corp" (id: 2) → role: admin (invited)
   │   └── Project "Acme Website"
-  └── Organization "Agency Pro" (id: 3) → role: viewer (invited)
-      └── Project "Client Campaign"
+  └── Organization "Agency Pro" (id: 3) → role: guest (invited)
+      └── assigned Project "Client Campaign"
 ```
 
 Alice can:
 - Create/edit/delete projects in "Alice's Startup" (admin + owner)
 - Create/edit projects in "Acme Corp" (admin)
-- Only view projects in "Agency Pro" (viewer)
+- Only view explicitly assigned projects in "Agency Pro" (guest)
 
 ### User with no owned org
 
 ```
 Bob (owned_organization_id: null)
   ├── Organization "Acme Corp" → role: member
-  └── Organization "Agency Pro" → role: viewer
+  └── Organization "Agency Pro" → role: guest
 ```
 
-Bob doesn't own any organization. He can create projects in "Acme Corp" (member) but can only view in "Agency Pro" (viewer). The global dashboard lists both organizations with his role in each.
+Bob doesn't own any organization. He can create projects in "Acme Corp" (member) but
+can only view explicitly assigned projects in "Agency Pro" (guest). The global dashboard
+lists both organizations with his role in each.

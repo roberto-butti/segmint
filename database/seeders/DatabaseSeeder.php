@@ -79,12 +79,12 @@ class DatabaseSeeder extends Seeder
             'active' => true,
         ]);
 
-        // Org 5: Agency Pro — user1 is viewer
+        // Org 5: Agency Pro — user1 is a guest
         $org5 = Organization::create([
             'name' => 'Agency Pro',
             'slug' => 'agency-pro',
         ]);
-        $org5->members()->attach($user1, ['role' => OrganizationRole::Viewer->value]);
+        $org5->members()->attach($user1, ['role' => OrganizationRole::Guest->value]);
 
         Project::create([
             'organization_id' => $org5->id,

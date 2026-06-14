@@ -87,18 +87,22 @@ class DashboardTest extends TestCase
             );
     }
 
-    public function test_viewer_can_view_but_cannot_manage_projects_from_organization_dashboard(): void
+    public function test_guest_sees_limited_organization_dashboard_without_unassigned_projects(): void
     {
         $organization = Organization::factory()->create();
         $viewer = User::factory()->create();
-        $organization->members()->attach($viewer, ['role' => OrganizationRole::Viewer->value]);
+        $organization->members()->attach($viewer, ['role' => OrganizationRole::Guest->value]);
+        Project::factory()->create(['organization_id' => $organization->id]);
 
         $this->actingAs($viewer)
             ->get(route('organizations.dashboard', $organization))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->where('currentUserRole.label', 'Viewer')
-                ->where('canManageProjects', false)
+                ->component('Organizations/Dashboard')
+                ->where('currentUserRole.label', 'Guest')
+                ->where('limitedGuestView', true)
+                ->where('stats.projects_count', 0)
+                ->has('projects', 0)
             );
     }
 

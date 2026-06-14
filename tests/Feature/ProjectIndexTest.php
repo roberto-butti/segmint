@@ -104,7 +104,7 @@ class ProjectIndexTest extends TestCase
         $user = User::factory()->create(['owned_organization_id' => null]);
 
         $viewerOrg = Organization::factory()->create();
-        $viewerOrg->members()->attach($user, ['role' => OrganizationRole::Viewer->value]);
+        $viewerOrg->members()->attach($user, ['role' => OrganizationRole::Guest->value]);
 
         $this->actingAs($user);
 
@@ -130,11 +130,11 @@ class ProjectIndexTest extends TestCase
         );
     }
 
-    public function test_viewer_cannot_create_projects_from_project_collection(): void
+    public function test_guest_cannot_create_projects_from_project_collection(): void
     {
         $user = User::factory()->create();
         $organization = Organization::factory()->create();
-        $organization->members()->attach($user, ['role' => OrganizationRole::Viewer->value]);
+        $organization->members()->attach($user, ['role' => OrganizationRole::Guest->value]);
 
         $this->actingAs($user)
             ->get(route('organizations.projects.index', $organization))

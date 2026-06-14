@@ -52,7 +52,7 @@ class ProjectFavoriteTest extends TestCase
     {
         ['user' => $firstUser, 'organization' => $organization] = $this->createUserWithOrganization();
         $secondUser = User::factory()->create();
-        $organization->members()->attach($secondUser, ['role' => OrganizationRole::Viewer->value]);
+        $organization->members()->attach($secondUser, ['role' => OrganizationRole::Guest->value]);
         $project = Project::factory()->create(['organization_id' => $organization->id]);
 
         $this->actingAs($firstUser)->post(route('projects.favorite.store', $project));

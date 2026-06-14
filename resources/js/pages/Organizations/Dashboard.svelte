@@ -54,6 +54,8 @@
         organization,
         currentUserRole,
         canManageProjects,
+        canManageOrganization,
+        limitedGuestView,
         stats,
         eventsOverTime,
         roleCounts,
@@ -62,6 +64,8 @@
         organization: Organization;
         currentUserRole: { value: string; label: string };
         canManageProjects: boolean;
+        canManageOrganization: boolean;
+        limitedGuestView: boolean;
         stats: Stats;
         eventsOverTime: Record<string, number>;
         roleCounts: Record<string, number>;
@@ -124,7 +128,9 @@
                     <Badge variant="secondary">{currentUserRole.label}</Badge>
                 </div>
                 <p class="mt-1 text-sm text-muted-foreground">
-                    Organization activity and project overview
+                    {limitedGuestView
+                        ? 'Your access within this organization'
+                        : 'Organization activity and project overview'}
                 </p>
             </div>
             <div class="flex gap-2">
@@ -154,102 +160,164 @@
                         {/snippet}
                     </Button>
                 {/if}
+                {#if canManageOrganization}
+                    <Button variant="outline" size="sm" asChild>
+                        {#snippet children(props)}
+                            <Link
+                                href={organizations.members.index.url(
+                                    organization.public_id,
+                                )}
+                                class={props.class}
+                            >
+                                Manage members
+                            </Link>
+                        {/snippet}
+                    </Button>
+                {/if}
             </div>
         </div>
 
-        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {#if limitedGuestView}
             <Card>
-                <CardHeader class="flex-row items-center justify-between">
-                    <CardTitle class="text-sm font-medium">Projects</CardTitle>
-                    <FolderKanban class="size-4 text-muted-foreground" />
+                <CardHeader>
+                    <CardTitle class="text-base">Guest access</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <div class="text-3xl font-bold">{stats.projects_count}</div>
-                    <p class="text-xs text-muted-foreground">
-                        {stats.active_projects_count} active
-                    </p>
+                <CardContent class="space-y-2 text-sm">
+                    {#if projects.length === 0}
+                        <p>
+                            You belong to {organization.name}, but you have not
+                            been assigned to any projects yet.
+                        </p>
+                        <p class="text-muted-foreground">
+                            An organization owner or admin can assign projects
+                            to your guest account.
+                        </p>
+                    {:else}
+                        <p>
+                            You can access {projects.length}
+                            {projects.length === 1 ? 'project' : 'projects'} assigned
+                            to your guest account.
+                        </p>
+                        <p class="text-muted-foreground">
+                            Organization-wide analytics and unassigned projects
+                            are not visible to guests.
+                        </p>
+                    {/if}
                 </CardContent>
             </Card>
-            <Card>
-                <CardHeader class="flex-row items-center justify-between">
-                    <CardTitle class="text-sm font-medium">Members</CardTitle>
-                    <Users class="size-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div class="text-3xl font-bold">{stats.members_count}</div>
-                    <p class="text-xs text-muted-foreground">
-                        Across this organization
-                    </p>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader class="flex-row items-center justify-between">
-                    <CardTitle class="text-sm font-medium">Segments</CardTitle>
-                    <Target class="size-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div class="text-3xl font-bold">{stats.segments_count}</div>
-                    <p class="text-xs text-muted-foreground">
-                        {stats.active_segments_count} active
-                    </p>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader class="flex-row items-center justify-between">
-                    <CardTitle class="text-sm font-medium">Events</CardTitle>
-                    <Activity class="size-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div class="text-3xl font-bold">{stats.events_count}</div>
-                    <p class="text-xs text-muted-foreground">
-                        {stats.unique_visitors_count} unique visitors
-                    </p>
-                </CardContent>
-            </Card>
-        </div>
+        {:else}
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <Card>
+                    <CardHeader class="flex-row items-center justify-between">
+                        <CardTitle class="text-sm font-medium"
+                            >Projects</CardTitle
+                        >
+                        <FolderKanban class="size-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div class="text-3xl font-bold">
+                            {stats.projects_count}
+                        </div>
+                        <p class="text-xs text-muted-foreground">
+                            {stats.active_projects_count} active
+                        </p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader class="flex-row items-center justify-between">
+                        <CardTitle class="text-sm font-medium"
+                            >Members</CardTitle
+                        >
+                        <Users class="size-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div class="text-3xl font-bold">
+                            {stats.members_count}
+                        </div>
+                        <p class="text-xs text-muted-foreground">
+                            Across this organization
+                        </p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader class="flex-row items-center justify-between">
+                        <CardTitle class="text-sm font-medium"
+                            >Segments</CardTitle
+                        >
+                        <Target class="size-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div class="text-3xl font-bold">
+                            {stats.segments_count}
+                        </div>
+                        <p class="text-xs text-muted-foreground">
+                            {stats.active_segments_count} active
+                        </p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader class="flex-row items-center justify-between">
+                        <CardTitle class="text-sm font-medium">Events</CardTitle
+                        >
+                        <Activity class="size-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div class="text-3xl font-bold">
+                            {stats.events_count}
+                        </div>
+                        <p class="text-xs text-muted-foreground">
+                            {stats.unique_visitors_count} unique visitors
+                        </p>
+                    </CardContent>
+                </Card>
+            </div>
 
-        <div class="grid gap-4 lg:grid-cols-3">
-            <Card class="lg:col-span-2">
-                <CardHeader>
-                    <CardTitle class="text-sm font-medium">
-                        Events - last 30 days
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {#if eventData.length > 0}
-                        <AreaChart
-                            labels={eventLabels}
-                            data={eventData}
-                            label="Events"
-                        />
-                    {:else}
-                        <div class="flex h-64 items-center justify-center">
-                            <p class="text-sm text-muted-foreground">
-                                No events in the last 30 days
-                            </p>
-                        </div>
-                    {/if}
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle class="text-sm font-medium">
-                        Member roles
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {#if roleData.length > 0}
-                        <DoughnutChart labels={roleLabels} data={roleData} />
-                    {:else}
-                        <div class="flex h-64 items-center justify-center">
-                            <p class="text-sm text-muted-foreground">
-                                No members
-                            </p>
-                        </div>
-                    {/if}
-                </CardContent>
-            </Card>
-        </div>
+            <div class="grid gap-4 lg:grid-cols-3">
+                <Card class="lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle class="text-sm font-medium">
+                            Events - last 30 days
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {#if eventData.length > 0}
+                            <AreaChart
+                                labels={eventLabels}
+                                data={eventData}
+                                label="Events"
+                            />
+                        {:else}
+                            <div class="flex h-64 items-center justify-center">
+                                <p class="text-sm text-muted-foreground">
+                                    No events in the last 30 days
+                                </p>
+                            </div>
+                        {/if}
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle class="text-sm font-medium">
+                            Member roles
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {#if roleData.length > 0}
+                            <DoughnutChart
+                                labels={roleLabels}
+                                data={roleData}
+                            />
+                        {:else}
+                            <div class="flex h-64 items-center justify-center">
+                                <p class="text-sm text-muted-foreground">
+                                    No members
+                                </p>
+                            </div>
+                        {/if}
+                    </CardContent>
+                </Card>
+            </div>
+        {/if}
 
         <div>
             <div class="mb-3 flex items-center justify-between">
@@ -270,8 +338,12 @@
             {#if projects.length === 0}
                 <EmptyState
                     icon={projectIcon}
-                    title={`No projects in ${organization.name}`}
-                    description="Create a project to start collecting events and defining audience segments."
+                    title={limitedGuestView
+                        ? 'No projects assigned yet'
+                        : `No projects in ${organization.name}`}
+                    description={limitedGuestView
+                        ? 'You are a guest in this organization. An owner or admin must assign a project before you can access it.'
+                        : 'Create a project to start collecting events and defining audience segments.'}
                     actions={canManageProjects
                         ? createProjectAction
                         : undefined}

@@ -74,7 +74,7 @@ class SegmentIndexTest extends TestCase
         $source = Project::factory()->create(['organization_id' => $organization->id]);
         $manageable = Project::factory()->create(['organization_id' => $organization->id]);
         $viewerOrganization = Organization::factory()->create();
-        $viewerOrganization->members()->attach($user, ['role' => OrganizationRole::Viewer->value]);
+        $viewerOrganization->members()->attach($user, ['role' => OrganizationRole::Guest->value]);
         Project::factory()->create(['organization_id' => $viewerOrganization->id]);
 
         $response = $this->actingAs($user)->get(route('projects.segments.index', $source));
@@ -85,12 +85,13 @@ class SegmentIndexTest extends TestCase
         );
     }
 
-    public function test_viewer_cannot_manage_segments_from_the_index(): void
+    public function test_guest_cannot_manage_segments_from_the_index(): void
     {
         ['user' => $user] = $this->createUserWithOrganization();
         $organization = Organization::factory()->create();
-        $organization->members()->attach($user, ['role' => OrganizationRole::Viewer->value]);
+        $organization->members()->attach($user, ['role' => OrganizationRole::Guest->value]);
         $project = Project::factory()->create(['organization_id' => $organization->id]);
+        $user->assignedProjects()->attach($project);
 
         $response = $this->actingAs($user)->get(route('projects.segments.index', $project));
 

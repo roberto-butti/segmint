@@ -149,12 +149,13 @@ class AccessTokenLifecycleTest extends TestCase
         $this->assertNotNull($token->fresh()->last_used_at);
     }
 
-    public function test_viewer_can_inspect_token_metadata_but_cannot_manage_tokens(): void
+    public function test_guest_can_inspect_assigned_project_token_metadata_but_cannot_manage_tokens(): void
     {
         $organization = Organization::factory()->create();
         $viewer = User::factory()->create();
-        $organization->members()->attach($viewer, ['role' => OrganizationRole::Viewer->value]);
+        $organization->members()->attach($viewer, ['role' => OrganizationRole::Guest->value]);
         $project = Project::factory()->create(['organization_id' => $organization->id]);
+        $viewer->assignedProjects()->attach($project);
         $token = $project->accessTokens()->firstOrFail();
 
         $this->actingAs($viewer)

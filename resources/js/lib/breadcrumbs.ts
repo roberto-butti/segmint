@@ -8,6 +8,7 @@ export interface BreadcrumbOrganization {
     id: number;
     public_id: string;
     name: string;
+    can_view_dashboard?: boolean;
 }
 
 export interface BreadcrumbProject {
@@ -26,7 +27,10 @@ export function organizationBreadcrumbs(
         },
         {
             title: organization.name,
-            href: organizations.dashboard.url(organization.public_id),
+            href:
+                organization.can_view_dashboard !== false
+                    ? organizations.dashboard.url(organization.public_id)
+                    : organizationProjects.index.url(organization.public_id),
         },
     ];
 }
