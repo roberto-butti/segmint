@@ -24,9 +24,13 @@ export type NavigationContextItem = {
     name: string;
 };
 
+export type NavigationProjectContextItem = NavigationContextItem & {
+    is_favorite: boolean;
+};
+
 export type NavigationContext = {
     organizations: NavigationContextItem[];
     organization: NavigationContextItem | null;
-    projects: NavigationContextItem[];
+    projects: NavigationProjectContextItem[];
     project: NavigationContextItem | null;
 };

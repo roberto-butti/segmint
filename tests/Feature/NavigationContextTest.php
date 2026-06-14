@@ -60,4 +60,34 @@ class NavigationContextTest extends TestCase
                 ->where('navigationContext.project.public_id', $project->public_id)
             );
     }
+
+    public function test_project_navigation_context_lists_personal_favorites_first(): void
+    {
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $alpha = Project::factory()->create([
+            'organization_id' => $organization->id,
+            'name' => 'Alpha',
+        ]);
+        $beta = Project::factory()->create([
+            'organization_id' => $organization->id,
+            'name' => 'Beta',
+        ]);
+        $favorite = Project::factory()->create([
+            'organization_id' => $organization->id,
+            'name' => 'Zulu favorite',
+        ]);
+        $user->favoriteProjects()->attach($favorite);
+
+        $this->actingAs($user)
+            ->get(route('organizations.dashboard', $organization))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('navigationContext.projects.0.id', $favorite->id)
+                ->where('navigationContext.projects.0.is_favorite', true)
+                ->where('navigationContext.projects.1.id', $alpha->id)
+                ->where('navigationContext.projects.1.is_favorite', false)
+                ->where('navigationContext.projects.2.id', $beta->id)
+                ->where('navigationContext.projects.2.is_favorite', false)
+            );
+    }
 }

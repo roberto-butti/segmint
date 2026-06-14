@@ -59,7 +59,7 @@ class HandleInertiaRequests extends Middleware
      * @return array{
      *     organizations: array<int, array{id: int, public_id: string, name: string}>,
      *     organization: array{id: int, public_id: string, name: string}|null,
-     *     projects: array<int, array{id: int, public_id: string, name: string}>,
+     *     projects: array<int, array{id: int, public_id: string, name: string, is_favorite: bool}>,
      *     project: array{id: int, public_id: string, name: string}|null
      * }
      */
@@ -90,19 +90,41 @@ class HandleInertiaRequests extends Middleware
             ->values()
             ->all();
 
+        $projects = $organization
+            ? $this->projectNavigationItems($request, $organization)
+            : [];
+
         return [
             'organizations' => $organizations,
             'organization' => $organization ? $this->navigationItem($organization) : null,
-            'projects' => $organization
-                ? $organization->projects()
-                    ->orderBy('name')
-                    ->get(['id', 'public_id', 'name'])
-                    ->map(fn (Project $item) => $this->navigationItem($item))
-                    ->values()
-                    ->all()
-                : [],
+            'projects' => $projects,
             'project' => $project ? $this->navigationItem($project) : null,
         ];
+    }
+
+    /**
+     * @return array<int, array{id: int, public_id: string, name: string, is_favorite: bool}>
+     */
+    private function projectNavigationItems(Request $request, Organization $organization): array
+    {
+        $favoriteProjectIds = $request->user()
+            ->favoriteProjects()
+            ->where('organization_id', $organization->id)
+            ->pluck('projects.id');
+
+        return $organization->projects()
+            ->orderBy('name')
+            ->get(['id', 'public_id', 'name'])
+            ->map(fn (Project $project) => [
+                ...$this->navigationItem($project),
+                'is_favorite' => $favoriteProjectIds->contains($project->id),
+            ])
+            ->sortBy(fn (array $project) => [
+                $project['is_favorite'] ? 0 : 1,
+                mb_strtolower($project['name']),
+            ])
+            ->values()
+            ->all();
     }
 
     /**

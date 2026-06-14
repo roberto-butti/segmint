@@ -6,6 +6,7 @@
     import FolderKanban from 'lucide-svelte/icons/folder-kanban';
     import KeyRound from 'lucide-svelte/icons/key-round';
     import LayoutDashboard from 'lucide-svelte/icons/layout-dashboard';
+    import Star from 'lucide-svelte/icons/star';
     import Target from 'lucide-svelte/icons/target';
     import {
         Select,
@@ -174,7 +175,14 @@
                 <SelectContent>
                     {#each context.projects as project (project.id)}
                         <SelectItem value={project.public_id}>
-                            {project.name}
+                            <span class="flex min-w-0 items-center gap-2">
+                                {#if project.is_favorite}
+                                    <Star
+                                        class="size-3.5 fill-amber-400 text-amber-500"
+                                    />
+                                {/if}
+                                <span class="truncate">{project.name}</span>
+                            </span>
                         </SelectItem>
                     {/each}
                 </SelectContent>
