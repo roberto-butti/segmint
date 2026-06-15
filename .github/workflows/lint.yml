@@ -33,6 +33,9 @@ jobs:
         with:
           bun-version: '1.3.14'
 
+      - name: Print Tool Versions
+        run: bun --version
+
       - name: Install Dependencies
         run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
@@ -59,8 +62,19 @@ jobs:
           node-version-file: '.nvmrc'
           cache: npm
 
+      - name: Print Tool Versions
+        run: |
+          node --version
+          npm --version
+          cat .nvmrc
+
       - name: Install Frontend Dependencies
         run: npm ci
+
+      - name: Print Npm Compatibility Details
+        run: |
+          npm ls eslint --depth=0
+          npm exec -- eslint -v
 
       - name: Check Frontend
         run: |

@@ -37,6 +37,9 @@ jobs:
         with:
           bun-version: '1.3.14'
 
+      - name: Print Tool Versions
+        run: bun --version
+
       - name: Install Frontend Dependencies
         run: bun install --frozen-lockfile
 
