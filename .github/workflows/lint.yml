@@ -39,6 +39,9 @@ jobs:
       - name: Install Dependencies
         run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
+      - name: Generate Wayfinder Types
+        run: php artisan wayfinder:generate --with-form
+
       - name: Run Pint
         run: composer lint:check
 
@@ -56,6 +59,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
@@ -70,6 +78,12 @@ jobs:
 
       - name: Install Frontend Dependencies
         run: npm ci
+
+      - name: Install Laravel Dependencies
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Generate Wayfinder Types
+        run: php artisan wayfinder:generate --with-form
 
       - name: Print Npm Compatibility Details
         run: |
