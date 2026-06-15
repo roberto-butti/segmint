@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Form } from '@inertiajs/svelte';
+
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
     import InputError from '@/components/InputError.svelte';

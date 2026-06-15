@@ -1,10 +1,10 @@
 <script lang="ts">
     import {
-        Chart,
-        CategoryScale,
-        LinearScale,
-        BarElement,
         BarController,
+        BarElement,
+        CategoryScale,
+        Chart,
+        LinearScale,
         Tooltip,
     } from 'chart.js';
     import { onMount } from 'svelte';

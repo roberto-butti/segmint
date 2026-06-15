@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Link } from '@inertiajs/svelte';
+
     import AppHead from '@/components/AppHead.svelte';
     import AreaChart from '@/components/charts/AreaChart.svelte';
     import BarChart from '@/components/charts/BarChart.svelte';
@@ -14,8 +15,8 @@
         CardTitle,
     } from '@/components/ui/card';
     import AppLayout from '@/layouts/AppLayout.svelte';
-    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
     import type { BreadcrumbOrganization } from '@/lib/breadcrumbs';
+    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
     import projects from '@/routes/projects';
     import accessTokens from '@/routes/projects/access-tokens';
     import eventsRoute from '@/routes/projects/events';

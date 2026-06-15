@@ -2,6 +2,7 @@
     import { Link, router } from '@inertiajs/svelte';
     import LogOut from 'lucide-svelte/icons/log-out';
     import Settings from 'lucide-svelte/icons/settings';
+
     import {
         DropdownMenuGroup,
         DropdownMenuItem,

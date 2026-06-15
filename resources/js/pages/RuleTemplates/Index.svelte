@@ -2,6 +2,7 @@
     import { Link, page, router } from '@inertiajs/svelte';
     import X from 'lucide-svelte/icons/x';
     import { untrack } from 'svelte';
+
     import AppHead from '@/components/AppHead.svelte';
     import CopyRuleTemplatesDialog from '@/components/CopyRuleTemplatesDialog.svelte';
     import EmptyState from '@/components/EmptyState.svelte';
@@ -33,8 +34,8 @@
         SelectTrigger,
     } from '@/components/ui/select';
     import AppLayout from '@/layouts/AppLayout.svelte';
-    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
     import type { BreadcrumbOrganization } from '@/lib/breadcrumbs';
+    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
     import ruleTemplatesRoute from '@/routes/projects/rule-templates';
     import type { BreadcrumbItem } from '@/types';
 

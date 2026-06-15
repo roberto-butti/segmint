@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Form } from '@inertiajs/svelte';
+
     import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
     import Heading from '@/components/Heading.svelte';
     import InputError from '@/components/InputError.svelte';

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { page } from '@inertiajs/svelte';
     import type { Snippet } from 'svelte';
+
     import { SidebarProvider } from '@/components/ui/sidebar';
     import type { AppVariant } from '@/types';
 

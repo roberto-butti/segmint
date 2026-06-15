@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Form } from '@inertiajs/svelte';
+
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
     import InputError from '@/components/InputError.svelte';
@@ -9,8 +10,8 @@
     import { Input } from '@/components/ui/input';
     import { Label } from '@/components/ui/label';
     import AppLayout from '@/layouts/AppLayout.svelte';
-    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
     import type { BreadcrumbOrganization } from '@/lib/breadcrumbs';
+    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
     import segments from '@/routes/projects/segments';
     import type { BreadcrumbItem } from '@/types';
 

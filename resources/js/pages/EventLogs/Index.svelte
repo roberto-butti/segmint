@@ -4,6 +4,7 @@
     import CircleCheck from 'lucide-svelte/icons/circle-check';
     import CircleDashed from 'lucide-svelte/icons/circle-dashed';
     import { untrack } from 'svelte';
+
     import AppHead from '@/components/AppHead.svelte';
     import EmptyState from '@/components/EmptyState.svelte';
     import { Button } from '@/components/ui/button';
@@ -15,8 +16,8 @@
         SelectTrigger,
     } from '@/components/ui/select';
     import AppLayout from '@/layouts/AppLayout.svelte';
-    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
     import type { BreadcrumbOrganization } from '@/lib/breadcrumbs';
+    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
     import events from '@/routes/projects/events';
     import segments from '@/routes/projects/segments';
     import type { BreadcrumbItem } from '@/types';

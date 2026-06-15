@@ -2,6 +2,7 @@
     import { Link, page } from '@inertiajs/svelte';
     import Target from 'lucide-svelte/icons/target';
     import X from 'lucide-svelte/icons/x';
+
     import AppHead from '@/components/AppHead.svelte';
     import CopySegmentsDialog from '@/components/CopySegmentsDialog.svelte';
     import DeleteSegmentDialog from '@/components/DeleteSegmentDialog.svelte';
@@ -19,8 +20,8 @@
     } from '@/components/ui/card';
     import { Checkbox } from '@/components/ui/checkbox';
     import AppLayout from '@/layouts/AppLayout.svelte';
-    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
     import type { BreadcrumbOrganization } from '@/lib/breadcrumbs';
+    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
     import segments from '@/routes/projects/segments';
     import type { BreadcrumbItem } from '@/types';
 

@@ -2,6 +2,7 @@
     import { Link, router } from '@inertiajs/svelte';
     import FolderKanban from 'lucide-svelte/icons/folder-kanban';
     import Star from 'lucide-svelte/icons/star';
+
     import AppHead from '@/components/AppHead.svelte';
     import EmptyState from '@/components/EmptyState.svelte';
     import { Button } from '@/components/ui/button';
@@ -12,8 +13,8 @@
         CardTitle,
     } from '@/components/ui/card';
     import AppLayout from '@/layouts/AppLayout.svelte';
-    import { organizationBreadcrumbs } from '@/lib/breadcrumbs';
     import type { BreadcrumbOrganization } from '@/lib/breadcrumbs';
+    import { organizationBreadcrumbs } from '@/lib/breadcrumbs';
     import organizationsRoutes from '@/routes/organizations';
     import organizationProjects from '@/routes/organizations/projects';
     import projects from '@/routes/projects';

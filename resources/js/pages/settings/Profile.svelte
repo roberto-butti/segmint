@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Form, page } from '@inertiajs/svelte';
+
     import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
     import AppHead from '@/components/AppHead.svelte';
     import DeleteUser from '@/components/DeleteUser.svelte';

@@ -3,6 +3,7 @@
     import Building2 from 'lucide-svelte/icons/building-2';
     import FolderKanban from 'lucide-svelte/icons/folder-kanban';
     import Users from 'lucide-svelte/icons/users';
+
     import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';

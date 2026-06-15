@@ -1,6 +1,7 @@
 <script lang="ts">
     import { router } from '@inertiajs/svelte';
     import Mail from 'lucide-svelte/icons/mail';
+
     import AppHead from '@/components/AppHead.svelte';
     import EmptyState from '@/components/EmptyState.svelte';
     import { Badge } from '@/components/ui/badge';

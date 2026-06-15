@@ -1,14 +1,14 @@
 <script lang="ts">
     import {
-        Chart,
         CategoryScale,
-        LinearScale,
-        PointElement,
-        LineElement,
-        LineController,
+        Chart,
         Filler,
-        Tooltip,
         Legend,
+        LinearScale,
+        LineController,
+        LineElement,
+        PointElement,
+        Tooltip,
     } from 'chart.js';
     import { onMount } from 'svelte';
 

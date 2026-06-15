@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Link } from '@inertiajs/svelte';
+
     import {
         SidebarGroup,
         SidebarGroupLabel,

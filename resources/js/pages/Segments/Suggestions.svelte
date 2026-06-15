@@ -4,6 +4,7 @@
     import GitCompare from 'lucide-svelte/icons/git-compare';
     import Lightbulb from 'lucide-svelte/icons/lightbulb';
     import Sparkles from 'lucide-svelte/icons/sparkles';
+
     import AppHead from '@/components/AppHead.svelte';
     import EmptyState from '@/components/EmptyState.svelte';
     import { Button } from '@/components/ui/button';
@@ -15,8 +16,8 @@
         CardTitle,
     } from '@/components/ui/card';
     import AppLayout from '@/layouts/AppLayout.svelte';
-    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
     import type { BreadcrumbOrganization } from '@/lib/breadcrumbs';
+    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
     import events from '@/routes/projects/events';
     import segments from '@/routes/projects/segments';
     import type { BreadcrumbItem } from '@/types';

@@ -1,10 +1,10 @@
 <script lang="ts">
     import {
-        Chart,
         ArcElement,
+        Chart,
         DoughnutController,
-        Tooltip,
         Legend,
+        Tooltip,
     } from 'chart.js';
     import { onMount } from 'svelte';
 

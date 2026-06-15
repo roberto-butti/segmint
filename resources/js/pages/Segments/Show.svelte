@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Link } from '@inertiajs/svelte';
+
     import AppHead from '@/components/AppHead.svelte';
     import DeleteSegmentDialog from '@/components/DeleteSegmentDialog.svelte';
     import DuplicateSegmentDialog from '@/components/DuplicateSegmentDialog.svelte';
@@ -12,8 +13,8 @@
         CardTitle,
     } from '@/components/ui/card';
     import AppLayout from '@/layouts/AppLayout.svelte';
-    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
     import type { BreadcrumbOrganization } from '@/lib/breadcrumbs';
+    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
     import segments from '@/routes/projects/segments';
     import type { BreadcrumbItem } from '@/types';
 

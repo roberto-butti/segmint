@@ -5,6 +5,7 @@
     import KeyRound from 'lucide-svelte/icons/key-round';
     import RotateCw from 'lucide-svelte/icons/rotate-cw';
     import X from 'lucide-svelte/icons/x';
+
     import AppHead from '@/components/AppHead.svelte';
     import EmptyState from '@/components/EmptyState.svelte';
     import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -28,8 +29,8 @@
     import { Input } from '@/components/ui/input';
     import { Label } from '@/components/ui/label';
     import AppLayout from '@/layouts/AppLayout.svelte';
-    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
     import type { BreadcrumbOrganization } from '@/lib/breadcrumbs';
+    import { projectBreadcrumbs } from '@/lib/breadcrumbs';
     import accessTokens from '@/routes/projects/access-tokens';
     import type { BreadcrumbItem } from '@/types';
 

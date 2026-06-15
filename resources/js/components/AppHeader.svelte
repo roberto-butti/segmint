@@ -5,6 +5,7 @@
     import LayoutGrid from 'lucide-svelte/icons/layout-grid';
     import Menu from 'lucide-svelte/icons/menu';
     import Search from 'lucide-svelte/icons/search';
+
     import AppLogo from '@/components/AppLogo.svelte';
     import AppLogoIcon from '@/components/AppLogoIcon.svelte';
     import Breadcrumbs from '@/components/Breadcrumbs.svelte';

@@ -2,6 +2,7 @@
     import { page, router } from '@inertiajs/svelte';
     import MailPlus from 'lucide-svelte/icons/mail-plus';
     import Trash2 from 'lucide-svelte/icons/trash-2';
+
     import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
@@ -30,8 +31,8 @@
         SelectTrigger,
     } from '@/components/ui/select';
     import AppLayout from '@/layouts/AppLayout.svelte';
-    import { organizationBreadcrumbs } from '@/lib/breadcrumbs';
     import type { BreadcrumbOrganization } from '@/lib/breadcrumbs';
+    import { organizationBreadcrumbs } from '@/lib/breadcrumbs';
     import organizationInvitations from '@/routes/organizations/invitations';
     import organizationMembers from '@/routes/organizations/members';
     import type { BreadcrumbItem } from '@/types';

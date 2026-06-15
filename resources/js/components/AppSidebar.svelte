@@ -5,6 +5,7 @@
     import LayoutGrid from 'lucide-svelte/icons/layout-grid';
     import Mail from 'lucide-svelte/icons/mail';
     import type { Snippet } from 'svelte';
+
     import AppLogo from '@/components/AppLogo.svelte';
     import NavContext from '@/components/NavContext.svelte';
     import NavFooter from '@/components/NavFooter.svelte';

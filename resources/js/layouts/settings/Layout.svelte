@@ -1,6 +1,7 @@
 <script lang="ts">
     import { Link } from '@inertiajs/svelte';
     import type { Snippet } from 'svelte';
+
     import Heading from '@/components/Heading.svelte';
     import { Button } from '@/components/ui/button';
     import { Separator } from '@/components/ui/separator';

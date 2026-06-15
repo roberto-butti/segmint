@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { Snippet } from 'svelte';
+
     import AppContent from '@/components/AppContent.svelte';
     import AppHeader from '@/components/AppHeader.svelte';
     import AppShell from '@/components/AppShell.svelte';

@@ -1,7 +1,7 @@
 import js from '@eslint/js';
 import stylistic from '@stylistic/eslint-plugin';
 import prettier from 'eslint-config-prettier/flat';
-import importPlugin from 'eslint-plugin-import';
+import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import svelte from 'eslint-plugin-svelte';
 import ts from 'typescript-eslint';
 
@@ -42,16 +42,7 @@ export default ts.config(
     },
     {
         plugins: {
-            import: importPlugin,
-        },
-        settings: {
-            'import/resolver': {
-                typescript: {
-                    alwaysTryTypes: true,
-                    project: './tsconfig.json',
-                },
-                node: true,
-            },
+            'simple-import-sort': simpleImportSort,
         },
         rules: {
             'no-undef': 'off',
@@ -70,20 +61,8 @@ export default ts.config(
                     fixStyle: 'separate-type-imports',
                 },
             ],
-            'import/order': [
-                'error',
-                {
-                    groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
-                    alphabetize: {
-                        order: 'asc',
-                        caseInsensitive: true,
-                    },
-                },
-            ],
-            'import/consistent-type-specifier-style': [
-                'error',
-                'prefer-top-level',
-            ],
+            'simple-import-sort/imports': 'error',
+            'simple-import-sort/exports': 'error',
         },
     },
     {

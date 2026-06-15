@@ -4,6 +4,7 @@
     import FolderKanban from 'lucide-svelte/icons/folder-kanban';
     import Target from 'lucide-svelte/icons/target';
     import Users from 'lucide-svelte/icons/users';
+
     import AppHead from '@/components/AppHead.svelte';
     import AreaChart from '@/components/charts/AreaChart.svelte';
     import DoughnutChart from '@/components/charts/DoughnutChart.svelte';
