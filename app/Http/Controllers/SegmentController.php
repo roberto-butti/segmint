@@ -31,14 +31,8 @@ class SegmentController extends Controller
             ->latest()
             ->get();
 
-        $manageableOrganizationIds = $request->user()
-            ->organizations()
-            ->get()
-            ->filter(fn ($organization) => $organization->pivot->role->canManageProjects())
-            ->pluck('id');
-
-        $destinationProjects = Project::query()
-            ->whereIn('organization_id', $manageableOrganizationIds)
+        $destinationProjects = $request->user()
+            ->accessibleProjects()
             ->whereKeyNot($project->id)
             ->with([
                 'organization:id,name',
@@ -48,6 +42,7 @@ class SegmentController extends Controller
             ])
             ->orderBy('name')
             ->get()
+            ->filter(fn (Project $destination) => $request->user()->can('update', $destination))
             ->map(fn (Project $destination) => [
                 'id' => $destination->id,
                 'name' => $destination->name,
@@ -62,7 +57,7 @@ class SegmentController extends Controller
             'organization' => $this->organizationContext($project->organization),
             'segments' => $segments,
             'destinationProjects' => $destinationProjects,
-            'canManageProject' => $request->user()->roleInOrganization($project->organization)?->canManageProjects() ?? false,
+            'canManageProject' => $request->user()->can('update', $project),
         ]);
     }
 
@@ -104,7 +99,7 @@ class SegmentController extends Controller
      */
     public function show(Request $request, Project $project, Segment $segment): Response
     {
-        $this->authorize('view', $project);
+        $this->authorize('update', $project);
         abort_unless($segment->project_id === $project->id, 404);
 
         $segment->load('rules');
@@ -123,7 +118,7 @@ class SegmentController extends Controller
      */
     public function edit(Request $request, Project $project, Segment $segment): Response
     {
-        $this->authorize('view', $project);
+        $this->authorize('update', $project);
         abort_unless($segment->project_id === $project->id, 404);
 
         $segment->load('rules');

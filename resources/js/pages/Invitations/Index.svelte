@@ -13,6 +13,11 @@
         CardTitle,
     } from '@/components/ui/card';
     import AppLayout from '@/layouts/AppLayout.svelte';
+    import {
+        type OrganizationRole,
+        type ProjectRole,
+        requiresExplicitProjectAssignment,
+    } from '@/lib/roles';
     import { dashboard } from '@/routes';
     import invitationsRoutes from '@/routes/invitations';
     import type { BreadcrumbItem } from '@/types';
@@ -22,9 +27,9 @@
         public_id: string;
         organization: { public_id: string; name: string };
         invited_by: string;
-        role: string;
+        role: OrganizationRole;
         role_label: string;
-        projects: { id: number; name: string }[];
+        projects: { id: number; name: string; role: ProjectRole }[];
         expires_at: string;
     }
 
@@ -92,12 +97,15 @@
                                     invitation.expires_at,
                                 ).toLocaleDateString()}.
                             </p>
-                            {#if invitation.role === 'guest'}
+                            {#if requiresExplicitProjectAssignment(invitation.role)}
                                 <p class="text-sm">
                                     Project access: {invitation.projects
                                         .length > 0
                                         ? invitation.projects
-                                              .map((project) => project.name)
+                                              .map(
+                                                  (project) =>
+                                                      `${project.name} (${project.role})`,
+                                              )
                                               .join(', ')
                                         : 'No projects assigned yet'}
                                 </p>

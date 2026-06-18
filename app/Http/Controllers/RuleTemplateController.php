@@ -28,14 +28,8 @@ class RuleTemplateController extends Controller
             ->orderBy('name')
             ->get();
 
-        $manageableOrganizationIds = $request->user()
-            ->organizations()
-            ->get()
-            ->filter(fn ($organization) => $organization->pivot->role->canManageProjects())
-            ->pluck('id');
-
-        $destinationProjects = Project::query()
-            ->whereIn('organization_id', $manageableOrganizationIds)
+        $destinationProjects = $request->user()
+            ->accessibleProjects()
             ->whereKeyNot($project->id)
             ->with([
                 'organization:id,name',
@@ -45,6 +39,7 @@ class RuleTemplateController extends Controller
             ])
             ->orderBy('name')
             ->get()
+            ->filter(fn (Project $destination) => $request->user()->can('update', $destination))
             ->map(fn (Project $destination) => [
                 'id' => $destination->id,
                 'name' => $destination->name,
@@ -61,7 +56,7 @@ class RuleTemplateController extends Controller
             'destinationProjects' => $destinationProjects,
             'ruleTypes' => $this->enumOptions(SegmentRuleType::class),
             'ruleOperators' => $this->enumOptions(SegmentRuleOperator::class),
-            'canManageProject' => $request->user()->roleInOrganization($project->organization)?->canManageProjects() ?? false,
+            'canManageProject' => $request->user()->can('update', $project),
         ]);
     }
 

@@ -40,8 +40,9 @@ deployment, monitoring, security, backups, and capacity planning.
   language rules.
 - **Rule templates** — Provides reusable rule presets scoped to each project.
 - **Organizations and teams** — Supports multiple organizations and role-based access
-  using owner, admin, member, and guest roles. Guests only access explicitly assigned
-  projects.
+  using organization and project roles. Owners and organization admins access every
+  project; members and guests access explicitly assigned projects as project admins,
+  editors, or viewers.
 - **Member invitations** — Sends organization invitations by email and shows pending
   invitations inside Segmint.
 - **Access-token lifecycle** — Create, revoke, reactivate, and rotate project tokens.

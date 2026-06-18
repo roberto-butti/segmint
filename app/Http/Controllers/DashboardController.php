@@ -35,7 +35,8 @@ class DashboardController extends Controller
             ->values()
             ->map(function (Organization $organization) use ($user) {
                 $role = $organization->pivot->role;
-                $guestProjects = $role === OrganizationRole::Guest
+                $assignedProjects = ! $user->isOwnerOf($organization)
+                    && $role?->canAccessAllProjects() !== true
                     ? $user->assignedProjects()->where('projects.organization_id', $organization->id)
                     : null;
 
@@ -44,8 +45,8 @@ class DashboardController extends Controller
                     'public_id' => $organization->public_id,
                     'name' => $organization->name,
                     'role' => $user->isOwnerOf($organization) ? 'owner' : $role->value,
-                    'projects_count' => $guestProjects?->count() ?? $organization->projects_count,
-                    'active_projects_count' => $guestProjects?->where('active', true)->count() ?? $organization->active_projects_count,
+                    'projects_count' => $assignedProjects?->count() ?? $organization->projects_count,
+                    'active_projects_count' => $assignedProjects?->where('active', true)->count() ?? $organization->active_projects_count,
                     'members_count' => $organization->members_count,
                 ];
             });
@@ -66,8 +67,9 @@ class DashboardController extends Controller
         session(['projects_organization_id' => $organization->id]);
 
         $role = $user->roleInOrganization($organization);
-        $isGuest = $role === OrganizationRole::Guest;
-        $projectsQuery = $isGuest
+        $hasLimitedProjectAccess = ! $user->isOwnerOf($organization)
+            && $role?->canAccessAllProjects() !== true;
+        $projectsQuery = $hasLimitedProjectAccess
             ? $user->assignedProjects()->where('projects.organization_id', $organization->id)
             : $organization->projects();
 
@@ -85,7 +87,7 @@ class DashboardController extends Controller
                 'event_logs_count' => $project->event_logs_count,
             ]);
 
-        if ($isGuest) {
+        if ($hasLimitedProjectAccess) {
             return Inertia::render('Organizations/Dashboard', [
                 'organization' => [
                     'id' => $organization->id,
@@ -98,7 +100,7 @@ class DashboardController extends Controller
                 ],
                 'canManageProjects' => false,
                 'canManageOrganization' => false,
-                'limitedGuestView' => true,
+                'limitedProjectView' => true,
                 'stats' => [
                     'members_count' => 0,
                     'projects_count' => $projects->count(),
@@ -146,9 +148,10 @@ class DashboardController extends Controller
                 'value' => $user->isOwnerOf($organization) ? 'owner' : $role?->value,
                 'label' => $user->isOwnerOf($organization) ? 'Owner' : $role?->label(),
             ],
-            'canManageProjects' => $role?->canManageProjects() ?? false,
+            'canManageProjects' => $user->isOwnerOf($organization)
+                || ($role?->canManageProjects() ?? false),
             'canManageOrganization' => $user->canManageOrganization($organization),
-            'limitedGuestView' => false,
+            'limitedProjectView' => false,
             'stats' => [
                 'members_count' => $organization->members()->count(),
                 'projects_count' => $organization->projects()->count(),

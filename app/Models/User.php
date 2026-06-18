@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\OrganizationRole;
+use App\Enums\ProjectRole;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -67,6 +68,8 @@ class User extends Authenticatable
     public function assignedProjects(): BelongsToMany
     {
         return $this->belongsToMany(Project::class, 'project_memberships')
+            ->using(ProjectMembership::class)
+            ->withPivot('role')
             ->withTimestamps();
     }
 
@@ -93,12 +96,13 @@ class User extends Authenticatable
     {
         $allProjectOrganizationIds = $this->organizations()
             ->get()
-            ->filter(fn (Organization $organization) => $organization->pivot->role->canAccessAllProjects())
+            ->filter(fn (Organization $organization) => $this->isOwnerOf($organization)
+                || $organization->pivot->role->canAccessAllProjects())
             ->pluck('id');
 
-        return Project::query()
+        return Project::query()->where(fn (Builder $query) => $query
             ->whereIn('organization_id', $allProjectOrganizationIds)
-            ->orWhereHas('members', fn (Builder $query) => $query->whereKey($this->id));
+            ->orWhereHas('members', fn (Builder $members) => $members->whereKey($this->id)));
     }
 
     /**
@@ -129,6 +133,20 @@ class User extends Authenticatable
     {
         return $this->isOwnerOf($organization)
             || $this->roleInOrganization($organization)?->canManageOrganization() === true;
+    }
+
+    public function roleInProject(Project $project): ?ProjectRole
+    {
+        if ($this->isOwnerOf($project->organization)
+            || $this->roleInOrganization($project->organization) === OrganizationRole::Admin) {
+            return ProjectRole::Admin;
+        }
+
+        $assignment = $this->assignedProjects()
+            ->where('projects.id', $project->id)
+            ->first();
+
+        return $assignment?->pivot->role;
     }
 
     public static function me(): self

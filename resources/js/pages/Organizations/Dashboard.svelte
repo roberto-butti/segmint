@@ -56,7 +56,7 @@
         currentUserRole,
         canManageProjects,
         canManageOrganization,
-        limitedGuestView,
+        limitedProjectView,
         stats,
         eventsOverTime,
         roleCounts,
@@ -66,7 +66,7 @@
         currentUserRole: { value: string; label: string };
         canManageProjects: boolean;
         canManageOrganization: boolean;
-        limitedGuestView: boolean;
+        limitedProjectView: boolean;
         stats: Stats;
         eventsOverTime: Record<string, number>;
         roleCounts: Record<string, number>;
@@ -129,7 +129,7 @@
                     <Badge variant="secondary">{currentUserRole.label}</Badge>
                 </div>
                 <p class="mt-1 text-sm text-muted-foreground">
-                    {limitedGuestView
+                    {limitedProjectView
                         ? 'Your access within this organization'
                         : 'Organization activity and project overview'}
                 </p>
@@ -178,7 +178,7 @@
             </div>
         </div>
 
-        {#if limitedGuestView}
+        {#if limitedProjectView}
             <Card>
                 <CardHeader>
                     <CardTitle class="text-base">Guest access</CardTitle>
@@ -339,10 +339,10 @@
             {#if projects.length === 0}
                 <EmptyState
                     icon={projectIcon}
-                    title={limitedGuestView
+                    title={limitedProjectView
                         ? 'No projects assigned yet'
                         : `No projects in ${organization.name}`}
-                    description={limitedGuestView
+                    description={limitedProjectView
                         ? 'You are a guest in this organization. An owner or admin must assign a project before you can access it.'
                         : 'Create a project to start collecting events and defining audience segments.'}
                     actions={canManageProjects

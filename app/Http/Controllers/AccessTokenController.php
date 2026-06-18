@@ -40,7 +40,7 @@ class AccessTokenController extends Controller
             'project' => $project,
             'organization' => $this->organizationContext($project->organization),
             'accessTokens' => $accessTokens,
-            'canManageProject' => $request->user()->can('update', $project),
+            'canManageProject' => $request->user()->can('manage', $project),
         ]);
     }
 
@@ -49,7 +49,7 @@ class AccessTokenController extends Controller
      */
     public function store(Request $request, Project $project): RedirectResponse
     {
-        $this->authorize('update', $project);
+        $this->authorize('manage', $project);
 
         $validated = $request->validate([
             'name' => [
@@ -75,7 +75,7 @@ class AccessTokenController extends Controller
      */
     public function update(Request $request, Project $project, AccessToken $accessToken): RedirectResponse
     {
-        $this->authorize('update', $project);
+        $this->authorize('manage', $project);
         $this->ensureBelongsToProject($project, $accessToken);
 
         $validated = $request->validate([
@@ -93,7 +93,7 @@ class AccessTokenController extends Controller
      */
     public function rotate(Request $request, Project $project, AccessToken $accessToken): RedirectResponse
     {
-        $this->authorize('update', $project);
+        $this->authorize('manage', $project);
         $this->ensureBelongsToProject($project, $accessToken);
 
         $token = AccessToken::generateToken();

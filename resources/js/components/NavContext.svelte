@@ -24,12 +24,14 @@
         SidebarMenuItem,
     } from '@/components/ui/sidebar';
     import { currentUrlState } from '@/lib/currentUrl';
+    import { dashboard } from '@/routes';
     import organizations from '@/routes/organizations';
     import organizationMembers from '@/routes/organizations/members';
     import organizationProjects from '@/routes/organizations/projects';
     import projects from '@/routes/projects';
     import accessTokens from '@/routes/projects/access-tokens';
     import events from '@/routes/projects/events';
+    import projectMembers from '@/routes/projects/members';
     import ruleTemplates from '@/routes/projects/rule-templates';
     import segments from '@/routes/projects/segments';
     import type { NavItem } from '@/types';
@@ -101,6 +103,17 @@
                       href: accessTokens.index.url(context.project.public_id),
                       icon: KeyRound,
                   },
+                  ...(context.canManageProject
+                      ? [
+                            {
+                                title: 'Members',
+                                href: projectMembers.index.url(
+                                    context.project.public_id,
+                                ),
+                                icon: Users,
+                            },
+                        ]
+                      : []),
               ]
             : [],
     );
@@ -115,6 +128,16 @@
         if (publicId) {
             router.get(projects.show.url(publicId));
         }
+    }
+
+    function selectedOrganizationDashboardUrl(): string {
+        return context.organization
+            ? organizations.dashboard.url(context.organization.public_id)
+            : dashboard.url();
+    }
+
+    function selectedOrganizationName(): string {
+        return context.organization?.name ?? 'Organization';
     }
 </script>
 
@@ -142,37 +165,61 @@
 {#if context.organization}
     <SidebarGroup class="border-t border-sidebar-border/70 px-2 pt-2 pb-0">
         <SidebarGroupLabel>Organization</SidebarGroupLabel>
-        <p
-            class="truncate px-2 pb-2 text-xs font-medium text-sidebar-foreground group-data-[collapsible=icon]:hidden"
-            title={context.organization.name}
-        >
-            {context.organization.name}
-        </p>
         <SidebarMenu>
-            {#each organizationItems as item (item.title)}
+            {#if context.project}
                 <SidebarMenuItem>
                     <SidebarMenuButton
                         asChild
                         isActive={isCurrentUrl(
-                            item.href,
+                            selectedOrganizationDashboardUrl(),
                             currentUrl(),
-                            item.title !== 'Dashboard',
                         )}
-                        tooltip={item.title}
+                        tooltip={selectedOrganizationName()}
                     >
                         {#snippet children(props)}
                             <Link
                                 {...props}
-                                href={item.href}
+                                href={selectedOrganizationDashboardUrl()}
                                 class={props.class}
                             >
-                                <item.icon class="size-4 shrink-0" />
-                                <span>{item.title}</span>
+                                <Building2 class="size-4 shrink-0" />
+                                <span>{selectedOrganizationName()}</span>
                             </Link>
                         {/snippet}
                     </SidebarMenuButton>
                 </SidebarMenuItem>
-            {/each}
+            {:else}
+                <p
+                    class="truncate px-2 pb-2 text-xs font-medium text-sidebar-foreground group-data-[collapsible=icon]:hidden"
+                    title={context.organization.name}
+                >
+                    {context.organization.name}
+                </p>
+                {#each organizationItems as item (item.title)}
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            asChild
+                            isActive={isCurrentUrl(
+                                item.href,
+                                currentUrl(),
+                                item.title !== 'Dashboard',
+                            )}
+                            tooltip={item.title}
+                        >
+                            {#snippet children(props)}
+                                <Link
+                                    {...props}
+                                    href={item.href}
+                                    class={props.class}
+                                >
+                                    <item.icon class="size-4 shrink-0" />
+                                    <span>{item.title}</span>
+                                </Link>
+                            {/snippet}
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                {/each}
+            {/if}
         </SidebarMenu>
     </SidebarGroup>
 

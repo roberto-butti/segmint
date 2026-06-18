@@ -25,7 +25,11 @@ class InvitationController extends Controller
                     'invited_by' => $invitation->invitedBy->name,
                     'role' => $invitation->role->value,
                     'role_label' => $invitation->role->label(),
-                    'projects' => $invitation->projects,
+                    'projects' => $invitation->projects->map(fn ($project) => [
+                        'id' => $project->id,
+                        'name' => $project->name,
+                        'role' => $project->pivot->role,
+                    ])->values(),
                     'expires_at' => $invitation->expires_at,
                 ]),
         ]);
@@ -46,8 +50,12 @@ class InvitationController extends Controller
             $request->user()->id => ['role' => $invitation->role->value],
         ]);
 
-        if ($invitation->role === OrganizationRole::Guest) {
-            $request->user()->assignedProjects()->syncWithoutDetaching($invitation->projects()->pluck('projects.id'));
+        if ($invitation->role !== OrganizationRole::Admin) {
+            $request->user()->assignedProjects()->syncWithoutDetaching(
+                $invitation->projects->mapWithKeys(fn ($project) => [
+                    $project->id => ['role' => $project->pivot->role],
+                ])
+            );
         }
 
         $invitation->update(['accepted_at' => now()]);

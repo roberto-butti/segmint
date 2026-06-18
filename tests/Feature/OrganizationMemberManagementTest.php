@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\OrganizationRole;
+use App\Enums\ProjectRole;
 use App\Models\Organization;
 use App\Models\OrganizationInvitation;
 use App\Models\Project;
@@ -16,7 +17,7 @@ class OrganizationMemberManagementTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_owner_can_manage_members_and_guest_project_access(): void
+    public function test_owner_can_manage_member_and_guest_project_roles(): void
     {
         ['user' => $owner, 'organization' => $organization] = $this->createUserWithOrganization();
         $guest = User::factory()->create();
@@ -35,12 +36,15 @@ class OrganizationMemberManagementTest extends TestCase
 
         $this->actingAs($owner)
             ->put(route('organizations.members.projects.update', [$organization, $guest]), [
-                'project_ids' => [$project->id],
+                'assignments' => [
+                    ['project_id' => $project->id, 'role' => ProjectRole::Editor->value],
+                ],
             ])
             ->assertRedirect();
 
         $this->assertTrue($guest->fresh()->assignedProjects->contains($project));
         $this->assertFalse($guest->fresh()->assignedProjects->contains($otherProject));
+        $this->assertSame(ProjectRole::Editor, $guest->fresh()->roleInProject($project));
 
         $this->actingAs($owner)
             ->patch(route('organizations.members.update', [$organization, $guest]), [
@@ -49,7 +53,7 @@ class OrganizationMemberManagementTest extends TestCase
             ->assertRedirect();
 
         $this->assertSame(OrganizationRole::Member, $guest->roleInOrganization($organization));
-        $this->assertCount(0, $guest->fresh()->assignedProjects);
+        $this->assertCount(1, $guest->fresh()->assignedProjects);
     }
 
     public function test_admin_cannot_manage_owner_or_another_admin(): void
@@ -80,7 +84,7 @@ class OrganizationMemberManagementTest extends TestCase
         $organization->members()->attach($guest, ['role' => OrganizationRole::Guest->value]);
         $assigned = Project::factory()->create(['organization_id' => $organization->id]);
         $unassigned = Project::factory()->create(['organization_id' => $organization->id]);
-        $guest->assignedProjects()->attach($assigned);
+        $guest->assignedProjects()->attach($assigned, ['role' => ProjectRole::Viewer->value]);
 
         $this->actingAs($guest)
             ->get(route('organizations.projects.index', $organization))
@@ -96,7 +100,7 @@ class OrganizationMemberManagementTest extends TestCase
             ->get(route('organizations.dashboard', $organization))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->where('limitedGuestView', true)
+                ->where('limitedProjectView', true)
                 ->has('projects', 1)
                 ->where('projects.0.id', $assigned->id)
             );
@@ -113,7 +117,9 @@ class OrganizationMemberManagementTest extends TestCase
             ->post(route('organizations.invitations.store', $organization), [
                 'email' => $invitee->email,
                 'role' => OrganizationRole::Guest->value,
-                'project_ids' => [$project->id],
+                'project_assignments' => [
+                    ['project_id' => $project->id, 'role' => ProjectRole::Viewer->value],
+                ],
             ])
             ->assertRedirect();
 
@@ -134,6 +140,7 @@ class OrganizationMemberManagementTest extends TestCase
 
         $this->assertSame(OrganizationRole::Guest, $invitee->roleInOrganization($organization));
         $this->assertTrue($invitee->fresh()->assignedProjects->contains($project));
+        $this->assertSame(ProjectRole::Viewer, $invitee->fresh()->roleInProject($project));
         $this->assertNotNull($invitation->fresh()->accepted_at);
     }
 

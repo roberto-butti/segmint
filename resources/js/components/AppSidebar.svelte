@@ -31,21 +31,33 @@
         children?: Snippet;
     } = $props();
 
-    const mainNavItems: NavItem[] = $derived([
-        {
-            title: 'Organizations',
-            href: dashboard(),
-            icon: LayoutGrid,
-        },
-        {
-            title:
-                page.props.auth.pendingInvitationCount > 0
-                    ? `Invitations (${page.props.auth.pendingInvitationCount})`
-                    : 'Invitations',
-            href: invitations.index(),
-            icon: Mail,
-        },
-    ]);
+    const context = $derived(page.props.navigationContext);
+
+    const mainNavItems: NavItem[] = $derived(
+        context.project
+            ? [
+                  {
+                      title: 'Dashboard',
+                      href: dashboard(),
+                      icon: LayoutGrid,
+                  },
+              ]
+            : [
+                  {
+                      title: 'Organizations',
+                      href: dashboard(),
+                      icon: LayoutGrid,
+                  },
+                  {
+                      title:
+                          page.props.auth.pendingInvitationCount > 0
+                              ? `Invitations (${page.props.auth.pendingInvitationCount})`
+                              : 'Invitations',
+                      href: invitations.index(),
+                      icon: Mail,
+                  },
+              ],
+    );
 
     const footerNavItems: NavItem[] = [
         {

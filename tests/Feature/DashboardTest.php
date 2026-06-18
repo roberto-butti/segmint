@@ -29,7 +29,8 @@ class DashboardTest extends TestCase
 
         $memberOrganization = Organization::factory()->create(['name' => 'Member workspace']);
         $memberOrganization->members()->attach($user, ['role' => OrganizationRole::Member->value]);
-        Project::factory()->create(['organization_id' => $memberOrganization->id, 'active' => false]);
+        $assignedProject = Project::factory()->create(['organization_id' => $memberOrganization->id, 'active' => false]);
+        $user->assignedProjects()->attach($assignedProject);
 
         Project::factory()->create();
 
@@ -100,7 +101,7 @@ class DashboardTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Organizations/Dashboard')
                 ->where('currentUserRole.label', 'Guest')
-                ->where('limitedGuestView', true)
+                ->where('limitedProjectView', true)
                 ->where('stats.projects_count', 0)
                 ->has('projects', 0)
             );

@@ -19,7 +19,7 @@ enum OrganizationRole: string
 
     public function canManageProjects(): bool
     {
-        return in_array($this, [self::Admin, self::Member]);
+        return $this === self::Admin;
     }
 
     public function canManageOrganization(): bool
@@ -29,6 +29,6 @@ enum OrganizationRole: string
 
     public function canAccessAllProjects(): bool
     {
-        return $this !== self::Guest;
+        return $this === self::Admin;
     }
 }

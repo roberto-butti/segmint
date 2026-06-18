@@ -42,7 +42,9 @@ class ProjectController extends Controller
         session(['projects_organization_id' => $organization->id]);
 
         $role = $request->user()->roleInOrganization($organization);
-        $projects = $role?->canAccessAllProjects() === true
+        $canAccessAllProjects = $request->user()->isOwnerOf($organization)
+            || $role?->canAccessAllProjects() === true;
+        $projects = $canAccessAllProjects
             ? $organization->projects()
             : $request->user()->assignedProjects()->where('organization_id', $organization->id);
         $favoriteProjectIds = $request->user()
@@ -52,7 +54,8 @@ class ProjectController extends Controller
 
         return Inertia::render('Projects/Index', [
             'organization' => $this->organizationContext($organization),
-            'canManageProjects' => $role?->canManageProjects() ?? false,
+            'canManageProjects' => $request->user()->isOwnerOf($organization)
+                || ($role?->canManageProjects() ?? false),
             'projects' => $projects
                 ->latest()
                 ->get()
@@ -69,7 +72,8 @@ class ProjectController extends Controller
     public function create(Request $request, Organization $organization): Response
     {
         $role = $request->user()->roleInOrganization($organization);
-        abort_unless($role !== null && $role->canManageProjects(), 403);
+        abort_unless($request->user()->isOwnerOf($organization)
+            || ($role !== null && $role->canManageProjects()), 403);
 
         return Inertia::render('Projects/Create', [
             'organization' => $organization,
@@ -88,7 +92,8 @@ class ProjectController extends Controller
 
         $role = $request->user()->roleInOrganization($organization);
 
-        abort_unless($role !== null && $role->canManageProjects(), 403);
+        abort_unless($request->user()->isOwnerOf($organization)
+            || ($role !== null && $role->canManageProjects()), 403);
 
         $project = $organization->projects()->create([
             'name' => $validated['name'],
@@ -217,7 +222,7 @@ class ProjectController extends Controller
      */
     public function edit(Request $request, Project $project): Response
     {
-        $this->authorize('update', $project);
+        $this->authorize('manage', $project);
 
         return Inertia::render('Projects/Edit', [
             'project' => $project,

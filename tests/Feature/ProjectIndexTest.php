@@ -50,7 +50,8 @@ class ProjectIndexTest extends TestCase
         $org2->members()->attach($user, ['role' => OrganizationRole::Member->value]);
 
         Project::factory()->count(2)->create(['organization_id' => $org1->id]);
-        Project::factory()->count(4)->create(['organization_id' => $org2->id]);
+        $assignedProjects = Project::factory()->count(4)->create(['organization_id' => $org2->id]);
+        $user->assignedProjects()->attach($assignedProjects->pluck('id')->all());
 
         $this->actingAs($user);
 
@@ -87,7 +88,8 @@ class ProjectIndexTest extends TestCase
         $org2 = Organization::factory()->create();
         $org2->members()->attach($user, ['role' => OrganizationRole::Member->value]);
 
-        Project::factory()->count(1)->create(['organization_id' => $org2->id]);
+        $project = Project::factory()->create(['organization_id' => $org2->id]);
+        $user->assignedProjects()->attach($project);
 
         $this->actingAs($user);
 

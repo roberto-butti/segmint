@@ -9,6 +9,7 @@ use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\OrganizationInvitationController;
 use App\Http\Controllers\OrganizationMemberController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ProjectMemberController;
 use App\Http\Controllers\RuleTemplateController;
 use App\Http\Controllers\SegmentController;
 use App\Http\Controllers\SegmentSuggestionController;
@@ -36,6 +37,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
     Route::get('projects/{project}/edit', [ProjectController::class, 'edit'])->name('projects.edit');
     Route::put('projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
+    Route::get('projects/{project}/members', [ProjectMemberController::class, 'index'])->name('projects.members.index');
+    Route::put('projects/{project}/members/{member}', [ProjectMemberController::class, 'update'])->name('projects.members.update');
+    Route::delete('projects/{project}/members/{member}', [ProjectMemberController::class, 'destroy'])->name('projects.members.destroy');
     Route::post('projects/{project}/favorite', [FavoriteProjectController::class, 'store'])->name('projects.favorite.store');
     Route::delete('projects/{project}/favorite', [FavoriteProjectController::class, 'destroy'])->name('projects.favorite.destroy');
     Route::get('projects/{project}/segments', [SegmentController::class, 'index'])->name('projects.segments.index');

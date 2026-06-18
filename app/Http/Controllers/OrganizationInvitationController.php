@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\OrganizationRole;
+use App\Enums\ProjectRole;
 use App\Models\Organization;
 use App\Models\OrganizationInvitation;
 use App\Models\User;
@@ -21,11 +22,13 @@ class OrganizationInvitationController extends Controller
         $validated = $request->validate([
             'email' => ['required', 'email', 'max:255'],
             'role' => ['required', Rule::enum(OrganizationRole::class)],
-            'project_ids' => ['array'],
-            'project_ids.*' => [
+            'project_assignments' => ['array'],
+            'project_assignments.*.project_id' => [
+                'required',
                 'integer',
                 Rule::exists('projects', 'id')->where('organization_id', $organization->id),
             ],
+            'project_assignments.*.role' => ['required', Rule::enum(ProjectRole::class)],
         ]);
 
         $email = mb_strtolower($validated['email']);
@@ -52,8 +55,12 @@ class OrganizationInvitationController extends Controller
             'expires_at' => now()->addDays(7),
         ]);
 
-        if ($role === OrganizationRole::Guest) {
-            $invitation->projects()->sync($validated['project_ids'] ?? []);
+        if ($role !== OrganizationRole::Admin) {
+            $invitation->projects()->sync(
+                collect($validated['project_assignments'] ?? [])->mapWithKeys(fn (array $assignment) => [
+                    $assignment['project_id'] => ['role' => $assignment['role']],
+                ])
+            );
         }
 
         $invitation->load(['organization', 'invitedBy']);

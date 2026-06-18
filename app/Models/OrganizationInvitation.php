@@ -49,6 +49,7 @@ class OrganizationInvitation extends Model
     public function projects(): BelongsToMany
     {
         return $this->belongsToMany(Project::class, 'organization_invitation_projects')
+            ->withPivot('role')
             ->withTimestamps();
     }
 

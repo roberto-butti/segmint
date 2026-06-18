@@ -72,6 +72,7 @@ class HandleInertiaRequests extends Middleware
      *     organization: array{id: int, public_id: string, name: string}|null,
      *     canViewOrganizationDashboard: bool,
      *     canManageOrganization: bool,
+     *     canManageProject: bool,
      *     projects: array<int, array{id: int, public_id: string, name: string, is_favorite: bool}>,
      *     project: array{id: int, public_id: string, name: string}|null
      * }
@@ -86,6 +87,7 @@ class HandleInertiaRequests extends Middleware
                 'organization' => null,
                 'canViewOrganizationDashboard' => false,
                 'canManageOrganization' => false,
+                'canManageProject' => false,
                 'projects' => [],
                 'project' => null,
             ];
@@ -118,6 +120,9 @@ class HandleInertiaRequests extends Middleware
             'canManageOrganization' => $organization
                 ? $user->canManageOrganization($organization)
                 : false,
+            'canManageProject' => $project
+                ? $user->can('manage', $project)
+                : false,
             'projects' => $projects,
             'project' => $project ? $this->navigationItem($project) : null,
         ];
@@ -133,7 +138,8 @@ class HandleInertiaRequests extends Middleware
             ->where('organization_id', $organization->id)
             ->pluck('projects.id');
 
-        $projects = $request->user()->roleInOrganization($organization)?->canAccessAllProjects() === true
+        $projects = $request->user()->isOwnerOf($organization)
+            || $request->user()->roleInOrganization($organization)?->canAccessAllProjects() === true
             ? $organization->projects()
             : $request->user()->assignedProjects()->where('organization_id', $organization->id);
 

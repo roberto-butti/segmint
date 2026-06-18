@@ -12,7 +12,6 @@
         CardHeader,
         CardTitle,
     } from '@/components/ui/card';
-    import { Checkbox } from '@/components/ui/checkbox';
     import {
         Dialog,
         DialogClose,
@@ -33,6 +32,14 @@
     import AppLayout from '@/layouts/AppLayout.svelte';
     import type { BreadcrumbOrganization } from '@/lib/breadcrumbs';
     import { organizationBreadcrumbs } from '@/lib/breadcrumbs';
+    import {
+        isOrganizationRole,
+        isProjectRole,
+        OrganizationRole,
+        type OrganizationRole as OrganizationRoleValue,
+        type ProjectRole as ProjectRoleValue,
+        requiresExplicitProjectAssignment,
+    } from '@/lib/roles';
     import organizationInvitations from '@/routes/organizations/invitations';
     import organizationMembers from '@/routes/organizations/members';
     import type { BreadcrumbItem } from '@/types';
@@ -41,13 +48,14 @@
         id: number;
         public_id: string;
         name: string;
+        role?: ProjectRoleValue;
     }
 
     interface Member {
         id: number;
         name: string;
         email: string;
-        role: string;
+        role: OrganizationRoleValue | 'owner';
         projects: Project[];
         can_manage: boolean;
     }
@@ -56,7 +64,7 @@
         id: number;
         public_id: string;
         email: string;
-        role: string;
+        role: OrganizationRoleValue;
         expires_at: string;
         invited_by: string;
         projects: Project[];
@@ -73,12 +81,14 @@
         invitations,
         projects,
         roles,
+        projectRoles,
     }: {
         organization: BreadcrumbOrganization;
         members: Member[];
         invitations: Invitation[];
         projects: Project[];
         roles: Role[];
+        projectRoles: Role[];
     } = $props();
 
     const breadcrumbs: BreadcrumbItem[] = $derived([
@@ -91,11 +101,11 @@
 
     let inviteOpen = $state(false);
     let inviteEmail = $state('');
-    let inviteRole = $state('member');
-    let inviteProjects = $state<Record<number, boolean>>({});
+    let inviteRole = $state<OrganizationRoleValue>(OrganizationRole.Member);
+    let inviteProjects = $state<Record<number, ProjectRoleValue | null>>({});
     let processing = $state(false);
     let editingProjectsFor = $state<Member | null>(null);
-    let projectSelection = $state<Record<number, boolean>>({});
+    let projectSelection = $state<Record<number, ProjectRoleValue | null>>({});
     let projectDialogOpen = $state(false);
 
     function invite(): void {
@@ -105,16 +115,16 @@
             {
                 email: inviteEmail,
                 role: inviteRole,
-                project_ids: selectedProjectIds(inviteProjects),
+                project_assignments: selectedAssignments(inviteProjects),
             },
             {
                 preserveScroll: true,
                 onSuccess: () => {
                     inviteOpen = false;
                     inviteEmail = '';
-                    inviteRole = 'member';
+                    inviteRole = OrganizationRole.Member;
                     inviteProjects = Object.fromEntries(
-                        projects.map((project) => [project.id, false]),
+                        projects.map((project) => [project.id, null]),
                     );
                 },
                 onFinish: () => (processing = false),
@@ -122,7 +132,7 @@
         );
     }
 
-    function updateRole(member: Member, role: string): void {
+    function updateRole(member: Member, role: OrganizationRoleValue): void {
         router.patch(
             organizationMembers.update.url({
                 organization: organization.public_id,
@@ -139,7 +149,8 @@
         projectSelection = Object.fromEntries(
             projects.map((project) => [
                 project.id,
-                member.projects.some((assigned) => assigned.id === project.id),
+                member.projects.find((assigned) => assigned.id === project.id)
+                    ?.role ?? null,
             ]),
         );
     }
@@ -155,7 +166,7 @@
                 organization: organization.public_id,
                 member: editingProjectsFor.id,
             }),
-            { project_ids: selectedProjectIds(projectSelection) },
+            { assignments: selectedAssignments(projectSelection) },
             {
                 preserveScroll: true,
                 onSuccess: () => {
@@ -191,10 +202,25 @@
         );
     }
 
-    function selectedProjectIds(selection: Record<number, boolean>): number[] {
-        return Object.entries(selection)
-            .filter(([, selected]) => selected)
-            .map(([id]) => Number(id));
+    function selectedAssignments(
+        selection: Record<number, ProjectRoleValue | null>,
+    ): { project_id: number; role: ProjectRoleValue }[] {
+        return Object.entries(selection).flatMap(([id, role]) =>
+            role === null ? [] : [{ project_id: Number(id), role }],
+        );
+    }
+
+    function setProjectRole(
+        selection: Record<number, ProjectRoleValue | null>,
+        projectId: number,
+        role: string,
+    ): void {
+        selection[projectId] =
+            role === 'unassigned'
+                ? null
+                : isProjectRole(role)
+                  ? role
+                  : selection[projectId];
     }
 </script>
 
@@ -206,7 +232,8 @@
             <div>
                 <h2 class="text-xl font-semibold">Organization members</h2>
                 <p class="mt-1 text-sm text-muted-foreground">
-                    Manage organization roles and project access for guests.
+                    Manage organization roles and explicit project access for
+                    members and guests.
                 </p>
             </div>
             <Dialog bind:open={inviteOpen}>
@@ -262,31 +289,57 @@
                                 </SelectContent>
                             </Select>
                         </div>
-                        {#if inviteRole === 'guest'}
+                        {#if requiresExplicitProjectAssignment(inviteRole)}
                             <div class="space-y-2">
-                                <Label>Initial project access</Label>
+                                <Label>Initial project roles</Label>
+                                <p class="text-xs text-muted-foreground">
+                                    Leave a project unassigned or choose the
+                                    access level this user needs.
+                                </p>
                                 <div
                                     class="max-h-48 space-y-2 overflow-y-auto rounded-md border p-3"
                                 >
                                     {#each projects as project (project.id)}
-                                        <label
-                                            class="flex items-center gap-2 text-sm"
+                                        <div
+                                            class="flex items-center justify-between gap-3 text-sm"
                                         >
-                                            <Checkbox
-                                                checked={inviteProjects[
+                                            <span>{project.name}</span>
+                                            <Select
+                                                type="single"
+                                                value={inviteProjects[
                                                     project.id
-                                                ] ?? false}
-                                                onclick={() =>
-                                                    (inviteProjects[
-                                                        project.id
-                                                    ] = !(
-                                                        inviteProjects[
-                                                            project.id
-                                                        ] ?? false
-                                                    ))}
-                                            />
-                                            {project.name}
-                                        </label>
+                                                ] ?? 'unassigned'}
+                                                onValueChange={(role) =>
+                                                    setProjectRole(
+                                                        inviteProjects,
+                                                        project.id,
+                                                        role,
+                                                    )}
+                                            >
+                                                <SelectTrigger class="w-32"
+                                                    >{projectRoles.find(
+                                                        (role) =>
+                                                            role.value ===
+                                                            inviteProjects[
+                                                                project.id
+                                                            ],
+                                                    )?.label ??
+                                                        'Unassigned'}</SelectTrigger
+                                                >
+                                                <SelectContent>
+                                                    <SelectItem
+                                                        value="unassigned"
+                                                        >Unassigned</SelectItem
+                                                    >
+                                                    {#each projectRoles as role (role.value)}
+                                                        <SelectItem
+                                                            value={role.value}
+                                                            >{role.label}</SelectItem
+                                                        >
+                                                    {/each}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
                                     {/each}
                                 </div>
                             </div>
@@ -324,7 +377,7 @@
                             <p class="truncate text-sm text-muted-foreground">
                                 {member.email}
                             </p>
-                            {#if member.role === 'guest'}
+                            {#if member.role !== 'owner' && requiresExplicitProjectAssignment(member.role)}
                                 <p class="mt-1 text-xs text-muted-foreground">
                                     {member.projects.length} assigned {member
                                         .projects.length === 1
@@ -338,8 +391,11 @@
                                 <Select
                                     type="single"
                                     value={member.role}
-                                    onValueChange={(role) =>
-                                        updateRole(member, role)}
+                                    onValueChange={(role) => {
+                                        if (isOrganizationRole(role)) {
+                                            updateRole(member, role);
+                                        }
+                                    }}
                                 >
                                     <SelectTrigger class="w-32"
                                         >{roles.find(
@@ -354,7 +410,7 @@
                                             >{/each}
                                     </SelectContent>
                                 </Select>
-                                {#if member.role === 'guest'}
+                                {#if member.role !== 'owner' && requiresExplicitProjectAssignment(member.role)}
                                     <Button
                                         variant="outline"
                                         size="sm"
@@ -399,6 +455,16 @@
                                 <p class="text-sm text-muted-foreground">
                                     {invitation.role} · invited by {invitation.invited_by}
                                 </p>
+                                {#if requiresExplicitProjectAssignment(invitation.role)}
+                                    <p
+                                        class="mt-1 text-xs text-muted-foreground"
+                                    >
+                                        {invitation.projects.length} initial project
+                                        {invitation.projects.length === 1
+                                            ? 'assignment'
+                                            : 'assignments'}
+                                    </p>
+                                {/if}
                             </div>
                             <Button
                                 variant="outline"
@@ -418,20 +484,37 @@
     <DialogContent>
         <DialogTitle>Project access for {editingProjectsFor?.name}</DialogTitle>
         <DialogDescription
-            >Guests can only access explicitly assigned projects.</DialogDescription
+            >Members and guests can only access explicitly assigned projects.
+            Choose a role for each required project.</DialogDescription
         >
         <div class="max-h-64 space-y-2 overflow-y-auto rounded-md border p-3">
             {#each projects as project (project.id)}
-                <label class="flex items-center gap-2 text-sm">
-                    <Checkbox
-                        checked={projectSelection[project.id] ?? false}
-                        onclick={() =>
-                            (projectSelection[project.id] = !(
-                                projectSelection[project.id] ?? false
-                            ))}
-                    />
-                    {project.name}
-                </label>
+                <div class="flex items-center justify-between gap-3 text-sm">
+                    <span>{project.name}</span>
+                    <Select
+                        type="single"
+                        value={projectSelection[project.id] ?? 'unassigned'}
+                        onValueChange={(role) =>
+                            setProjectRole(projectSelection, project.id, role)}
+                    >
+                        <SelectTrigger class="w-32"
+                            >{projectRoles.find(
+                                (role) =>
+                                    role.value === projectSelection[project.id],
+                            )?.label ?? 'Unassigned'}</SelectTrigger
+                        >
+                        <SelectContent>
+                            <SelectItem value="unassigned"
+                                >Unassigned</SelectItem
+                            >
+                            {#each projectRoles as role (role.value)}
+                                <SelectItem value={role.value}
+                                    >{role.label}</SelectItem
+                                >
+                            {/each}
+                        </SelectContent>
+                    </Select>
+                </div>
             {/each}
         </div>
         <DialogFooter>

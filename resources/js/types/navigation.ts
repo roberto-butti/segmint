@@ -33,6 +33,7 @@ export type NavigationContext = {
     organization: NavigationContextItem | null;
     canViewOrganizationDashboard: boolean;
     canManageOrganization: boolean;
+    canManageProject: boolean;
     projects: NavigationProjectContextItem[];
     project: NavigationContextItem | null;
 };

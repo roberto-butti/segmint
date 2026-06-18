@@ -1,5 +1,9 @@
 # Organization Guests and Project Assignments
 
+> Superseded by
+> [Organization and Project Roles](0005-organization-and-project-roles.md). This record
+> describes the earlier guest-only assignment model.
+
 ## Decision
 
 Segmint has one organization owner and supports `admin`, `member`, and `guest`

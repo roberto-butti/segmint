@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Enums\OrganizationRole;
+use App\Enums\ProjectRole;
 use App\Models\Organization;
+use App\Models\Project;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,7 +32,12 @@ class OrganizationMemberController extends Controller
                     : $member->pivot->role->value,
                 'projects' => $member->assignedProjects
                     ->where('organization_id', $organization->id)
-                    ->map->only(['id', 'public_id', 'name'])
+                    ->map(fn (Project $project) => [
+                        'id' => $project->id,
+                        'public_id' => $project->public_id,
+                        'name' => $project->name,
+                        'role' => $project->pivot->role->value,
+                    ])
                     ->values(),
                 'can_manage' => $this->canManageMember($request->user(), $organization, $member),
             ]);
@@ -50,7 +57,12 @@ class OrganizationMemberController extends Controller
                 'role' => $invitation->role->value,
                 'expires_at' => $invitation->expires_at,
                 'invited_by' => $invitation->invitedBy->name,
-                'projects' => $invitation->projects->map->only(['id', 'public_id', 'name'])->values(),
+                'projects' => $invitation->projects->map(fn (Project $project) => [
+                    'id' => $project->id,
+                    'public_id' => $project->public_id,
+                    'name' => $project->name,
+                    'role' => $project->pivot->role,
+                ])->values(),
             ]);
 
         return Inertia::render('Organizations/Members', [
@@ -61,6 +73,9 @@ class OrganizationMemberController extends Controller
             'roles' => collect(OrganizationRole::cases())
                 ->reject(fn (OrganizationRole $role) => ! $request->user()->isOwnerOf($organization) && $role === OrganizationRole::Admin)
                 ->map(fn (OrganizationRole $role) => ['value' => $role->value, 'label' => $role->label()])
+                ->values(),
+            'projectRoles' => collect(ProjectRole::cases())
+                ->map(fn (ProjectRole $role) => ['value' => $role->value, 'label' => $role->label()])
                 ->values(),
         ]);
     }
@@ -77,7 +92,7 @@ class OrganizationMemberController extends Controller
 
         $organization->members()->updateExistingPivot($member->id, ['role' => $role->value]);
 
-        if ($role !== OrganizationRole::Guest) {
+        if ($role === OrganizationRole::Admin) {
             $member->assignedProjects()->where('organization_id', $organization->id)->detach();
         }
 
@@ -87,21 +102,31 @@ class OrganizationMemberController extends Controller
     public function syncProjects(Request $request, Organization $organization, User $member): RedirectResponse
     {
         $this->authorizeMemberManagement($request, $organization, $member);
-        abort_unless($member->roleInOrganization($organization) === OrganizationRole::Guest, 422);
+        abort_if($member->roleInOrganization($organization) === OrganizationRole::Admin, 422);
 
-        $projectIds = $request->validate([
-            'project_ids' => ['array'],
-            'project_ids.*' => [
+        $assignments = $request->validate([
+            'assignments' => ['array'],
+            'assignments.*.project_id' => [
+                'required',
                 'integer',
                 Rule::exists('projects', 'id')->where('organization_id', $organization->id),
             ],
-        ])['project_ids'] ?? [];
+            'assignments.*.role' => ['required', Rule::enum(ProjectRole::class)],
+        ])['assignments'] ?? [];
 
-        $otherProjectIds = $member->assignedProjects()
+        $otherAssignments = $member->assignedProjects()
             ->where('projects.organization_id', '!=', $organization->id)
-            ->pluck('projects.id');
+            ->get()
+            ->toBase()
+            ->mapWithKeys(fn (Project $project) => [
+                $project->id => ['role' => $project->pivot->role->value],
+            ]);
 
-        $member->assignedProjects()->sync($otherProjectIds->merge($projectIds));
+        $organizationAssignments = collect($assignments)->mapWithKeys(fn (array $assignment) => [
+            $assignment['project_id'] => ['role' => $assignment['role']],
+        ]);
+
+        $member->assignedProjects()->sync($otherAssignments->union($organizationAssignments));
 
         return back()->with('success', "{$member->name}'s project access was updated.");
     }
