@@ -13,6 +13,7 @@ class VisitCountRule extends AbstractRule
         $eventType = $this->rule->key ?: 'page-view';
 
         $total = DB::table('event_logs')
+            ->where('project_id', $logValues['project_id'])
             ->where('visitor_id', $visitorId)
             ->where('event_type', $eventType)
             ->count();

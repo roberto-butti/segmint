@@ -186,6 +186,7 @@ class SegmentEngine
     {
         $eventType = $this->eventTypeForVisitCount($rule);
         $total = DB::table('event_logs')
+            ->where('project_id', $logValues['project_id'])
             ->where('visitor_id', $logValues['visitor_id'])
             ->where('event_type', $eventType)
             ->count();
@@ -206,6 +207,7 @@ class SegmentEngine
         }
 
         $total = DB::table('event_logs')
+            ->where('project_id', $logValues['project_id'])
             ->where('visitor_id', $logValues['visitor_id'])
             ->where('event_type', 'page-view')
             ->where('page_path', $currentPath)

@@ -81,6 +81,43 @@ class EventLogTrackTest extends TestCase
         $this->assertDatabaseCount('segment_matches', 0);
     }
 
+    public function test_count_rules_ignore_events_from_other_projects(): void
+    {
+        [$project, $token] = $this->createProjectWithToken();
+        $otherProject = Project::factory()->create();
+        $segment = Segment::factory()->create([
+            'project_id' => $project->id,
+            'slug' => 'frequent-visitors',
+        ]);
+        $this->createRule($segment, [
+            'type' => 'visit_count',
+            'key' => 'page-view',
+            'operator' => '>=',
+            'value' => '2',
+        ]);
+        $this->createRule($segment, [
+            'type' => 'page_view_count',
+            'key' => 'page_path',
+            'operator' => '>=',
+            'value' => '2',
+            'priority' => 1,
+        ]);
+
+        EventLog::create([
+            'project_id' => $otherProject->id,
+            'visitor_id' => 'visitor-1',
+            'event_type' => 'page-view',
+            'page_path' => '/pricing',
+        ]);
+
+        $this->postJson('/api/event-log/track', [
+            ...$this->eventPayload($token),
+            'dry_run' => true,
+        ])
+            ->assertOk()
+            ->assertJsonPath('segments', []);
+    }
+
     public function test_dry_run_and_real_event_return_the_same_segments_for_the_same_state(): void
     {
         [$project, $token] = $this->createProjectWithToken();

@@ -134,6 +134,48 @@ class ProjectDiagnosticsTest extends TestCase
         $this->assertDatabaseCount('segment_matches', 0);
     }
 
+    public function test_diagnostics_count_rules_ignore_events_from_other_projects(): void
+    {
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
+        $otherProject = Project::factory()->create();
+        $segment = Segment::factory()->create([
+            'project_id' => $project->id,
+            'name' => 'Frequent Pricing Visitors',
+            'slug' => 'frequent-pricing-visitors',
+        ]);
+        $this->createRule($segment, [
+            'type' => 'visit_count',
+            'key' => 'page-view',
+            'operator' => '>=',
+            'value' => '2',
+        ]);
+        $this->createRule($segment, [
+            'type' => 'page_view_count',
+            'key' => 'page_path',
+            'operator' => '>=',
+            'value' => '2',
+            'priority' => 1,
+        ]);
+
+        EventLog::create([
+            'project_id' => $otherProject->id,
+            'visitor_id' => 'visitor-1',
+            'event_type' => 'page-view',
+            'page_path' => '/pricing',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('projects.diagnostics.evaluate', $project), $this->payload())
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('diagnostics.0.slug', 'frequent-pricing-visitors')
+                ->where('diagnostics.0.matched', false)
+                ->where('diagnostics.0.rules.0.actual', 1)
+                ->where('diagnostics.0.rules.1.actual', 1)
+            );
+    }
+
     public function test_diagnostics_can_evaluate_browser_language_rules(): void
     {
         ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
