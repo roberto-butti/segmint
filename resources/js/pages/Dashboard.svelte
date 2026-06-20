@@ -2,6 +2,7 @@
     import { Link } from '@inertiajs/svelte';
     import Building2 from 'lucide-svelte/icons/building-2';
     import FolderKanban from 'lucide-svelte/icons/folder-kanban';
+    import Star from 'lucide-svelte/icons/star';
     import Users from 'lucide-svelte/icons/users';
 
     import AppHead from '@/components/AppHead.svelte';
@@ -18,6 +19,7 @@
     import { dashboard } from '@/routes';
     import organizations from '@/routes/organizations';
     import organizationProjects from '@/routes/organizations/projects';
+    import projects from '@/routes/projects';
     import type { BreadcrumbItem } from '@/types';
 
     interface Organization {
@@ -30,8 +32,20 @@
         members_count: number;
     }
 
-    let { organizations: organizationList }: { organizations: Organization[] } =
-        $props();
+    interface FavoriteProject {
+        id: number;
+        public_id: string;
+        name: string;
+        organization_name: string;
+    }
+
+    let {
+        organizations: organizationList,
+        favoriteProjects = [],
+    }: {
+        organizations: Organization[];
+        favoriteProjects: FavoriteProject[];
+    } = $props();
 
     const ownedOrganization = $derived(
         organizationList.find((organization) => organization.role === 'owner'),
@@ -149,9 +163,52 @@
                         Owned organization
                     </h3>
                     <div
-                        class="grid auto-rows-fr gap-4 md:grid-cols-2 xl:grid-cols-3"
+                        class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]"
                     >
-                        {@render organizationCard(ownedOrganization)}
+                        <div class="auto-rows-fr">
+                            {@render organizationCard(ownedOrganization)}
+                        </div>
+                        <Card>
+                            <CardHeader>
+                                <div class="flex items-center gap-2">
+                                    <Star
+                                        class="size-4 fill-current text-amber-500"
+                                    />
+                                    <CardTitle class="text-base">
+                                        Favorite projects
+                                    </CardTitle>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                {#if favoriteProjects.length === 0}
+                                    <p class="text-sm text-muted-foreground">
+                                        No favorite projects yet.
+                                    </p>
+                                {:else}
+                                    <div class="grid gap-2 sm:grid-cols-2">
+                                        {#each favoriteProjects as project (project.id)}
+                                            <Link
+                                                href={projects.show.url(
+                                                    project.public_id,
+                                                )}
+                                                class="rounded-md border p-3 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                                            >
+                                                <span
+                                                    class="block truncate font-medium"
+                                                >
+                                                    {project.name}
+                                                </span>
+                                                <span
+                                                    class="mt-1 block truncate text-xs text-muted-foreground"
+                                                >
+                                                    {project.organization_name}
+                                                </span>
+                                            </Link>
+                                        {/each}
+                                    </div>
+                                {/if}
+                            </CardContent>
+                        </Card>
                     </div>
                 </section>
             {/if}

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\OrganizationRole;
 use App\Models\EventLog;
 use App\Models\Organization;
+use App\Models\Project;
 use App\Models\Segment;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -51,8 +52,22 @@ class DashboardController extends Controller
                 ];
             });
 
+        $accessibleProjectIds = $user->accessibleProjects()->select('projects.id');
+        $favoriteProjects = $user->favoriteProjects()
+            ->whereIn('projects.id', $accessibleProjectIds)
+            ->with('organization:id,name')
+            ->orderBy('projects.name')
+            ->get()
+            ->map(fn (Project $project) => [
+                'id' => $project->id,
+                'public_id' => $project->public_id,
+                'name' => $project->name,
+                'organization_name' => $project->organization->name,
+            ]);
+
         return Inertia::render('Dashboard', [
             'organizations' => $organizations,
+            'favoriteProjects' => $favoriteProjects,
         ]);
     }
 

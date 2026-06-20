@@ -51,6 +51,28 @@ class DashboardTest extends TestCase
             );
     }
 
+    public function test_global_dashboard_includes_accessible_favorite_projects(): void
+    {
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $favorite = Project::factory()->create([
+            'organization_id' => $organization->id,
+            'name' => 'Favorite CRM',
+        ]);
+        $inaccessibleFavorite = Project::factory()->create(['name' => 'Hidden Favorite']);
+        $user->favoriteProjects()->attach([$favorite->id, $inaccessibleFavorite->id]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Dashboard')
+                ->has('favoriteProjects', 1)
+                ->where('favoriteProjects.0.name', 'Favorite CRM')
+                ->where('favoriteProjects.0.public_id', $favorite->public_id)
+                ->where('favoriteProjects.0.organization_name', $organization->name)
+            );
+    }
+
     public function test_member_can_view_an_organization_dashboard_with_scoped_metrics(): void
     {
         ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
