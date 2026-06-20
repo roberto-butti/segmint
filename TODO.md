@@ -21,3 +21,9 @@ organization navigation, and project-section navigation.
 [DONE] add contextual empty states with organization/project context and a
 relevant next action where one exists. Management actions are only shown when
 the current organization role permits them.
+
+[UI][LOGIC] Later diagnostic enhancement: show regression deltas when re-running
+a saved diagnostic scenario. Compare the previous `last_result` with the new
+result before overwriting it, then highlight segments that changed from matched
+to not matched or not matched to matched. Keep this out of the initial
+diagnostic release unless users need explicit regression reporting.

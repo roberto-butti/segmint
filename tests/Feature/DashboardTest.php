@@ -73,6 +73,53 @@ class DashboardTest extends TestCase
             );
     }
 
+    public function test_global_dashboard_includes_recently_active_accessible_projects(): void
+    {
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $olderProject = Project::factory()->create([
+            'organization_id' => $organization->id,
+            'name' => 'Older Project',
+        ]);
+        $recentProject = Project::factory()->create([
+            'organization_id' => $organization->id,
+            'name' => 'Recent Project',
+        ]);
+        $hiddenProject = Project::factory()->create(['name' => 'Hidden Project']);
+
+        EventLog::create([
+            'project_id' => $olderProject->id,
+            'visitor_id' => 'visitor-1',
+            'event_type' => 'page-view',
+        ])->forceFill(['created_at' => now()->subDays(2)])->save();
+        EventLog::create([
+            'project_id' => $recentProject->id,
+            'visitor_id' => 'visitor-1',
+            'event_type' => 'page-view',
+        ])->forceFill(['created_at' => now()->subHour()])->save();
+        EventLog::create([
+            'project_id' => $recentProject->id,
+            'visitor_id' => 'visitor-2',
+            'event_type' => 'page-view',
+        ])->forceFill(['created_at' => now()->subHours(2)])->save();
+        EventLog::create([
+            'project_id' => $hiddenProject->id,
+            'visitor_id' => 'visitor-1',
+            'event_type' => 'page-view',
+        ])->forceFill(['created_at' => now()])->save();
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Dashboard')
+                ->has('recentlyActiveProjects', 2)
+                ->where('recentlyActiveProjects.0.name', 'Recent Project')
+                ->where('recentlyActiveProjects.0.events_count_24h', 2)
+                ->where('recentlyActiveProjects.1.name', 'Older Project')
+                ->where('recentlyActiveProjects.1.events_count_24h', 0)
+            );
+    }
+
     public function test_member_can_view_an_organization_dashboard_with_scoped_metrics(): void
     {
         ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();

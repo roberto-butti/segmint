@@ -1,6 +1,7 @@
 <script lang="ts">
     import { Link } from '@inertiajs/svelte';
     import Building2 from 'lucide-svelte/icons/building-2';
+    import Clock3 from 'lucide-svelte/icons/clock-3';
     import FolderKanban from 'lucide-svelte/icons/folder-kanban';
     import Star from 'lucide-svelte/icons/star';
     import Users from 'lucide-svelte/icons/users';
@@ -39,12 +40,23 @@
         organization_name: string;
     }
 
+    interface RecentlyActiveProject {
+        id: number;
+        public_id: string;
+        name: string;
+        organization_name: string;
+        last_event_at: string;
+        events_count_24h: number;
+    }
+
     let {
         organizations: organizationList,
         favoriteProjects = [],
+        recentlyActiveProjects = [],
     }: {
         organizations: Organization[];
         favoriteProjects: FavoriteProject[];
+        recentlyActiveProjects: RecentlyActiveProject[];
     } = $props();
 
     const ownedOrganization = $derived(
@@ -65,6 +77,13 @@
 
     function roleLabel(role: string): string {
         return role.charAt(0).toUpperCase() + role.slice(1);
+    }
+
+    function formatActivityTime(value: string): string {
+        return new Intl.DateTimeFormat(undefined, {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+        }).format(new Date(value));
     }
 </script>
 
@@ -163,7 +182,7 @@
                         Owned organization
                     </h3>
                     <div
-                        class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]"
+                        class="grid gap-4 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1fr)]"
                     >
                         <div class="auto-rows-fr">
                             {@render organizationCard(ownedOrganization)}
@@ -202,6 +221,55 @@
                                                     class="mt-1 block truncate text-xs text-muted-foreground"
                                                 >
                                                     {project.organization_name}
+                                                </span>
+                                            </Link>
+                                        {/each}
+                                    </div>
+                                {/if}
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <div class="flex items-center gap-2">
+                                    <Clock3
+                                        class="size-4 text-muted-foreground"
+                                    />
+                                    <CardTitle class="text-base">
+                                        Recently active
+                                    </CardTitle>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                {#if recentlyActiveProjects.length === 0}
+                                    <p class="text-sm text-muted-foreground">
+                                        No recent project activity yet.
+                                    </p>
+                                {:else}
+                                    <div class="space-y-2">
+                                        {#each recentlyActiveProjects as project (project.id)}
+                                            <Link
+                                                href={projects.show.url(
+                                                    project.public_id,
+                                                )}
+                                                class="block rounded-md border p-3 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                                            >
+                                                <span
+                                                    class="block truncate font-medium"
+                                                >
+                                                    {project.name}
+                                                </span>
+                                                <span
+                                                    class="mt-1 block truncate text-xs text-muted-foreground"
+                                                >
+                                                    {project.organization_name}
+                                                </span>
+                                                <span
+                                                    class="mt-2 block text-xs text-muted-foreground"
+                                                >
+                                                    {formatActivityTime(
+                                                        project.last_event_at,
+                                                    )} · {project.events_count_24h}
+                                                    events in 24h
                                                 </span>
                                             </Link>
                                         {/each}

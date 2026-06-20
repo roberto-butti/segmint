@@ -65,9 +65,35 @@ class DashboardController extends Controller
                 'organization_name' => $project->organization->name,
             ]);
 
+        $recentlyActiveProjects = EventLog::query()
+            ->join('projects', 'event_logs.project_id', '=', 'projects.id')
+            ->join('organizations', 'projects.organization_id', '=', 'organizations.id')
+            ->whereIn('projects.id', $user->accessibleProjects()->select('projects.id'))
+            ->select([
+                'projects.id',
+                'projects.public_id',
+                'projects.name',
+                'organizations.name as organization_name',
+                DB::raw('MAX(event_logs.created_at) as last_event_at'),
+                DB::raw("SUM(CASE WHEN event_logs.created_at >= '".now()->subDay()->toDateTimeString()."' THEN 1 ELSE 0 END) as events_count_24h"),
+            ])
+            ->groupBy('projects.id', 'projects.public_id', 'projects.name', 'organizations.name')
+            ->orderByRaw('MAX(event_logs.created_at) DESC')
+            ->limit(5)
+            ->get()
+            ->map(fn ($project) => [
+                'id' => $project->id,
+                'public_id' => $project->public_id,
+                'name' => $project->name,
+                'organization_name' => $project->organization_name,
+                'last_event_at' => Carbon::parse($project->last_event_at)->toIso8601String(),
+                'events_count_24h' => (int) $project->events_count_24h,
+            ]);
+
         return Inertia::render('Dashboard', [
             'organizations' => $organizations,
             'favoriteProjects' => $favoriteProjects,
+            'recentlyActiveProjects' => $recentlyActiveProjects,
         ]);
     }
 
