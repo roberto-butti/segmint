@@ -32,6 +32,7 @@ class ProjectDiagnosticsTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Projects/Diagnostics')
+                ->where('evaluatedAt', null)
                 ->where('project.id', $project->id)
                 ->where('diagnostics', null)
                 ->where('payload.type', 'page-view')
@@ -74,6 +75,7 @@ class ProjectDiagnosticsTest extends TestCase
         $response->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Projects/Diagnostics')
+                ->whereNot('evaluatedAt', null)
                 ->where('diagnostics.0.slug', 'facebook-visitors')
                 ->where('diagnostics.0.matched', false)
                 ->where('diagnostics.0.rules.0.actual', 'google')
@@ -284,6 +286,46 @@ class ProjectDiagnosticsTest extends TestCase
         $scenario->refresh();
 
         $this->assertFalse(data_get($scenario->last_result, '0.matched'));
+    }
+
+    public function test_user_can_update_saved_scenario_payload_and_last_result(): void
+    {
+        ['user' => $user, 'organization' => $organization] = $this->createUserWithOrganization();
+        $project = Project::factory()->create(['organization_id' => $organization->id]);
+        $segment = Segment::factory()->create([
+            'project_id' => $project->id,
+            'slug' => 'facebook-visitors',
+        ]);
+        $this->createRule($segment, ['key' => 'utm_source', 'value' => 'facebook']);
+        $scenario = DiagnosticScenario::create([
+            'project_id' => $project->id,
+            'name' => 'Social visitor',
+            'payload' => [
+                ...$this->payload(),
+                'utms' => ['utm_source' => 'google'],
+            ],
+            'last_result' => [],
+        ]);
+
+        $this->actingAs($user)
+            ->put(route('projects.diagnostics.scenarios.update', [$project, $scenario]), [
+                'payload' => [
+                    ...$this->payload(),
+                    'utms' => ['utm_source' => 'facebook'],
+                ],
+            ])
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('diagnostics.0.slug', 'facebook-visitors')
+                ->where('diagnostics.0.matched', true)
+                ->where('savedScenarios.0.payload.utms.utm_source', 'facebook')
+                ->where('savedScenarios.0.last_result.0.matched', true)
+            );
+
+        $scenario->refresh();
+
+        $this->assertSame('facebook', data_get($scenario->payload, 'utms.utm_source'));
+        $this->assertTrue(data_get($scenario->last_result, '0.matched'));
     }
 
     public function test_user_can_delete_saved_scenario(): void

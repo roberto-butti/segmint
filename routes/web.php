@@ -44,6 +44,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('projects/{project}/diagnostics', [ProjectDiagnosticsController::class, 'index'])->name('projects.diagnostics.index');
     Route::post('projects/{project}/diagnostics', [ProjectDiagnosticsController::class, 'evaluate'])->name('projects.diagnostics.evaluate');
     Route::post('projects/{project}/diagnostics/scenarios', [ProjectDiagnosticsController::class, 'store'])->name('projects.diagnostics.scenarios.store');
+    Route::put('projects/{project}/diagnostics/scenarios/{diagnosticScenario}', [ProjectDiagnosticsController::class, 'update'])->name('projects.diagnostics.scenarios.update');
     Route::post('projects/{project}/diagnostics/scenarios/{diagnosticScenario}/run', [ProjectDiagnosticsController::class, 'run'])->name('projects.diagnostics.scenarios.run');
     Route::delete('projects/{project}/diagnostics/scenarios/{diagnosticScenario}', [ProjectDiagnosticsController::class, 'destroy'])->name('projects.diagnostics.scenarios.destroy');
     Route::post('projects/{project}/favorite', [FavoriteProjectController::class, 'store'])->name('projects.favorite.store');

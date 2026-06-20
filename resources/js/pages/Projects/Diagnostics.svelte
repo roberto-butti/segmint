@@ -2,6 +2,7 @@
     import type { RequestPayload } from '@inertiajs/core';
     import { router } from '@inertiajs/svelte';
     import Activity from 'lucide-svelte/icons/activity';
+    import ChevronDown from 'lucide-svelte/icons/chevron-down';
     import CircleCheck from 'lucide-svelte/icons/circle-check';
     import CircleX from 'lucide-svelte/icons/circle-x';
     import Play from 'lucide-svelte/icons/play';
@@ -18,6 +19,14 @@
         CardHeader,
         CardTitle,
     } from '@/components/ui/card';
+    import {
+        Dialog,
+        DialogClose,
+        DialogContent,
+        DialogDescription,
+        DialogFooter,
+        DialogTitle,
+    } from '@/components/ui/dialog';
     import { Input } from '@/components/ui/input';
     import { Label } from '@/components/ui/label';
     import AppLayout from '@/layouts/AppLayout.svelte';
@@ -85,12 +94,14 @@
         organization,
         payload,
         diagnostics = null,
+        evaluatedAt = null,
         savedScenarios = [],
     }: {
         project: Project;
         organization: BreadcrumbOrganization;
         payload: DiagnosticsPayload;
         diagnostics: DiagnosticSegment[] | null;
+        evaluatedAt: string | null;
         savedScenarios: SavedScenario[];
     } = $props();
 
@@ -111,11 +122,20 @@
     let scenarioName = $state('');
     let scenarioError = $state<string | null>(null);
     let isSavingScenario = $state(false);
+    let isUpdatingScenario = $state(false);
+    let saveDialogOpen = $state(false);
+    let selectedScenarioId = $state('');
     let runningScenarioId = $state<number | null>(null);
     let deletingScenarioId = $state<number | null>(null);
 
     const matchedSegments = $derived(
         diagnostics?.filter((segment) => segment.matched) ?? [],
+    );
+
+    const selectedScenario = $derived(
+        savedScenarios.find(
+            (scenario) => String(scenario.id) === selectedScenarioId,
+        ) ?? null,
     );
 
     const breadcrumbs: BreadcrumbItem[] = $derived([
@@ -128,6 +148,12 @@
 
     function submit(): void {
         jsonError = null;
+
+        if (selectedScenario) {
+            runScenario(selectedScenario);
+
+            return;
+        }
 
         const payload = currentPayload();
 
@@ -184,6 +210,10 @@
                 onFinish: () => {
                     isSavingScenario = false;
                 },
+                onSuccess: () => {
+                    scenarioName = '';
+                    saveDialogOpen = false;
+                },
             },
         );
     }
@@ -203,6 +233,69 @@
                 },
             },
         );
+    }
+
+    function updateScenario(scenario: SavedScenario): void {
+        jsonError = null;
+
+        const payload = currentPayload();
+
+        if (jsonError) {
+            return;
+        }
+
+        router.put(
+            `/projects/${project.public_id}/diagnostics/scenarios/${scenario.id}`,
+            {
+                payload,
+            } as unknown as RequestPayload,
+            {
+                preserveScroll: true,
+                preserveState: false,
+                onStart: () => {
+                    isUpdatingScenario = true;
+                },
+                onFinish: () => {
+                    isUpdatingScenario = false;
+                },
+            },
+        );
+    }
+
+    function selectScenario(value: string): void {
+        selectedScenarioId = value;
+        scenarioError = null;
+
+        if (value === '') {
+            return;
+        }
+
+        const scenario = savedScenarios.find(
+            (candidate) => String(candidate.id) === value,
+        );
+
+        if (!scenario) {
+            return;
+        }
+
+        applyPayload(scenario.payload);
+    }
+
+    function startNewDiagnostic(): void {
+        selectedScenarioId = '';
+    }
+
+    function applyPayload(nextPayload: DiagnosticsPayload): void {
+        visitorId = nextPayload.visitor_id;
+        eventType = nextPayload.type;
+        pageUrl = nextPayload.url ?? '';
+        referrer = nextPayload.referrer ?? '';
+        utmSource = nextPayload.utms.utm_source ?? '';
+        utmMedium = nextPayload.utms.utm_medium ?? '';
+        utmCampaign = nextPayload.utms.utm_campaign ?? '';
+        acceptLanguage = nextPayload.accept_language ?? '';
+        eventPropertiesJson = formatJson(nextPayload.event_properties);
+        metadataJson = formatJson(nextPayload.metadata);
     }
 
     function deleteScenario(scenario: SavedScenario): void {
@@ -311,6 +404,17 @@
             timeStyle: 'short',
         }).format(new Date(value));
     }
+
+    function formatRunTime(value: string | null): string {
+        if (!value) {
+            return '';
+        }
+
+        return new Intl.DateTimeFormat(undefined, {
+            dateStyle: 'medium',
+            timeStyle: 'medium',
+        }).format(new Date(value));
+    }
 </script>
 
 <AppHead title={`Diagnostics - ${project.name}`} />
@@ -324,6 +428,102 @@
                 storing the event or changing analytics.
             </p>
         </div>
+
+        <Card>
+            <CardContent class="py-4">
+                <div class="flex flex-col gap-3 lg:flex-row lg:items-start">
+                    <div class="min-w-0 flex-1 space-y-2">
+                        <Label for="scenario-selector">Scenario</Label>
+                        <select
+                            id="scenario-selector"
+                            class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            bind:value={selectedScenarioId}
+                            onchange={(event) =>
+                                selectScenario(event.currentTarget.value)}
+                        >
+                            <option value="">New diagnostic</option>
+                            {#each savedScenarios as scenario (scenario.id)}
+                                <option value={String(scenario.id)}>
+                                    {scenario.name}
+                                </option>
+                            {/each}
+                        </select>
+                        {#if selectedScenario}
+                            <p class="text-xs text-muted-foreground">
+                                Last result: {matchedCount(
+                                    selectedScenario.last_result,
+                                )} of {selectedScenario.last_result?.length ??
+                                    0} matched · {formatRunDate(
+                                    selectedScenario.last_run_at,
+                                )}
+                            </p>
+                        {/if}
+                    </div>
+                    <div class="flex flex-wrap gap-2 lg:pt-7">
+                        <Button
+                            type="button"
+                            onclick={submit}
+                            disabled={isEvaluating ||
+                                runningScenarioId !== null}
+                        >
+                            {#if selectedScenario}
+                                <Play class="size-4" />
+                                {runningScenarioId === selectedScenario.id
+                                    ? 'Running'
+                                    : 'Run scenario'}
+                            {:else}
+                                <Activity class="size-4" />
+                                {isEvaluating ? 'Running' : 'Run diagnostic'}
+                            {/if}
+                        </Button>
+                        {#if diagnostics}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onclick={() => {
+                                    scenarioError = null;
+                                    saveDialogOpen = true;
+                                }}
+                            >
+                                <Save class="size-4" />
+                                Save as scenario
+                            </Button>
+                        {/if}
+                        {#if selectedScenario}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onclick={() => updateScenario(selectedScenario)}
+                                disabled={isUpdatingScenario}
+                            >
+                                <Save class="size-4" />
+                                {isUpdatingScenario
+                                    ? 'Saving'
+                                    : 'Save changes'}
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onclick={startNewDiagnostic}
+                            >
+                                New
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                class="text-destructive hover:text-destructive"
+                                onclick={() => deleteScenario(selectedScenario)}
+                                disabled={deletingScenarioId ===
+                                    selectedScenario.id}
+                            >
+                                <Trash2 class="size-4" />
+                                Delete
+                            </Button>
+                        {/if}
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
 
         <div class="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
             <Card>
@@ -369,79 +569,117 @@
                             />
                         </div>
 
-                        <div class="space-y-2">
-                            <Label for="accept-language">Accept-Language</Label>
-                            <Input
-                                id="accept-language"
-                                placeholder="en-US,en;q=0.9"
-                                bind:value={acceptLanguage}
-                            />
-                            <p class="text-xs text-muted-foreground">
-                                Defaults to the current browser request header.
-                                Edit it to test a different language header.
-                            </p>
-                        </div>
-
-                        <div class="space-y-2">
-                            <Label for="referrer">Referrer URL</Label>
-                            <Input
-                                id="referrer"
-                                type="url"
-                                bind:value={referrer}
-                            />
-                        </div>
-
-                        <div class="grid gap-4 md:grid-cols-3">
+                        <div class="grid gap-4 md:grid-cols-2">
                             <div class="space-y-2">
                                 <Label for="utm-source">UTM source</Label>
-                                <Input id="utm-source" bind:value={utmSource} />
-                            </div>
-                            <div class="space-y-2">
-                                <Label for="utm-medium">UTM medium</Label>
-                                <Input id="utm-medium" bind:value={utmMedium} />
-                            </div>
-                            <div class="space-y-2">
-                                <Label for="utm-campaign">UTM campaign</Label>
                                 <Input
-                                    id="utm-campaign"
-                                    bind:value={utmCampaign}
+                                    id="utm-source"
+                                    bind:value={utmSource}
                                 />
                             </div>
                         </div>
 
-                        <div class="space-y-2">
-                            <Label for="event-properties"
-                                >Event properties JSON</Label
+                        <details class="group rounded-lg border p-3">
+                            <summary
+                                class="flex cursor-pointer list-none items-center justify-between text-sm font-medium"
                             >
-                            <textarea
-                                id="event-properties"
-                                class="min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                bind:value={eventPropertiesJson}
-                                placeholder={JSON.stringify({ plan: 'pro' })}
-                            ></textarea>
-                        </div>
+                                Advanced
+                                <ChevronDown
+                                    class="size-4 transition group-open:rotate-180"
+                                />
+                            </summary>
+                            <div class="mt-4 space-y-4">
+                                <div class="space-y-2">
+                                    <Label for="referrer">Referrer URL</Label>
+                                    <Input
+                                        id="referrer"
+                                        type="url"
+                                        bind:value={referrer}
+                                    />
+                                </div>
 
-                        <div class="space-y-2">
-                            <Label for="metadata">Metadata JSON</Label>
-                            <textarea
-                                id="metadata"
-                                class="min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                bind:value={metadataJson}
-                                placeholder={JSON.stringify({
-                                    source: 'diagnostics',
-                                })}
-                            ></textarea>
-                        </div>
+                                <div class="grid gap-4 md:grid-cols-2">
+                                    <div class="space-y-2">
+                                        <Label for="utm-medium"
+                                            >UTM medium</Label
+                                        >
+                                        <Input
+                                            id="utm-medium"
+                                            bind:value={utmMedium}
+                                        />
+                                    </div>
+                                    <div class="space-y-2">
+                                        <Label for="utm-campaign"
+                                            >UTM campaign</Label
+                                        >
+                                        <Input
+                                            id="utm-campaign"
+                                            bind:value={utmCampaign}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for="accept-language"
+                                        >Accept-Language</Label
+                                    >
+                                    <Input
+                                        id="accept-language"
+                                        placeholder="en-US,en;q=0.9"
+                                        bind:value={acceptLanguage}
+                                    />
+                                    <p class="text-xs text-muted-foreground">
+                                        Defaults to the current browser request
+                                        header.
+                                    </p>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for="event-properties"
+                                        >Event properties JSON</Label
+                                    >
+                                    <textarea
+                                        id="event-properties"
+                                        class="min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                        bind:value={eventPropertiesJson}
+                                        placeholder={JSON.stringify({
+                                            plan: 'pro',
+                                        })}
+                                    ></textarea>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label for="metadata">Metadata JSON</Label>
+                                    <textarea
+                                        id="metadata"
+                                        class="min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                        bind:value={metadataJson}
+                                        placeholder={JSON.stringify({
+                                            source: 'diagnostics',
+                                        })}
+                                    ></textarea>
+                                </div>
+                            </div>
+                        </details>
 
                         {#if jsonError}
                             <p class="text-sm text-destructive">{jsonError}</p>
                         {/if}
 
-                        <Button type="submit" disabled={isEvaluating}>
-                            <Activity class="size-4" />
-                            {isEvaluating
-                                ? 'Evaluating segments'
-                                : 'Evaluate segments'}
+                        <Button
+                            type="submit"
+                            disabled={isEvaluating ||
+                                runningScenarioId !== null}
+                        >
+                            {#if selectedScenario}
+                                <Play class="size-4" />
+                                {runningScenarioId === selectedScenario.id
+                                    ? 'Running'
+                                    : 'Run scenario'}
+                            {:else}
+                                <Activity class="size-4" />
+                                {isEvaluating ? 'Running' : 'Run diagnostic'}
+                            {/if}
                         </Button>
                     </form>
                 </CardContent>
@@ -463,118 +701,38 @@
                             {/if}
                         </CardDescription>
                     </CardHeader>
-                </Card>
-
-                {#if diagnostics}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle class="text-base"
-                                >Save scenario</CardTitle
-                            >
-                            <CardDescription>
-                                Store this candidate event and its latest
-                                result.
-                            </CardDescription>
-                        </CardHeader>
+                    {#if diagnostics}
                         <CardContent>
-                            <div class="flex flex-col gap-3 sm:flex-row">
-                                <div class="min-w-0 flex-1 space-y-2">
-                                    <Label for="scenario-name"
-                                        >Scenario name</Label
-                                    >
-                                    <Input
-                                        id="scenario-name"
-                                        bind:value={scenarioName}
-                                        placeholder="Pricing visitor from Google - EN"
-                                    />
+                            <div
+                                class="grid gap-3 text-sm text-muted-foreground sm:grid-cols-3"
+                            >
+                                <div>
+                                    <p class="text-xs uppercase text-muted-foreground">
+                                        Executed
+                                    </p>
+                                    <p class="mt-1 text-foreground">
+                                        {formatRunTime(evaluatedAt)}
+                                    </p>
                                 </div>
-                                <Button
-                                    class="self-end"
-                                    type="button"
-                                    onclick={saveScenario}
-                                    disabled={isSavingScenario}
-                                >
-                                    <Save class="size-4" />
-                                    {isSavingScenario
-                                        ? 'Saving'
-                                        : 'Save scenario'}
-                                </Button>
+                                <div>
+                                    <p class="text-xs uppercase text-muted-foreground">
+                                        Event
+                                    </p>
+                                    <p class="mt-1 text-foreground">
+                                        {payload.type}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="text-xs uppercase text-muted-foreground">
+                                        Visitor
+                                    </p>
+                                    <p class="mt-1 truncate text-foreground">
+                                        {payload.visitor_id}
+                                    </p>
+                                </div>
                             </div>
-                            {#if scenarioError}
-                                <p class="mt-2 text-sm text-destructive">
-                                    {scenarioError}
-                                </p>
-                            {/if}
                         </CardContent>
-                    </Card>
-                {/if}
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle class="text-base">Saved scenarios</CardTitle>
-                        <CardDescription>
-                            Re-run known candidate events against the current
-                            segments.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {#if savedScenarios.length === 0}
-                            <p class="text-sm text-muted-foreground">
-                                No saved scenarios yet.
-                            </p>
-                        {:else}
-                            <div class="space-y-3">
-                                {#each savedScenarios as scenario (scenario.id)}
-                                    <div
-                                        class="flex items-start justify-between gap-3 rounded-lg border p-3"
-                                    >
-                                        <div class="min-w-0">
-                                            <p class="truncate text-sm font-medium">
-                                                {scenario.name}
-                                            </p>
-                                            <p
-                                                class="text-xs text-muted-foreground"
-                                            >
-                                                {matchedCount(
-                                                    scenario.last_result,
-                                                )} of {scenario.last_result
-                                                    ?.length ?? 0} matched · {formatRunDate(
-                                                    scenario.last_run_at,
-                                                )}
-                                            </p>
-                                        </div>
-                                        <div class="flex shrink-0 gap-1">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="icon"
-                                                onclick={() =>
-                                                    runScenario(scenario)}
-                                                disabled={runningScenarioId ===
-                                                    scenario.id}
-                                                title="Run scenario"
-                                            >
-                                                <Play class="size-4" />
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon"
-                                                class="text-destructive hover:text-destructive"
-                                                onclick={() =>
-                                                    deleteScenario(scenario)}
-                                                disabled={deletingScenarioId ===
-                                                    scenario.id}
-                                                title="Delete scenario"
-                                            >
-                                                <Trash2 class="size-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                {/each}
-                            </div>
-                        {/if}
-                    </CardContent>
+                    {/if}
                 </Card>
 
                 {#if diagnostics}
@@ -673,4 +831,42 @@
             </div>
         </div>
     </div>
+
+    <Dialog bind:open={saveDialogOpen}>
+        <DialogContent>
+            <DialogTitle>Save diagnostic scenario</DialogTitle>
+            <DialogDescription>
+                Save the current candidate event and latest result for future
+                regression checks.
+            </DialogDescription>
+            <div class="space-y-2">
+                <Label for="save-scenario-name">Scenario name</Label>
+                <Input
+                    id="save-scenario-name"
+                    bind:value={scenarioName}
+                    placeholder="Pricing visitor from Google - EN"
+                />
+                {#if scenarioError}
+                    <p class="text-sm text-destructive">{scenarioError}</p>
+                {/if}
+            </div>
+            <DialogFooter>
+                <DialogClose asChild>
+                    {#snippet children(props)}
+                        <Button variant="outline" onclick={props.onclick}
+                            >Cancel</Button
+                        >
+                    {/snippet}
+                </DialogClose>
+                <Button
+                    type="button"
+                    onclick={saveScenario}
+                    disabled={isSavingScenario}
+                >
+                    <Save class="size-4" />
+                    {isSavingScenario ? 'Saving' : 'Save scenario'}
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 </AppLayout>

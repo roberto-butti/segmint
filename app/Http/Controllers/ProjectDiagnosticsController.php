@@ -18,7 +18,7 @@ class ProjectDiagnosticsController extends Controller
     {
         $this->authorize('view', $project);
 
-        return $this->render($project, $this->defaultPayload($request), null);
+        return $this->render($project, $this->defaultPayload($request), null, null);
     }
 
     public function evaluate(Request $request, Project $project, SegmentEngine $engine): Response
@@ -28,7 +28,7 @@ class ProjectDiagnosticsController extends Controller
         $payload = $this->validatedPayload($request);
         $diagnostics = $this->diagnosePayload($request, $project, $engine, $payload);
 
-        return $this->render($project, $payload, $diagnostics);
+        return $this->render($project, $payload, $diagnostics, now()->toIso8601String());
     }
 
     public function store(Request $request, Project $project, SegmentEngine $engine): Response
@@ -49,14 +49,16 @@ class ProjectDiagnosticsController extends Controller
         $payload = $this->normalizePayload($request, $validated['payload']);
         $diagnostics = $this->diagnosePayload($request, $project, $engine, $payload);
 
+        $evaluatedAt = now();
+
         $project->diagnosticScenarios()->create([
             'name' => $validated['name'],
             'payload' => $payload,
             'last_result' => $diagnostics,
-            'last_run_at' => now(),
+            'last_run_at' => $evaluatedAt,
         ]);
 
-        return $this->render($project, $payload, $diagnostics);
+        return $this->render($project, $payload, $diagnostics, $evaluatedAt->toIso8601String());
     }
 
     public function run(Request $request, Project $project, DiagnosticScenario $diagnosticScenario, SegmentEngine $engine): Response
@@ -67,12 +69,37 @@ class ProjectDiagnosticsController extends Controller
         $payload = $diagnosticScenario->payload;
         $diagnostics = $this->diagnosePayload($request, $project, $engine, $payload);
 
+        $evaluatedAt = now();
+
         $diagnosticScenario->update([
             'last_result' => $diagnostics,
-            'last_run_at' => now(),
+            'last_run_at' => $evaluatedAt,
         ]);
 
-        return $this->render($project, $payload, $diagnostics);
+        return $this->render($project, $payload, $diagnostics, $evaluatedAt->toIso8601String());
+    }
+
+    public function update(Request $request, Project $project, DiagnosticScenario $diagnosticScenario, SegmentEngine $engine): Response
+    {
+        $this->authorize('update', $project);
+        $this->ensureScenarioBelongsToProject($project, $diagnosticScenario);
+
+        $validated = $request->validate([
+            'payload' => ['required', 'array'],
+            ...$this->payloadRules('payload.'),
+        ]);
+
+        $payload = $this->normalizePayload($request, $validated['payload']);
+        $diagnostics = $this->diagnosePayload($request, $project, $engine, $payload);
+        $evaluatedAt = now();
+
+        $diagnosticScenario->update([
+            'payload' => $payload,
+            'last_result' => $diagnostics,
+            'last_run_at' => $evaluatedAt,
+        ]);
+
+        return $this->render($project, $payload, $diagnostics, $evaluatedAt->toIso8601String());
     }
 
     public function destroy(Request $request, Project $project, DiagnosticScenario $diagnosticScenario): RedirectResponse
@@ -217,13 +244,14 @@ class ProjectDiagnosticsController extends Controller
      * @param  array<string, mixed>  $payload
      * @param  array<int, array<string, mixed>>|null  $diagnostics
      */
-    private function render(Project $project, array $payload, ?array $diagnostics): Response
+    private function render(Project $project, array $payload, ?array $diagnostics, ?string $evaluatedAt): Response
     {
         return Inertia::render('Projects/Diagnostics', [
             'project' => $project,
             'organization' => $this->organizationContext($project->organization),
             'payload' => $payload,
             'diagnostics' => $diagnostics,
+            'evaluatedAt' => $evaluatedAt,
             'savedScenarios' => $project->diagnosticScenarios()
                 ->orderBy('name')
                 ->get()

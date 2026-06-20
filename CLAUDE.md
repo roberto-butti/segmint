@@ -48,7 +48,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 ## Frontend Bundling
 
-- If the user doesn't see a frontend change reflected in the UI, it could mean they need to run `bun run build`, `bun run dev`, or `composer run dev`. Ask them.
+- If the user doesn't see a frontend change reflected in the UI, it could mean they need to run `npm run build`, `npm run dev`, or `composer run dev`. Ask them.
 
 ## Documentation Files
 
@@ -125,7 +125,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 # Inertia
 
 - Inertia creates fully client-side rendered SPAs without modern SPA complexity, leveraging existing server-side patterns.
-- Authenticated application components live in `resources/js/pages` (unless specified in `vite.config.js`) and use `Inertia::render()`. Public content pages use Laravel Blade.
+- Components live in `resources/js/pages` (unless specified in `vite.config.js`). Use `Inertia::render()` for server-side routing instead of Blade views.
 - ALWAYS use `search-docs` tool for version-specific Inertia documentation and updated code examples.
 - IMPORTANT: Activate `inertia-svelte-development` when working with Inertia Svelte client-side patterns.
 
@@ -138,7 +138,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Axios has been removed. Use the built-in XHR client with interceptors, or install Axios separately if needed.
 - `Inertia::lazy()` / `LazyProp` has been removed. Use `Inertia::optional()` instead.
 - Prop types (`Inertia::optional()`, `Inertia::defer()`, `Inertia::merge()`) work inside nested arrays with dot-notation paths.
-- Inertia SSR is intentionally disabled. Authenticated application pages are client-rendered, while public content pages use Laravel Blade. See `docs/decisions/0004-client-rendered-inertia-and-blade-public-pages.md`.
+- SSR works automatically in Vite dev mode with `@inertiajs/vite` - no separate Node.js server needed during development.
 - Event renames: `invalid` is now `httpException`, `exception` is now `networkError`.
 - `router.cancel()` replaced by `router.cancelAll()`.
 - The `future` configuration namespace has been removed - all v2 future options are now always enabled.
@@ -171,7 +171,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 ## Vite Error
 
-- If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, you can run `bun run build` or ask the user to run `bun run dev` or `composer run dev`.
+- If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, you can run `npm run build` or ask the user to run `npm run dev` or `composer run dev`.
 
 === wayfinder/core rules ===
 
