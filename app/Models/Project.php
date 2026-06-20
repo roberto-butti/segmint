@@ -83,6 +83,11 @@ class Project extends Model
         return $this->hasMany(EventLog::class);
     }
 
+    public function diagnosticScenarios(): HasMany
+    {
+        return $this->hasMany(DiagnosticScenario::class);
+    }
+
     public function ruleTemplates(): HasMany
     {
         return $this->hasMany(RuleTemplate::class);

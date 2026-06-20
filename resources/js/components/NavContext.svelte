@@ -30,6 +30,7 @@
     import organizationProjects from '@/routes/organizations/projects';
     import projects from '@/routes/projects';
     import accessTokens from '@/routes/projects/access-tokens';
+    import diagnostics from '@/routes/projects/diagnostics';
     import events from '@/routes/projects/events';
     import projectMembers from '@/routes/projects/members';
     import ruleTemplates from '@/routes/projects/rule-templates';
@@ -97,6 +98,11 @@
                       title: 'Rule templates',
                       href: ruleTemplates.index.url(context.project.public_id),
                       icon: FileStack,
+                  },
+                  {
+                      title: 'Diagnostics',
+                      href: diagnostics.index.url(context.project.public_id),
+                      icon: Activity,
                   },
                   {
                       title: 'Access tokens',
