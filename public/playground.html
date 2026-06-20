@@ -329,7 +329,7 @@
 
         var allSegments = [];
 
-        Segmint.init({ token: token, autoTrack: true, debug: true })
+        Segmint.init({ token: token, autoTrack: { evaluate: true }, debug: true })
             .then(function (result) {
                 log('info', 'Track response: ' + JSON.stringify(result.status));
                 log('info', 'Session: ' + (result.session || 'n/a'));

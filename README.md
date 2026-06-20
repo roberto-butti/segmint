@@ -33,7 +33,7 @@ deployment, monitoring, security, backups, and capacity planning.
 
 - **Data-based segment suggestions** — Suggests segments from tracked UTM sources,
   campaigns, referrer domains, returning visitors, and frequently visited pages.
-- **Real-time matching** — Re-evaluates a visitor's segments when an event is received.
+- **Real-time matching** — Can re-evaluate a visitor's segments on demand when an event is received.
 - **JavaScript SDK** — Tracks browser events and provides access to the current visitor's
   matched segments.
 - **Configurable rules** — Supports comparisons, visit counts, page views, and browser
@@ -62,7 +62,7 @@ deployment, monitoring, security, backups, and capacity planning.
 ```html
 <script src="https://your-segmint-host/js/segmint.min.js"></script>
 <script>
-  await Segmint.init({ token: 'your-token', autoTrack: true });
+  await Segmint.init({ token: 'your-token', autoTrack: { evaluate: true } });
 
   if (Segmint.visitor.hasSegment('high_intent')) {
     showSpecialOffer();
@@ -194,9 +194,23 @@ Segmint ships with a lightweight SDK (`public/js/segmint.js`) organised into two
 
 ### Track events
 
+| Call | Stores event | Evaluates segments |
+|------|--------------|--------------------|
+| `visitor.event(type, props)` | yes | no |
+| `visitor.event(type, props, { evaluate: true })` | yes | yes |
+| `visitor.event(type, props, { dryRun: true })` | no | yes |
+| `visitor.beacon(type, props)` | yes | no |
+
 ```js
-// Store a custom event and receive matched segments
+// Store a custom event for analytics only
 await Segmint.visitor.event('add-to-cart', { product_id: 42, price: 29.99 });
+
+// Store a custom event and refresh matched segments
+await Segmint.visitor.event(
+  'add-to-cart',
+  { product_id: 42, price: 29.99 },
+  { evaluate: true },
+);
 
 // Store an event without blocking the current UI flow
 Segmint.visitor
@@ -212,12 +226,13 @@ window.addEventListener('beforeunload', function () {
 });
 ```
 
-Use `autoTrack: true` for an automatic stored initial page view, a normal
-`visitor.event()` for events that should contribute to analytics, and `{ dryRun: true }`
+Use `autoTrack: true` for an automatic stored initial page view that does not need an
+immediate segment response. Use `autoTrack: { evaluate: true }` or
+`visitor.event(..., { evaluate: true })` when the current UI needs fresh matched
+segments. Use a normal `visitor.event()` for analytics events, and `{ dryRun: true }`
 only for rule testing or diagnostics. `visitor.beacon()` sends a normal stored event but
 does not return segment results; reserve it for page unload and skip the call when it
-must not be stored. During normal page use, call `visitor.event()` without `await` when
-the UI does not need to wait for its response.
+must not be stored.
 
 ### Read segments
 
@@ -236,7 +251,7 @@ const allSegments = await Segmint.fetch.segments();
 |----------------|---------|------------------|-------------------------------------------------|
 | `token`        | string  | —                | Project access token (required)                 |
 | `endpoint`     | string  | auto-detected    | Full URL of the tracking API                    |
-| `autoTrack`    | boolean | `false`          | Send a `page-view` event on init                |
+| `autoTrack`    | boolean \| object | `false` | Send a `page-view` event on init. Use `{ evaluate: true }` to refresh segments. |
 | `debug`        | boolean | `false`          | Log events and responses to the console         |
 | `visitorIdKey` | string  | `'segmint_vid'`  | localStorage key used for the visitor ID        |
 
@@ -245,7 +260,7 @@ const allSegments = await Segmint.fetch.segments();
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `init(options)` | `Promise` (if autoTrack) | Initialise the SDK |
-| `visitor.event(type?, props?, options?)` | `Promise<{status, segments}>` | Store an event and update cached segments, or evaluate without storing with `options.dryRun` |
+| `visitor.event(type?, props?, options?)` | `Promise<{status, evaluated, segments}>` | Store an event by default. Use `options.evaluate` to refresh cached segments, or `options.dryRun` to evaluate without storing. |
 | `visitor.beacon(type?, props?)` | `void` | Store an event using fire-and-forget delivery; no response or dry-run |
 | `visitor.segments()` | `Object[]` | Get cached matched segments |
 | `visitor.hasSegment(slug)` | `boolean` | Check if visitor matches a segment |

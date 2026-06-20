@@ -35,6 +35,7 @@ class EventLogTrackTest extends TestCase
         $response
             ->assertOk()
             ->assertJsonPath('dry_run', true)
+            ->assertJsonPath('evaluated', true)
             ->assertJsonPath('segments.0.slug', 'google-visitors');
 
         $this->assertDatabaseCount('event_logs', 0);
@@ -145,7 +146,10 @@ class EventLogTrackTest extends TestCase
         ])->json('segments');
 
         $realSegments = $this
-            ->postJson('/api/event-log/track', $this->eventPayload($token))
+            ->postJson('/api/event-log/track', [
+                ...$this->eventPayload($token),
+                'evaluate' => true,
+            ])
             ->json('segments');
 
         $this->assertSame(
@@ -154,7 +158,7 @@ class EventLogTrackTest extends TestCase
         );
     }
 
-    public function test_omitting_dry_run_preserves_event_and_match_persistence(): void
+    public function test_default_tracking_stores_event_without_segment_evaluation(): void
     {
         [$project, $token] = $this->createProjectWithToken();
         $segment = Segment::factory()->create(['project_id' => $project->id]);
@@ -162,7 +166,31 @@ class EventLogTrackTest extends TestCase
 
         $this->postJson('/api/event-log/track', $this->eventPayload($token))
             ->assertOk()
-            ->assertJsonMissingPath('dry_run');
+            ->assertJsonMissingPath('dry_run')
+            ->assertJsonPath('evaluated', false)
+            ->assertJsonPath('segments', []);
+
+        $this->assertDatabaseCount('event_logs', 1);
+        $this->assertDatabaseCount('segment_matches', 0);
+        $this->assertNotNull($project->accessTokens()->firstOrFail()->last_used_at);
+    }
+
+    public function test_evaluate_true_stores_event_and_segment_matches(): void
+    {
+        [$project, $token] = $this->createProjectWithToken();
+        $segment = Segment::factory()->create([
+            'project_id' => $project->id,
+            'slug' => 'page-viewers',
+        ]);
+        $this->createRule($segment);
+
+        $this->postJson('/api/event-log/track', [
+            ...$this->eventPayload($token),
+            'evaluate' => true,
+        ])
+            ->assertOk()
+            ->assertJsonPath('evaluated', true)
+            ->assertJsonPath('segments.0.slug', 'page-viewers');
 
         $this->assertDatabaseCount('event_logs', 1);
         $this->assertDatabaseCount('segment_matches', 1);
@@ -170,7 +198,7 @@ class EventLogTrackTest extends TestCase
         $this->assertNotNull($project->accessTokens()->firstOrFail()->last_used_at);
     }
 
-    public function test_false_dry_run_preserves_normal_tracking_behavior(): void
+    public function test_false_dry_run_stores_event_without_segment_evaluation(): void
     {
         [, $token] = $this->createProjectWithToken();
 
@@ -179,9 +207,11 @@ class EventLogTrackTest extends TestCase
             'dry_run' => false,
         ])
             ->assertOk()
-            ->assertJsonMissingPath('dry_run');
+            ->assertJsonMissingPath('dry_run')
+            ->assertJsonPath('evaluated', false);
 
         $this->assertDatabaseCount('event_logs', 1);
+        $this->assertDatabaseCount('segment_matches', 0);
     }
 
     public function test_dry_run_must_be_a_strict_boolean(): void
@@ -194,6 +224,20 @@ class EventLogTrackTest extends TestCase
         ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('dry_run');
+
+        $this->assertDatabaseCount('event_logs', 0);
+    }
+
+    public function test_evaluate_must_be_a_strict_boolean(): void
+    {
+        [, $token] = $this->createProjectWithToken();
+
+        $this->postJson('/api/event-log/track', [
+            ...$this->eventPayload($token),
+            'evaluate' => 'true',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('evaluate');
 
         $this->assertDatabaseCount('event_logs', 0);
     }

@@ -13,9 +13,11 @@ class EventLogController extends Controller
     {
         $request->validate([
             'dry_run' => ['sometimes', 'boolean:strict'],
+            'evaluate' => ['sometimes', 'boolean:strict'],
         ]);
 
         $dryRun = $request->boolean('dry_run');
+        $evaluate = $dryRun || $request->boolean('evaluate');
         $token = $request->input('token', '');
         if ($token === '') {
             abort(404, 'token_mandatory');
@@ -51,12 +53,13 @@ class EventLogController extends Controller
             $segments = $engine->evaluateSegments($log);
         } else {
             $log->save();
-            $segments = $engine->assignSegments($log);
+            $segments = $evaluate ? $engine->assignSegments($log) : collect();
         }
 
         $response = [
             'status' => 'OK',
             'session' => $sessionId,
+            'evaluated' => $evaluate,
             'segments' => $segments,
         ];
 

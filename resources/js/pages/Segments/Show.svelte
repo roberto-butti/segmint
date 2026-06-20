@@ -102,7 +102,7 @@
 }`);
 
     const snippetInit =
-        $derived(`Segmint.init({ token: 'your-project-token', autoTrack: true })
+        $derived(`Segmint.init({ token: 'your-project-token', autoTrack: { evaluate: true } })
   .then(function () {
     if (Segmint.visitor.hasSegment('${segment.slug}')) {
       document.getElementById('banner').style.display = 'block';

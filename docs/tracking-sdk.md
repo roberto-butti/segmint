@@ -24,7 +24,7 @@ see [Frontend Integration Guide for Coding Agents](frontend-integration-for-codi
 ```html
 <script src="https://your-segmint-host/js/segmint.min.js"></script>
 <script>
-  Segmint.init({ token: 'your-project-token', autoTrack: true })
+  Segmint.init({ token: 'your-project-token', autoTrack: { evaluate: true } })
     .then(function () {
       if (Segmint.visitor.hasSegment('returning-buyer')) {
         document.getElementById('hero').innerHTML = 'Welcome back!';
@@ -33,22 +33,25 @@ see [Frontend Integration Guide for Coding Agents](frontend-integration-for-codi
 </script>
 ```
 
-With `autoTrack: true`, `init()` immediately sends a `page-view` event and returns a Promise that resolves once the server responds with matched segments. This lets you personalise content on first paint.
+With `autoTrack: { evaluate: true }`, `init()` immediately sends a `page-view` event and returns a Promise that resolves once the server responds with matched segments. This lets you personalise content on first paint.
 
 ## Choosing how to send an event
 
 | Use case | Recommended method | Stored? | Returns matched segments? |
 |---|---|---|---|
-| Track the initial page view automatically | `Segmint.init({ token, autoTrack: true })` | Yes | Yes, through the returned Promise |
+| Track the initial page view automatically, for analytics only | `Segmint.init({ token, autoTrack: true })` | Yes | No |
+| Track and evaluate the initial page view for first-paint personalisation | `Segmint.init({ token, autoTrack: { evaluate: true } })` | Yes | Yes, through the returned Promise |
 | Initialise without automatically tracking a page view | `Segmint.init({ token, autoTrack: false })` | No automatic event | No |
-| Record a page view, interaction, or component impression | `Segmint.visitor.event(type, properties)` | Yes | Yes |
-| Record an event without blocking the current UI flow | Call `visitor.event(type, properties)` without `await`, and handle rejection | Yes | Yes, processed asynchronously |
+| Record a page view, interaction, or component impression | `Segmint.visitor.event(type, properties)` | Yes | No |
+| Store an event and refresh matched segments immediately | `Segmint.visitor.event(type, properties, { evaluate: true })` | Yes | Yes |
+| Record an event without blocking the current UI flow | Call `visitor.event(type, properties)` without `await`, and handle rejection | Yes | No |
 | Test which segments a hypothetical event would match | `Segmint.visitor.event(type, properties, { dryRun: true })` | No | Yes |
 | Record an event while the page is unloading | `Segmint.visitor.beacon(type, properties)` | Yes | No |
 | Prevent a specific beacon event from being stored | Do not call `visitor.beacon()` | No | No |
 
 Use a normal `visitor.event()` when an observable action should become part of the
-visitor's history and future analytics. For example, record that a component was
+visitor's history and future analytics. By default it does not evaluate segments, so it
+is the cheapest model for high-volume tracking. For example, record that a component was
 actually displayed:
 
 ```js
@@ -56,6 +59,19 @@ await Segmint.visitor.event('component-viewed', {
   component: 'pricing-hero',
   variant: 'enterprise',
 });
+```
+
+Use `{ evaluate: true }` only when the caller needs fresh segments from this specific
+event:
+
+```js
+const result = await Segmint.visitor.event(
+  'add-to-cart',
+  { product_id: 42 },
+  { evaluate: true },
+);
+
+console.log(result.evaluated); // true
 ```
 
 When the event should be stored but the current UI flow does not need its response, call
@@ -71,9 +87,9 @@ Segmint.visitor
   });
 ```
 
-The request remains asynchronous, stores the event, and updates the SDK's cached
-segments when its response arrives. Prefer this over `beacon()` during normal page use,
-because `event()` can process the response and report failures.
+The request remains asynchronous and stores the event. It does not update the SDK's
+cached segments unless `{ evaluate: true }` is passed. Prefer this over `beacon()` during
+normal page use because `event()` can report failures.
 
 Use `{ dryRun: true }` only when the event is hypothetical and must not affect analytics.
 Use `beacon()` only when the page may unload before a normal `event()` request completes
@@ -113,7 +129,7 @@ Initialise the SDK. Must be called before any other method.
 |---|---|---|---|
 | `token` | `string` | — | **Required.** Your project access token. |
 | `endpoint` | `string` | auto-detected | Full URL of the tracking API (`/api/event-log/track`). Auto-detected from the script `src` attribute. |
-| `autoTrack` | `boolean` | `false` | Send a `page-view` event immediately on init. |
+| `autoTrack` | `boolean \| object` | `false` | Send a `page-view` event immediately on init. Use `{ evaluate: true }` when the initial response must refresh segments. |
 | `debug` | `boolean` | `false` | Log SDK activity to the browser console. |
 | `visitorIdKey` | `string` | `"segmint_vid"` | localStorage key used to persist the visitor ID. |
 
@@ -123,13 +139,16 @@ Initialise the SDK. Must be called before any other method.
 // Minimal
 Segmint.init({ token: 'abc123' });
 
-// With auto-tracking and debug
+// With auto-tracking for analytics only
 await Segmint.init({ token: 'abc123', autoTrack: true, debug: true });
+
+// With auto-tracking and immediate segment evaluation
+await Segmint.init({ token: 'abc123', autoTrack: { evaluate: true }, debug: true });
 ```
 
 #### `Segmint.onReady(callback)`
 
-Register a callback that fires once segments are available (after the first successful `visitor.event()` call). If segments are already cached, the callback fires immediately.
+Register a callback that fires once segments are available (after the first successful evaluated `visitor.event()` call). If segments are already cached, the callback fires immediately.
 
 ```js
 Segmint.onReady(function (segments) {
@@ -139,7 +158,7 @@ Segmint.onReady(function (segments) {
 
 #### `Segmint.isReady()`
 
-Returns `true` if the SDK has completed at least one `visitor.event()` call and segments are cached.
+Returns `true` if the SDK has completed at least one evaluated `visitor.event()` call and segments are cached.
 
 ```js
 if (Segmint.isReady()) {
@@ -151,28 +170,36 @@ if (Segmint.isReady()) {
 
 #### `Segmint.visitor.event(eventType?, eventProperties?, options?)`
 
-Send a tracking event to the Segmint API and update the internal segment cache with the
-response. By default, the event is stored and becomes available for analytics and future
-segment evaluation.
+Send a tracking event to the Segmint API. By default, the event is stored and becomes
+available for analytics and future segment evaluation, but the current response does not
+evaluate segments or update the internal segment cache.
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `eventType` | `string` | `"page-view"` | The type of event (e.g. `page-view`, `add-to-cart`, `signup`). |
 | `eventProperties` | `object` | `{}` | Arbitrary key-value pairs attached to the event. |
+| `options.evaluate` | `boolean` | `false` | Store the event and immediately evaluate segments. Updates the SDK segment cache. |
 | `options.dryRun` | `boolean` | `false` | Evaluate segment matches without storing the event or match records. |
 
-**Returns:** `Promise<Object>` — the API response containing `status`, `session`, and `segments`.
+**Returns:** `Promise<Object>` — the API response containing `status`, `session`, `evaluated`, and `segments`.
 
 ```js
-// Track a page view (default)
+// Track a page view for analytics only (default)
 await Segmint.visitor.event();
 
-// Track a custom event
+// Track a custom event for analytics only
 await Segmint.visitor.event('add-to-cart', {
   product_id: 42,
   price: 29.99,
   currency: 'EUR',
 });
+
+// Store an event and refresh the SDK's matched segment cache
+await Segmint.visitor.event(
+  'add-to-cart',
+  { product_id: 42, price: 29.99, currency: 'EUR' },
+  { evaluate: true },
+);
 
 // Evaluate rules without storing the event
 const result = await Segmint.visitor.event(
@@ -188,8 +215,8 @@ Dry-run uses the same project token and matching logic as a real event. Visit-co
 page-view-count rules include the candidate event during evaluation, but the event does
 not change stored counts. Use dry-run for rule testing, QA, and diagnostics only. A
 client-side segment result, including a dry-run result, must never be used for
-authorization. Like every `visitor.event()` response, a dry-run response updates the
-SDK's browser-side matched-segment cache.
+authorization. A dry-run response updates the SDK's browser-side matched-segment cache
+because it is an evaluation response.
 
 For a diagnostics or rule-testing flow, the recommended setup is
 `Segmint.init({ token, autoTrack: false })`. This prevents `init()` from storing its
@@ -198,8 +225,9 @@ storing it by calling `visitor.event(type, properties, { dryRun: true })`.
 
 `autoTrack: false` affects only the automatic page-view sent by `init()`; later calls to
 `visitor.event()` and `visitor.beacon()` still store events unless an individual
-`visitor.event()` uses `dryRun: true`. To prevent a beacon event from being stored, do
-not call `visitor.beacon()`.
+`visitor.event()` uses `dryRun: true`. A normal `visitor.event()` stores without
+evaluating unless `{ evaluate: true }` is passed. To prevent a beacon event from being
+stored, do not call `visitor.beacon()`.
 
 #### `Segmint.visitor.beacon(eventType?, eventProperties?)`
 
@@ -221,7 +249,7 @@ window.addEventListener('beforeunload', function () {
 
 #### `Segmint.visitor.segments()`
 
-Returns a copy of the cached segment list (array of segment objects) from the most recent `visitor.event()` response.
+Returns a copy of the cached segment list (array of segment objects) from the most recent evaluated `visitor.event()` response.
 
 ```js
 const segments = Segmint.visitor.segments();
@@ -302,7 +330,7 @@ Each `visitor.event()` call sends a `POST` request to `/api/event-log/track` wit
     "utm_term": "running shoes"
   },
   "event_properties": {},
-  "dry_run": true,
+  "evaluate": true,
   "metadata": {
     "path": "/products/shoes",
     "url": "https://example.com/products/shoes",
@@ -328,7 +356,9 @@ Each `visitor.event()` call sends a `POST` request to `/api/event-log/track` wit
 }
 ```
 
-`dry_run` is included only when `visitor.event(..., { dryRun: true })` is used.
+`evaluate` is included only when `visitor.event(..., { evaluate: true })` is used.
+`dry_run` is included only when `visitor.event(..., { dryRun: true })` is used and
+takes precedence by evaluating without storing the event.
 
 ### What the API returns
 
@@ -336,7 +366,7 @@ Each `visitor.event()` call sends a `POST` request to `/api/event-log/track` wit
 {
   "status": "OK",
   "session": "abc123sessionid",
-  "dry_run": true,
+  "evaluated": true,
   "segments": [
     { "id": 1, "name": "Google Visitors", "slug": "google_visitors", "value": "google_visitors" },
     { "id": 3, "name": "High Intent", "slug": "high_intent", "value": "high_intent" }
@@ -344,11 +374,41 @@ Each `visitor.event()` call sends a `POST` request to `/api/event-log/track` wit
 }
 ```
 
-`dry_run` is included only in dry-run responses. Normal responses remain unchanged.
+`evaluated` is `false` for default store-only tracking and `true` for `{ evaluate: true }`
+or `{ dryRun: true }`. `dry_run` is included only in dry-run responses.
 
-### Direct API dry-run
+Default store-only tracking returns an empty `segments` array and does not update the SDK
+segment cache:
 
-Set `dry_run` to the JSON boolean `true` when calling the tracking endpoint directly:
+```json
+{
+  "status": "OK",
+  "session": "abc123sessionid",
+  "evaluated": false,
+  "segments": []
+}
+```
+
+### Direct API evaluation flags
+
+Set `evaluate` to the JSON boolean `true` when a direct API call should store the event
+and immediately evaluate segments:
+
+```bash
+curl -X POST https://your-segmint-host/api/event-log/track \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "token": "your-project-token",
+    "visitor_id": "visitor-123",
+    "type": "page-view",
+    "path": "/pricing",
+    "evaluate": true
+  }'
+```
+
+Set `dry_run` to the JSON boolean `true` when calling the tracking endpoint directly to
+evaluate without storing:
 
 ```bash
 curl -X POST https://your-segmint-host/api/event-log/track \
@@ -364,7 +424,9 @@ curl -X POST https://your-segmint-host/api/event-log/track \
 ```
 
 The API rejects non-boolean `dry_run` values with HTTP `422`. When omitted or set to
-`false`, the event and its segment-match records are stored normally.
+`false`, the event is stored normally. The API also rejects non-boolean `evaluate`
+values with HTTP `422`. When `evaluate` is omitted or set to `false`, no immediate
+segment evaluation or segment-match records are created.
 
 ## Data collected automatically
 
@@ -391,7 +453,7 @@ The SDK collects the following data from the browser on every `visitor.event()` 
 ```html
 <script src="https://your-segmint-host/js/segmint.min.js"></script>
 <script>
-  Segmint.init({ token: 'your-token', autoTrack: true }).then(function () {
+  Segmint.init({ token: 'your-token', autoTrack: { evaluate: true } }).then(function () {
     if (Segmint.visitor.hasSegment('italy_traffic')) {
       document.getElementById('banner').textContent = 'Benvenuto!';
     }

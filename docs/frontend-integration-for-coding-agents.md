@@ -44,14 +44,15 @@ When integrating Segmint, follow these rules:
 3. Store the Segmint host and project token in the frontend application's existing
    environment configuration. Do not hard-code production values in source files.
 4. Initialise Segmint only in the browser and only after any required tracking consent.
-5. Track exactly one initial page view. For a multi-page application, use
-   `autoTrack: true`. For an SPA, either use `autoTrack: true` and track only subsequent
-   route changes, or use `autoTrack: false` and explicitly track every route including
-   the initial route.
+5. Track exactly one initial page view. For analytics-only tracking, use
+   `autoTrack: true`. When first-paint personalisation needs fresh segments, use
+   `autoTrack: { evaluate: true }`. For an SPA, use one initial tracking strategy and
+   track only subsequent route changes after that.
 6. Centralise SDK access in one integration module or service. UI components should use
    that abstraction instead of repeatedly initialising Segmint.
-7. Wait for the initial tracking response before evaluating segments. Segment checks
-   made before `init({ autoTrack: true })` resolves will use an empty cache.
+7. Wait for an evaluated tracking response before reading matched segments. Segment
+   checks made before `init({ autoTrack: { evaluate: true } })` or
+   `visitor.event(..., { evaluate: true })` resolves will use the previous cache.
 8. Fail open when tracking is unavailable: render the default content and do not block
    page usage.
 9. Use segmentation only for presentation and personalisation. Never use a client-side
@@ -79,7 +80,7 @@ export function initialiseSegmint() {
   }
 
   readyPromise = loadScript(`${host}/js/segmint.min.js`)
-    .then(() => window.Segmint.init({ token, autoTrack: true }))
+    .then(() => window.Segmint.init({ token, autoTrack: { evaluate: true } }))
     .then(() => window.Segmint)
     .catch((error) => {
       console.warn('Segmint is unavailable; using default content.', error);
@@ -99,6 +100,12 @@ export async function trackEvent(type, properties = {}) {
   const segmint = await initialiseSegmint();
 
   return segmint?.visitor.event(type, properties);
+}
+
+export async function trackAndEvaluate(type, properties = {}) {
+  const segmint = await initialiseSegmint();
+
+  return segmint?.visitor.event(type, properties, { evaluate: true });
 }
 
 function loadScript(src) {
@@ -161,15 +168,18 @@ Choose the sending method according to the required behavior:
 
 | Requirement | Method | Stored? | Segment response? |
 |---|---|---|---|
-| Automatic initial page view | `init({ token, autoTrack: true })` | Yes | Yes |
+| Automatic initial page view for analytics only | `init({ token, autoTrack: true })` | Yes | No |
+| Automatic initial page view for first-paint personalisation | `init({ token, autoTrack: { evaluate: true } })` | Yes | Yes |
 | No automatic initial page view | `init({ token, autoTrack: false })` | No automatic event | No |
-| Normal page, interaction, or component tracking | `visitor.event(type, properties)` | Yes | Yes |
-| Non-blocking tracking during normal page use | Call `visitor.event(type, properties)` without `await`, and handle rejection | Yes | Yes, processed asynchronously |
+| Normal page, interaction, or component tracking | `visitor.event(type, properties)` | Yes | No |
+| Store an event and refresh matched segments immediately | `visitor.event(type, properties, { evaluate: true })` | Yes | Yes |
+| Non-blocking tracking during normal page use | Call `visitor.event(type, properties)` without `await`, and handle rejection | Yes | No |
 | Hypothetical rule evaluation or diagnostics | `visitor.event(type, properties, { dryRun: true })` | No | Yes |
 | Unload-safe fire-and-forget tracking | `visitor.beacon(type, properties)` | Yes | No |
 
 `autoTrack: false` does not disable later tracking calls. A normal `visitor.event()` or
-`visitor.beacon()` still stores its event. There is no dry-run beacon; skip the
+`visitor.beacon()` still stores its event. A normal `visitor.event()` does not evaluate
+segments unless `{ evaluate: true }` is passed. There is no dry-run beacon; skip the
 `beacon()` call when that event must not be stored.
 
 ### Multi-page application
@@ -179,7 +189,7 @@ Initialise once on each full page load:
 ```js
 await window.Segmint.init({
   token: FRONTEND_SEGMINT_TOKEN,
-  autoTrack: true,
+  autoTrack: { evaluate: true },
 });
 ```
 
@@ -234,8 +244,9 @@ trackEvent('component-viewed', {
 ```
 
 This still stores the event and lets the SDK process the segment response
-asynchronously. Prefer it over `beacon()` during normal page use. Reserve `beacon()` for
-events sent while the page is unloading.
+asynchronously. It does not refresh matched segments unless `{ evaluate: true }` is
+passed. Prefer it over `beacon()` during normal page use. Reserve `beacon()` for events
+sent while the page is unloading.
 
 Do not send passwords, authentication tokens, payment details, or unnecessary personal
 data in event properties.
@@ -279,7 +290,7 @@ The coding agent must verify all applicable items:
 - Tracking waits for required consent.
 - Exactly one initial `page-view` event is sent.
 - SPA navigation sends one additional `page-view` per completed route change.
-- `hasSegment()` is evaluated only after initialisation resolves.
+- `hasSegment()` is evaluated only after an evaluation response has populated the cache.
 - Matched visitors see personalised content.
 - Unmatched visitors and tracking failures see default content.
 - Tracking failures do not break rendering, navigation, or form submission.

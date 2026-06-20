@@ -7,7 +7,7 @@
  *
  *   <script src="https://your-segmint-host/js/segmint.js"></script>
  *   <script>
- *     Segmint.init({ token: 'your-project-token', autoTrack: true })
+ *     Segmint.init({ token: 'your-project-token', autoTrack: { evaluate: true } })
  *       .then(() => {
  *         if (Segmint.visitor.hasSegment('returning-buyer')) {
  *           document.getElementById('hero').innerHTML = 'Welcome back!';
@@ -38,8 +38,8 @@
     visitorIdKey: 'segmint_vid',
   };
 
-  var _segments = [];        // Cached segment list from the latest response
-  var _ready = false;        // True after the first visitor.event() resolves
+  var _segments = [];        // Cached segment list from the latest evaluation response
+  var _ready = false;        // True after the first evaluated visitor.event() resolves
   var _readyCallbacks = [];  // Queued onReady callbacks
 
   // ---------------------------------------------------------------------------
@@ -178,16 +178,17 @@
   var visitor = {
 
     /**
-     * Send a tracking event and receive matched segments.
+     * Send a tracking event.
      *
-     * The returned segments are also cached internally — read them any time
-     * with visitor.segments() or visitor.hasSegment().
+     * By default this stores the event without evaluating segments. Pass
+     * { evaluate: true } or { dryRun: true } to receive and cache matched segments.
      *
      * @param  {string} [eventType='page-view']    - The event type.
      * @param  {Object} [eventProperties={}]       - Custom event properties.
      * @param  {Object} [options={}]               - Event options.
+     * @param  {boolean} [options.evaluate=false]  - Store and evaluate immediately.
      * @param  {boolean} [options.dryRun=false]    - Evaluate without storing.
-     * @return {Promise<Object>} Response with status and matched segments.
+     * @return {Promise<Object>} Response with status and optional matched segments.
      */
     event: function (eventType, eventProperties, options) {
       eventType = eventType || 'page-view';
@@ -213,6 +214,8 @@
 
       if (options.dryRun === true) {
         payload.dry_run = true;
+      } else if (options.evaluate === true) {
+        payload.evaluate = true;
       }
 
       log('Tracking', payload);
@@ -232,8 +235,12 @@
           return response.json();
         })
         .then(function (result) {
-          updateSegments(result.segments);
-          log('Segments', _segments);
+          if (result.evaluated !== false) {
+            updateSegments(result.segments);
+            log('Segments', _segments);
+          } else {
+            log('Tracking accepted', result);
+          }
           return result;
         })
         .catch(function (err) {
@@ -295,7 +302,7 @@
     /**
      * Get the cached list of matched segments for this visitor.
      *
-     * @return {Object[]} Array of segment objects from the latest event response.
+     * @return {Object[]} Array of segment objects from the latest evaluation response.
      */
     segments: function () {
       return _segments.slice();
@@ -391,21 +398,21 @@
     /**
      * Initialise the SDK.
      *
-     * When autoTrack is true, init() returns a Promise that resolves after the
-     * initial page-view is tracked and segments are cached — so you can
-     * personalise content immediately:
+     * When autoTrack includes { evaluate: true }, init() returns a Promise that
+     * resolves after the initial page-view is tracked and segments are cached —
+     * so you can personalise content immediately:
      *
-     *   await Segmint.init({ token: '...', autoTrack: true });
+     *   await Segmint.init({ token: '...', autoTrack: { evaluate: true } });
      *   if (Segmint.visitor.hasSegment('vip')) showVipBanner();
      *
      * @param {Object} options
      * @param {string}  options.token      - Project access token (required).
      * @param {string}  [options.endpoint] - Full URL of the tracking API.
      *                                       Defaults to auto-detected from script src.
-     * @param {boolean} [options.autoTrack=false] - Send a page-view event immediately.
+     * @param {boolean|Object} [options.autoTrack=false] - Send a page-view event immediately.
      * @param {boolean} [options.debug=false]     - Log to console.
      * @param {string}  [options.visitorIdKey]    - localStorage key for visitor ID.
-     * @return {Promise<Object>|void} When autoTrack is true, returns a Promise
+     * @return {Promise<Object>|void} When autoTrack is set, returns a Promise
      *                                 with the tracking result.
      */
     init: function (options) {
@@ -439,7 +446,8 @@
       log('Initialised', { endpoint: _config.endpoint, origin: _config.origin, token: _config.token });
 
       if (_config.autoTrack) {
-        return this.visitor.event();
+        var autoTrackOptions = typeof _config.autoTrack === 'object' ? _config.autoTrack : {};
+        return this.visitor.event('page-view', {}, autoTrackOptions);
       }
     },
 
@@ -459,7 +467,7 @@
     },
 
     /**
-     * Whether the SDK has completed its first visitor.event() call.
+     * Whether the SDK has completed its first evaluated visitor.event() call.
      *
      * @return {boolean}
      */
