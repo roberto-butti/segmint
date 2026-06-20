@@ -13,7 +13,7 @@
     "format:check": "prettier --check resources/",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
-    "types:check": "svelte-check --tsconfig ./tsconfig.json"
+    "types:check": "svelte-check --workspace ./resources/js --tsconfig ./tsconfig.svelte.json"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

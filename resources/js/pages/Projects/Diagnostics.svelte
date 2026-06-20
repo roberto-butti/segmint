@@ -497,9 +497,7 @@
                                 disabled={isUpdatingScenario}
                             >
                                 <Save class="size-4" />
-                                {isUpdatingScenario
-                                    ? 'Saving'
-                                    : 'Save changes'}
+                                {isUpdatingScenario ? 'Saving' : 'Save changes'}
                             </Button>
                             <Button
                                 type="button"
@@ -572,10 +570,7 @@
                         <div class="grid gap-4 md:grid-cols-2">
                             <div class="space-y-2">
                                 <Label for="utm-source">UTM source</Label>
-                                <Input
-                                    id="utm-source"
-                                    bind:value={utmSource}
-                                />
+                                <Input id="utm-source" bind:value={utmSource} />
                             </div>
                         </div>
 
@@ -707,7 +702,9 @@
                                 class="grid gap-3 text-sm text-muted-foreground sm:grid-cols-3"
                             >
                                 <div>
-                                    <p class="text-xs uppercase text-muted-foreground">
+                                    <p
+                                        class="text-xs uppercase text-muted-foreground"
+                                    >
                                         Executed
                                     </p>
                                     <p class="mt-1 text-foreground">
@@ -715,7 +712,9 @@
                                     </p>
                                 </div>
                                 <div>
-                                    <p class="text-xs uppercase text-muted-foreground">
+                                    <p
+                                        class="text-xs uppercase text-muted-foreground"
+                                    >
                                         Event
                                     </p>
                                     <p class="mt-1 text-foreground">
@@ -723,7 +722,9 @@
                                     </p>
                                 </div>
                                 <div>
-                                    <p class="text-xs uppercase text-muted-foreground">
+                                    <p
+                                        class="text-xs uppercase text-muted-foreground"
+                                    >
                                         Visitor
                                     </p>
                                     <p class="mt-1 truncate text-foreground">
