@@ -206,6 +206,8 @@
 
 <div id="toolbar" class="toolbar" style="display: none;">
     <strong>Segmint Playground</strong>
+    <span id="token-display" style="font-family: monospace; font-size: 11px; color: #64748b;"></span>
+    <button onclick="changeToken()" style="background: transparent; color: #2dd4a8; border: 1px solid #334155; padding: 4px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">Change token</button>
     <span id="visitor-id-display" style="font-family: monospace; font-size: 11px; color: #64748b;"></span>
     <button onclick="newVisitor()" style="background: #1e293b; color: #e2e8f0; border: 1px solid #334155; padding: 4px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">New visitor</button>
     <div class="status">
@@ -222,8 +224,7 @@
     <input id="token-input" type="text" placeholder="e.g. this-is-a-test-token" />
     <button onclick="startPlayground()">Start</button>
     <p class="hint">
-        Tip: pass the token as a query parameter to skip this screen:<br>
-        <code>playground.html?token=your-token</code>
+        The playground remembers the last token in this browser, so you only need to paste it once.
     </p>
 </div>
 
@@ -250,6 +251,7 @@
 
 <script src="js/segmint.js"></script>
 <script>
+    var TOKEN_STORAGE_KEY = 'segmint_playground_token';
     var logEl = document.getElementById('event-log');
 
     function log(type, message) {
@@ -305,6 +307,13 @@
         }
     }
 
+    function updateTokenDisplay(token) {
+        var el = document.getElementById('token-display');
+        if (el) {
+            el.textContent = token ? 'Token: ' + maskToken(token) : '';
+        }
+    }
+
     function newVisitor() {
         Segmint.visitor.reset();
         log('info', '');
@@ -313,19 +322,50 @@
         window.location.reload();
     }
 
+    function changeToken() {
+        try {
+            localStorage.removeItem(TOKEN_STORAGE_KEY);
+        } catch (e) { /* localStorage blocked */ }
+
+        window.location.href = window.location.pathname;
+    }
+
+    function saveToken(token) {
+        try {
+            localStorage.setItem(TOKEN_STORAGE_KEY, token);
+        } catch (e) { /* localStorage blocked */ }
+    }
+
+    function loadSavedToken() {
+        try {
+            return localStorage.getItem(TOKEN_STORAGE_KEY) || '';
+        } catch (e) {
+            return '';
+        }
+    }
+
+    function maskToken(token) {
+        if (!token) return '';
+        if (token.length <= 12) return token.slice(0, 3) + '...';
+
+        return token.slice(0, 6) + '...' + token.slice(-4);
+    }
+
     function startPlayground() {
         var input = document.getElementById('token-input');
         var token = input ? input.value.trim() : '';
         if (!token) { input.focus(); return; }
+        saveToken(token);
 
         document.getElementById('setup-screen').style.display = 'none';
         document.getElementById('playground').style.display = '';
         document.getElementById('toolbar').style.display = '';
 
         log('info', 'Initialising Segmint SDK...');
-        log('info', 'Token: ' + token);
+        log('info', 'Token: ' + maskToken(token));
         log('info', 'Visitor ID: ' + Segmint.visitor.id());
         updateVisitorDisplay();
+        updateTokenDisplay(token);
 
         var allSegments = [];
 
@@ -366,13 +406,21 @@
             });
     }
 
-    // Auto-start if token is in the URL
+    // Preserve query-token compatibility, but prefer a locally remembered token.
     (function () {
         var params = new URLSearchParams(window.location.search);
         var token = params.get('token');
+        var input = document.getElementById('token-input');
+
         if (token) {
-            var input = document.getElementById('token-input');
             if (input) input.value = token;
+            startPlayground();
+            return;
+        }
+
+        var savedToken = loadSavedToken();
+        if (savedToken && input) {
+            input.value = savedToken;
             startPlayground();
         }
     })();

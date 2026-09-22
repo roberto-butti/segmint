@@ -2,6 +2,7 @@
     import { page, router } from '@inertiajs/svelte';
     import Check from 'lucide-svelte/icons/check';
     import Copy from 'lucide-svelte/icons/copy';
+    import ExternalLink from 'lucide-svelte/icons/external-link';
     import KeyRound from 'lucide-svelte/icons/key-round';
     import RotateCw from 'lucide-svelte/icons/rotate-cw';
     import X from 'lucide-svelte/icons/x';
@@ -173,68 +174,83 @@
                     active segments.
                 </p>
             </div>
-            {#if canManageProject}
-                <Dialog bind:open={createOpen}>
-                    <DialogTrigger asChild>
-                        {#snippet children(props)}
-                            <Button size="sm" onclick={props.onclick}>
-                                Create access token
-                            </Button>
-                        {/snippet}
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogTitle>Create access token</DialogTitle>
-                        <DialogDescription>
-                            Give the token a name that identifies the
-                            application or integration using it.
-                        </DialogDescription>
-                        <form
-                            class="space-y-4"
-                            onsubmit={(event) => {
-                                event.preventDefault();
-                                createToken();
-                            }}
+            <div class="flex items-center gap-2">
+                <Button variant="outline" size="sm" asChild>
+                    {#snippet children(props)}
+                        <a
+                            href="/playground.html"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class={props.class}
                         >
-                            <div class="space-y-2">
-                                <Label for="access-token-name">Name</Label>
-                                <Input
-                                    id="access-token-name"
-                                    bind:value={createName}
-                                    placeholder="e.g. Production website"
-                                    required
-                                    maxlength={255}
-                                />
-                                {#if page.props.errors.name}
-                                    <p class="text-sm text-destructive">
-                                        {page.props.errors.name}
-                                    </p>
-                                {/if}
-                            </div>
-                            <DialogFooter>
-                                <DialogClose asChild>
-                                    {#snippet children(props)}
-                                        <Button
-                                            variant="outline"
-                                            type="button"
-                                            onclick={props.onclick}
-                                        >
-                                            Cancel
-                                        </Button>
-                                    {/snippet}
-                                </DialogClose>
-                                <Button
-                                    type="submit"
-                                    disabled={createProcessing}
-                                >
-                                    {createProcessing
-                                        ? 'Creating...'
-                                        : 'Create token'}
+                            <ExternalLink class="size-4" />
+                            Open playground
+                        </a>
+                    {/snippet}
+                </Button>
+                {#if canManageProject}
+                    <Dialog bind:open={createOpen}>
+                        <DialogTrigger asChild>
+                            {#snippet children(props)}
+                                <Button size="sm" onclick={props.onclick}>
+                                    Create access token
                                 </Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
-            {/if}
+                            {/snippet}
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogTitle>Create access token</DialogTitle>
+                            <DialogDescription>
+                                Give the token a name that identifies the
+                                application or integration using it.
+                            </DialogDescription>
+                            <form
+                                class="space-y-4"
+                                onsubmit={(event) => {
+                                    event.preventDefault();
+                                    createToken();
+                                }}
+                            >
+                                <div class="space-y-2">
+                                    <Label for="access-token-name">Name</Label>
+                                    <Input
+                                        id="access-token-name"
+                                        bind:value={createName}
+                                        placeholder="e.g. Production website"
+                                        required
+                                        maxlength={255}
+                                    />
+                                    {#if page.props.errors.name}
+                                        <p class="text-sm text-destructive">
+                                            {page.props.errors.name}
+                                        </p>
+                                    {/if}
+                                </div>
+                                <DialogFooter>
+                                    <DialogClose asChild>
+                                        {#snippet children(props)}
+                                            <Button
+                                                variant="outline"
+                                                type="button"
+                                                onclick={props.onclick}
+                                            >
+                                                Cancel
+                                            </Button>
+                                        {/snippet}
+                                    </DialogClose>
+                                    <Button
+                                        type="submit"
+                                        disabled={createProcessing}
+                                    >
+                                        {createProcessing
+                                            ? 'Creating...'
+                                            : 'Create token'}
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+                {/if}
+            </div>
         </div>
 
         {#if accessTokenSecret && dismissedSecretId !== accessTokenSecret.id}
