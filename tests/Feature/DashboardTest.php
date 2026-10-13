@@ -66,10 +66,10 @@ class DashboardTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Dashboard')
-                ->has('favoriteProjects', 1)
-                ->where('favoriteProjects.0.name', 'Favorite CRM')
-                ->where('favoriteProjects.0.public_id', $favorite->public_id)
-                ->where('favoriteProjects.0.organization_name', $organization->name)
+                ->has('organizations.0.favorite_projects', 1)
+                ->where('organizations.0.favorite_projects.0.name', 'Favorite CRM')
+                ->where('organizations.0.favorite_projects.0.public_id', $favorite->public_id)
+                ->where('organizations.0.favorite_projects.0.organization_name', $organization->name)
             );
     }
 
@@ -112,11 +112,51 @@ class DashboardTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Dashboard')
-                ->has('recentlyActiveProjects', 2)
-                ->where('recentlyActiveProjects.0.name', 'Recent Project')
-                ->where('recentlyActiveProjects.0.events_count_24h', 2)
-                ->where('recentlyActiveProjects.1.name', 'Older Project')
-                ->where('recentlyActiveProjects.1.events_count_24h', 0)
+                ->has('organizations.0.recently_active_projects', 2)
+                ->where('organizations.0.recently_active_projects.0.name', 'Recent Project')
+                ->where('organizations.0.recently_active_projects.0.events_count_24h', 2)
+                ->where('organizations.0.recently_active_projects.1.name', 'Older Project')
+                ->where('organizations.0.recently_active_projects.1.events_count_24h', 0)
+            );
+    }
+
+    public function test_global_dashboard_groups_favorites_and_recent_activity_by_organization(): void
+    {
+        ['user' => $user, 'organization' => $ownedOrganization] = $this->createUserWithOrganization();
+        $memberOrganization = Organization::factory()->create(['name' => 'Member workspace']);
+        $memberOrganization->members()->attach($user, ['role' => OrganizationRole::Admin->value]);
+
+        $ownedProject = Project::factory()->create([
+            'organization_id' => $ownedOrganization->id,
+            'name' => 'Owned project',
+        ]);
+        $memberProject = Project::factory()->create([
+            'organization_id' => $memberOrganization->id,
+            'name' => 'Member project',
+        ]);
+        $user->favoriteProjects()->attach([$ownedProject->id, $memberProject->id]);
+
+        EventLog::create([
+            'project_id' => $ownedProject->id,
+            'visitor_id' => 'owned-visitor',
+            'event_type' => 'page-view',
+        ]);
+        EventLog::create([
+            'project_id' => $memberProject->id,
+            'visitor_id' => 'member-visitor',
+            'event_type' => 'page-view',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('organizations.0.role', 'owner')
+                ->where('organizations.0.favorite_projects.0.name', 'Owned project')
+                ->where('organizations.0.recently_active_projects.0.name', 'Owned project')
+                ->where('organizations.1.name', 'Member workspace')
+                ->where('organizations.1.favorite_projects.0.name', 'Member project')
+                ->where('organizations.1.recently_active_projects.0.name', 'Member project')
             );
     }
 

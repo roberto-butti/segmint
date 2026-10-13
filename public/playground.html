@@ -210,6 +210,7 @@
     <button onclick="changeToken()" style="background: transparent; color: #2dd4a8; border: 1px solid #334155; padding: 4px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">Change token</button>
     <span id="visitor-id-display" style="font-family: monospace; font-size: 11px; color: #64748b;"></span>
     <button onclick="newVisitor()" style="background: #1e293b; color: #e2e8f0; border: 1px solid #334155; padding: 4px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">New visitor</button>
+    <a href="" title="Navigate to this page again and use it as the referrer" style="background: #1e293b; color: #e2e8f0; border: 1px solid #334155; padding: 4px 12px; border-radius: 6px; font-size: 12px; text-decoration: none;">Reload page</a>
     <div class="status">
         <div id="status-dot" class="dot"></div>
         <span id="status-text">Connecting...</span>
@@ -364,6 +365,7 @@
         log('info', 'Initialising Segmint SDK...');
         log('info', 'Token: ' + maskToken(token));
         log('info', 'Visitor ID: ' + Segmint.visitor.id());
+        log('info', 'Referrer: ' + (document.referrer || 'none (direct visit)'));
         updateVisitorDisplay();
         updateTokenDisplay(token);
 

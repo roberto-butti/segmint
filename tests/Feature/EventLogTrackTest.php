@@ -14,6 +14,33 @@ class EventLogTrackTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_referrer_can_match_with_the_contains_operator(): void
+    {
+        [$project, $token] = $this->createProjectWithToken();
+        $segment = Segment::factory()->create([
+            'project_id' => $project->id,
+            'slug' => 'search-referrals',
+        ]);
+        $this->createRule($segment, [
+            'key' => 'referrer_url',
+            'operator' => 'contains',
+            'value' => 'google.com',
+        ]);
+
+        $this->postJson('/api/event-log/track', [
+            ...$this->eventPayload($token),
+            'evaluate' => true,
+            'referrer' => 'https://www.google.com/search?q=segmint',
+        ])
+            ->assertOk()
+            ->assertJsonPath('segments.0.slug', 'search-referrals');
+
+        $this->assertDatabaseHas('event_logs', [
+            'project_id' => $project->id,
+            'referrer_url' => 'https://www.google.com/search?q=segmint',
+        ]);
+    }
+
     public function test_dry_run_returns_segments_without_persisting_event_or_matches(): void
     {
         [$project, $token] = $this->createProjectWithToken();

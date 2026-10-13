@@ -21,6 +21,50 @@ class DashboardController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
+        $accessibleProjectIds = $user->accessibleProjects()->select('projects.id');
+
+        $favoriteProjectsByOrganization = $user->favoriteProjects()
+            ->whereIn('projects.id', clone $accessibleProjectIds)
+            ->with('organization:id,name')
+            ->orderBy('projects.name')
+            ->get()
+            ->map(fn (Project $project) => [
+                'id' => $project->id,
+                'public_id' => $project->public_id,
+                'name' => $project->name,
+                'organization_name' => $project->organization->name,
+                'organization_id' => $project->organization_id,
+            ])
+            ->groupBy('organization_id');
+
+        $recentlyActiveProjectsByOrganization = EventLog::query()
+            ->join('projects', 'event_logs.project_id', '=', 'projects.id')
+            ->join('organizations', 'projects.organization_id', '=', 'organizations.id')
+            ->whereIn('projects.id', clone $accessibleProjectIds)
+            ->select([
+                'projects.id',
+                'projects.public_id',
+                'projects.name',
+                'projects.organization_id',
+                'organizations.name as organization_name',
+                DB::raw('MAX(event_logs.created_at) as last_event_at'),
+                DB::raw("SUM(CASE WHEN event_logs.created_at >= '".now()->subDay()->toDateTimeString()."' THEN 1 ELSE 0 END) as events_count_24h"),
+            ])
+            ->groupBy('projects.id', 'projects.public_id', 'projects.name', 'projects.organization_id', 'organizations.name')
+            ->orderByRaw('MAX(event_logs.created_at) DESC')
+            ->get()
+            ->map(fn ($project) => [
+                'id' => $project->id,
+                'public_id' => $project->public_id,
+                'name' => $project->name,
+                'organization_name' => $project->organization_name,
+                'organization_id' => $project->organization_id,
+                'last_event_at' => Carbon::parse($project->last_event_at)->toIso8601String(),
+                'events_count_24h' => (int) $project->events_count_24h,
+            ])
+            ->groupBy('organization_id')
+            ->map(fn ($projects) => $projects->take(5)->values());
+
         $organizations = $user->organizations()
             ->withCount([
                 'projects',
@@ -34,7 +78,7 @@ class DashboardController extends Controller
                 $organization->name,
             ])
             ->values()
-            ->map(function (Organization $organization) use ($user) {
+            ->map(function (Organization $organization) use ($favoriteProjectsByOrganization, $recentlyActiveProjectsByOrganization, $user) {
                 $role = $organization->pivot->role;
                 $assignedProjects = ! $user->isOwnerOf($organization)
                     && $role?->canAccessAllProjects() !== true
@@ -49,51 +93,13 @@ class DashboardController extends Controller
                     'projects_count' => $assignedProjects?->count() ?? $organization->projects_count,
                     'active_projects_count' => $assignedProjects?->where('active', true)->count() ?? $organization->active_projects_count,
                     'members_count' => $organization->members_count,
+                    'favorite_projects' => $favoriteProjectsByOrganization->get($organization->id, collect())->values(),
+                    'recently_active_projects' => $recentlyActiveProjectsByOrganization->get($organization->id, collect()),
                 ];
             });
 
-        $accessibleProjectIds = $user->accessibleProjects()->select('projects.id');
-        $favoriteProjects = $user->favoriteProjects()
-            ->whereIn('projects.id', $accessibleProjectIds)
-            ->with('organization:id,name')
-            ->orderBy('projects.name')
-            ->get()
-            ->map(fn (Project $project) => [
-                'id' => $project->id,
-                'public_id' => $project->public_id,
-                'name' => $project->name,
-                'organization_name' => $project->organization->name,
-            ]);
-
-        $recentlyActiveProjects = EventLog::query()
-            ->join('projects', 'event_logs.project_id', '=', 'projects.id')
-            ->join('organizations', 'projects.organization_id', '=', 'organizations.id')
-            ->whereIn('projects.id', $user->accessibleProjects()->select('projects.id'))
-            ->select([
-                'projects.id',
-                'projects.public_id',
-                'projects.name',
-                'organizations.name as organization_name',
-                DB::raw('MAX(event_logs.created_at) as last_event_at'),
-                DB::raw("SUM(CASE WHEN event_logs.created_at >= '".now()->subDay()->toDateTimeString()."' THEN 1 ELSE 0 END) as events_count_24h"),
-            ])
-            ->groupBy('projects.id', 'projects.public_id', 'projects.name', 'organizations.name')
-            ->orderByRaw('MAX(event_logs.created_at) DESC')
-            ->limit(5)
-            ->get()
-            ->map(fn ($project) => [
-                'id' => $project->id,
-                'public_id' => $project->public_id,
-                'name' => $project->name,
-                'organization_name' => $project->organization_name,
-                'last_event_at' => Carbon::parse($project->last_event_at)->toIso8601String(),
-                'events_count_24h' => (int) $project->events_count_24h,
-            ]);
-
         return Inertia::render('Dashboard', [
             'organizations' => $organizations,
-            'favoriteProjects' => $favoriteProjects,
-            'recentlyActiveProjects' => $recentlyActiveProjects,
         ]);
     }
 
